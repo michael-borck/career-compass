@@ -19,7 +19,7 @@
 This app lets people upload their resumes, fill in some of their interests, and get a list of possible careers they could do.
 
 - [Llama-3-70B](https://llama.meta.com/llama3/) for the LLM
-- [Together.ai](https://together.ai/) for the AI API (inference)
+- [Together.ai](https://togetherai.link/) for the AI API (inference)
 - [Plausible](https://plausible.io/) for website analytics
 - [Reactflow](https://reactflow.dev/) for the data visualization
 - [Helicone](https://helicone.ai/) for LLM observability

@@ -22,7 +22,7 @@ const Footer = () => (
         <div className='flex items-center gap-x-6 text-gray-400'>
           <a
             className='tracking-tight flex gap-1 hover:underline transition'
-            href='https://dub.sh/together-ai'
+            href='https://togetherai.link'
             target='_blank'
           >
             <span className='text-gray-500'>
