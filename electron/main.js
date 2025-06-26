@@ -353,21 +353,93 @@ ipcMain.handle('get-ollama-models', async (event, baseURL) => {
 
 ipcMain.handle('test-connection', async (event, provider, config) => {
   try {
-    // Simple connection test based on provider
+    // Get API key from environment if not provided in config
+    let apiKey = config.apiKey;
+    if (!apiKey) {
+      const envVarMap = {
+        openai: 'OPENAI_API_KEY',
+        claude: 'ANTHROPIC_API_KEY',
+        groq: 'GROQ_API_KEY',
+        gemini: 'GOOGLE_API_KEY'
+      };
+      if (envVarMap[provider]) {
+        apiKey = process.env[envVarMap[provider]];
+      }
+    }
+
+    // Connection test based on provider
     switch (provider) {
       case 'ollama':
         const ollamaUrl = config.baseURL || 'http://localhost:11434';
         const ollamaResponse = await fetch(`${ollamaUrl}/api/tags`);
-        return { success: ollamaResponse.ok, error: ollamaResponse.ok ? null : 'Ollama not reachable' };
+        return { 
+          success: ollamaResponse.ok, 
+          error: ollamaResponse.ok ? null : `Ollama not reachable at ${ollamaUrl}` 
+        };
       
       case 'openai':
+        if (!apiKey) {
+          return { success: false, error: 'API key required (set OPENAI_API_KEY or enter in settings)' };
+        }
         const openaiResponse = await fetch('https://api.openai.com/v1/models', {
-          headers: { 'Authorization': `Bearer ${config.apiKey}` }
+          headers: { 'Authorization': `Bearer ${apiKey}` }
         });
-        return { success: openaiResponse.ok, error: openaiResponse.ok ? null : 'Invalid OpenAI API key' };
+        if (!openaiResponse.ok) {
+          const errorText = await openaiResponse.text();
+          return { success: false, error: `OpenAI API error: ${openaiResponse.status} ${errorText}` };
+        }
+        return { success: true, error: null };
+      
+      case 'claude':
+        if (!apiKey) {
+          return { success: false, error: 'API key required (set ANTHROPIC_API_KEY or enter in settings)' };
+        }
+        // Anthropic doesn't have a simple health endpoint, so we'll test with a minimal request
+        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'test' }]
+          })
+        });
+        if (!claudeResponse.ok) {
+          const errorText = await claudeResponse.text();
+          return { success: false, error: `Claude API error: ${claudeResponse.status}` };
+        }
+        return { success: true, error: null };
+      
+      case 'groq':
+        if (!apiKey) {
+          return { success: false, error: 'API key required (set GROQ_API_KEY or enter in settings)' };
+        }
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!groqResponse.ok) {
+          const errorText = await groqResponse.text();
+          return { success: false, error: `Groq API error: ${groqResponse.status}` };
+        }
+        return { success: true, error: null };
+      
+      case 'gemini':
+        if (!apiKey) {
+          return { success: false, error: 'API key required (set GOOGLE_API_KEY or enter in settings)' };
+        }
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!geminiResponse.ok) {
+          const errorText = await geminiResponse.text();
+          return { success: false, error: `Gemini API error: ${geminiResponse.status}` };
+        }
+        return { success: true, error: null };
       
       default:
-        return { success: false, error: 'Connection testing not implemented for this provider' };
+        return { success: false, error: `Unknown provider: ${provider}` };
     }
   } catch (error) {
     return { success: false, error: error.message };
@@ -377,4 +449,8 @@ ipcMain.handle('test-connection', async (event, provider, config) => {
 // App info handlers
 ipcMain.handle('get-version', () => {
   return app.getVersion();
+});
+
+ipcMain.handle('get-env-var', (event, varName) => {
+  return process.env[varName] || null;
 });

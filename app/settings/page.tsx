@@ -76,7 +76,9 @@ export default function Settings() {
       // If no saved API key, check environment variables
       if (!apiKey) {
         const envVarName = getEnvVarName(savedSettings.provider);
-        apiKey = process.env[envVarName] || '';
+        if (envVarName && typeof window !== 'undefined' && (window as any).electronAPI) {
+          apiKey = await (window as any).electronAPI.getEnvVar(envVarName) || '';
+        }
       }
       
       setSettings({

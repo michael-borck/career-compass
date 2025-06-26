@@ -26,5 +26,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // App info
   getVersion: () => ipcRenderer.invoke('get-version'),
-  getPlatform: () => process.platform
+  getPlatform: () => process.platform,
+  getEnvVar: (varName) => ipcRenderer.invoke('get-env-var', varName)
 });
