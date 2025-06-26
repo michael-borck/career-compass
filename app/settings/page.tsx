@@ -70,8 +70,14 @@ export default function Settings() {
       // Load basic settings
       const savedSettings = settingsStore.get();
       
-      // Load API key separately from secure storage
-      const apiKey = await secureStorage.getApiKey(savedSettings.provider);
+      // Load API key from secure storage first, then try environment variables
+      let apiKey = await secureStorage.getApiKey(savedSettings.provider);
+      
+      // If no saved API key, check environment variables
+      if (!apiKey) {
+        const envVarName = getEnvVarName(savedSettings.provider);
+        apiKey = process.env[envVarName] || '';
+      }
       
       setSettings({
         ...savedSettings,
@@ -81,6 +87,31 @@ export default function Settings() {
       console.error('Failed to load settings:', error);
       toast.error('Failed to load settings');
     }
+  };
+
+  const getEnvVarName = (provider: LLMProvider): string => {
+    const envVarMap = {
+      openai: 'OPENAI_API_KEY',
+      claude: 'ANTHROPIC_API_KEY',
+      groq: 'GROQ_API_KEY',
+      gemini: 'GOOGLE_API_KEY',
+      ollama: ''
+    };
+    return envVarMap[provider];
+  };
+
+  const getApiKeyPlaceholder = (provider: LLMProvider): string => {
+    if (provider === 'ollama') return 'Not required for local Ollama';
+    
+    const envVar = getEnvVarName(provider);
+    return `Enter API key or set ${envVar} environment variable`;
+  };
+
+  const getApiKeyHelpText = (provider: LLMProvider): string => {
+    if (provider === 'ollama') return 'Ollama runs locally and does not require an API key.';
+    
+    const envVar = getEnvVarName(provider);
+    return `Leave blank to use ${envVar} environment variable, or enter your API key to save it securely.`;
   };
 
   const handleProviderChange = (provider: LLMProvider) => {
@@ -154,9 +185,12 @@ export default function Settings() {
       delete (settingsToSave as any).apiKey;
       settingsStore.set(settingsToSave);
 
-      // Save API key securely if provided
+      // Save API key securely if provided, otherwise clear stored key to use env vars
       if (settings.apiKey.trim()) {
         await secureStorage.setApiKey(settings.provider, settings.apiKey);
+      } else {
+        // Clear stored API key so environment variable can be used
+        await secureStorage.deleteApiKey(settings.provider);
       }
 
       toast.success('Settings saved successfully!');
@@ -247,20 +281,25 @@ export default function Settings() {
                   type="password"
                   value={settings.apiKey}
                   onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
-                  placeholder={`Enter your ${ProviderInfo[settings.provider].name} API key`}
+                  placeholder={getApiKeyPlaceholder(settings.provider)}
                   className="mt-2"
                 />
-                <p className="text-sm text-gray-600 mt-2">
-                  Get your API key from {' '}
-                  <a 
-                    href={ProviderInfo[settings.provider].website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {ProviderInfo[settings.provider].website}
-                  </a>
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-gray-600">
+                    {getApiKeyHelpText(settings.provider)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Get your API key from {' '}
+                    <a 
+                      href={ProviderInfo[settings.provider].website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {ProviderInfo[settings.provider].website}
+                    </a>
+                  </p>
+                </div>
               </div>
             )}
 

@@ -114,6 +114,15 @@ export function getLLMProvider(config: LLMConfig): LLMProvider {
   return LLMProviders[config.provider];
 }
 
+// Environment variable mapping for each provider
+const ENV_VAR_MAP = {
+  openai: 'OPENAI_API_KEY',
+  claude: 'ANTHROPIC_API_KEY',
+  groq: 'GROQ_API_KEY',
+  gemini: 'GOOGLE_API_KEY',
+  ollama: ''
+};
+
 // Helper function to get LLM config from user settings or environment
 export async function getLLMConfig(): Promise<LLMConfig> {
   // Check if we're in browser environment and have access to settings store
@@ -123,7 +132,12 @@ export async function getLLMConfig(): Promise<LLMConfig> {
       const { settingsStore, secureStorage } = await import('./settings-store');
       
       const settings = settingsStore.get();
-      const apiKey = await secureStorage.getApiKey(settings.provider);
+      let apiKey = await secureStorage.getApiKey(settings.provider);
+      
+      // If no stored API key, try environment variable
+      if (!apiKey && ENV_VAR_MAP[settings.provider]) {
+        apiKey = process.env[ENV_VAR_MAP[settings.provider]] || '';
+      }
       
       return {
         provider: settings.provider,
@@ -137,16 +151,21 @@ export async function getLLMConfig(): Promise<LLMConfig> {
   }
 
   // Fallback to environment variables for server-side or missing settings
-  const envProvider = process.env.LLM_PROVIDER as LLMConfig['provider'];
-  const envModel = process.env.LLM_MODEL;
-  const envApiKey = process.env.LLM_API_KEY;
-  const envBaseURL = process.env.LLM_BASE_URL;
+  const envProvider = (process.env.LLM_PROVIDER as LLMConfig['provider']) || 'ollama';
+  const envModel = process.env.LLM_MODEL || DefaultModels[envProvider];
+  const envBaseURL = process.env.LLM_BASE_URL || 'http://localhost:11434/v1';
+  
+  // Get API key from appropriate environment variable
+  let envApiKey = process.env.LLM_API_KEY; // Generic fallback
+  if (!envApiKey && ENV_VAR_MAP[envProvider]) {
+    envApiKey = process.env[ENV_VAR_MAP[envProvider]];
+  }
 
   // Default to Ollama for privacy-first approach
   return {
-    provider: envProvider || 'ollama',
-    model: envModel || DefaultModels[envProvider || 'ollama'],
-    apiKey: envApiKey,
-    baseURL: envBaseURL || 'http://localhost:11434/v1',
+    provider: envProvider,
+    model: envModel,
+    apiKey: envApiKey || '',
+    baseURL: envBaseURL,
   };
 }

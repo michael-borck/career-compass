@@ -141,6 +141,30 @@ export default function About() {
           </div>
         </div>
 
+        {/* Attribution */}
+        <div className="bg-gray-50 rounded-xl p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center">Acknowledgments</h2>
+          <div className="text-center space-y-2">
+            <p className="text-gray-700">
+              Career Compass is forked from and inspired by{' '}
+              <a
+                href="https://github.com/Nutlope/explorecareers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline font-medium"
+              >
+                ExploreCareers
+              </a>
+            </p>
+            <p className="text-sm text-gray-600">
+              Created by Hassan El Mghari and Youssef Hasboun
+            </p>
+            <p className="text-sm text-gray-600">
+              Enhanced for privacy-first desktop use with multi-LLM support and local processing
+            </p>
+          </div>
+        </div>
+
         {/* Version */}
         <div className="text-center text-gray-500 text-sm">
           <p>Career Compass v0.1.0 - Privacy-first career exploration</p>
