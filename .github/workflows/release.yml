@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Trigger on version tags like v1.0.0
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -91,12 +94,39 @@ jobs:
         run: ls -la ./artifacts
 
       - name: Create Release
-        run: |
-          gh release create ${{ github.ref_name }} \
-            --title "Career Compass ${{ github.ref_name }}" \
-            --notes "Privacy-first career exploration powered by AI. Download the appropriate installer for your platform."
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Career Compass ${{ github.ref_name }}
+          body: |
+            ## Career Compass ${{ github.ref_name }}
+            
+            Privacy-first career exploration powered by AI.
+            
+            ### Downloads
+            - **Windows**: Download the `.exe` installer
+            - **macOS**: Download the `.dmg` file  
+            - **Linux**: Download the `.AppImage` file
+            
+            ### Features
+            - ✅ Multiple LLM providers (OpenAI, Claude, Gemini, Groq, Ollama)
+            - ✅ Local file processing (PDF, Markdown, DOCX)
+            - ✅ Privacy-first architecture
+            - ✅ No external data transmission
+            - ✅ Secure API key storage
+            
+            ### Installation
+            1. Download the appropriate file for your operating system
+            2. **Windows**: Run the installer and follow the setup wizard
+            3. **macOS**: Open the DMG and drag to Applications folder
+            4. **Linux**: Make the AppImage executable and run it
+            
+            For detailed setup instructions, see the [README](https://github.com/michael-borck/career-compass#readme).
+          draft: false
+          prerelease: false
 
       - name: Find and upload release assets
         run: |
