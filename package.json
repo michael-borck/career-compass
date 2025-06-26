@@ -107,11 +107,6 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "michael-borck",
-      "repo": "career-compass"
     }
   }
 }
