@@ -11,7 +11,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron . --no-sandbox\"",
+    "electron:dev-unsafe": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron . --no-sandbox --disable-web-security\"",
     "electron:pack": "next build && next export && electron-builder --dir",
     "electron:dist": "next build && next export && electron-builder",
     "postinstall": "electron-builder install-app-deps"
@@ -23,6 +24,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "electron-store": "^10.1.0",
+    "electron-updater": "^6.6.2",
     "lucide-react": "^0.378.0",
     "mammoth": "^1.9.1",
     "next": "14.2.3",

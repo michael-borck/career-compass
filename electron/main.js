@@ -1,7 +1,11 @@
 const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
-const { autoUpdater } = require('electron-updater');
+// Only require electron-updater in production builds
+let autoUpdater;
+if (!isDev) {
+  autoUpdater = require('electron-updater').autoUpdater;
+}
 
 // Keep a global reference of the window object
 let mainWindow;
@@ -47,7 +51,7 @@ function createWindow() {
   });
 
   // Handle app updates (in production)
-  if (!isDev) {
+  if (!isDev && autoUpdater) {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
@@ -205,7 +209,7 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 // Auto-updater events (for production)
-if (!isDev) {
+if (!isDev && autoUpdater) {
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for update...');
   });
