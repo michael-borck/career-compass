@@ -79,7 +79,7 @@
         }
       ],
       "icon": "public/icon.png",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "Career-Compass-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -89,7 +89,7 @@
         }
       ],
       "icon": "public/icon.png",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "Career-Compass-Setup-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -100,7 +100,7 @@
       ],
       "category": "Office",
       "icon": "public/icon.png",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "Career-Compass-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -42,14 +42,14 @@ The GitHub workflow automatically builds and releases Career Compass for Windows
 The workflow creates these files:
 
 ### Windows
-- `Career Compass-Setup-{version}.exe` - NSIS installer for Windows x64
+- `Career-Compass-Setup-{version}.exe` - NSIS installer for Windows x64
 
 ### macOS
-- `Career Compass-{version}-x64.dmg` - Intel Mac installer
-- `Career Compass-{version}-arm64.dmg` - Apple Silicon installer
+- `Career-Compass-{version}-x64.dmg` - Intel Mac installer
+- `Career-Compass-{version}-arm64.dmg` - Apple Silicon installer
 
 ### Linux
-- `Career Compass-{version}-x64.AppImage` - Portable Linux application
+- `Career-Compass-{version}-x64.AppImage` - Portable Linux application
 
 ## Testing a Release
 
