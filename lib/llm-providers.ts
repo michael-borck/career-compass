@@ -131,7 +131,7 @@ export async function getLLMConfig(): Promise<LLMConfig> {
       // Import settings store dynamically to avoid SSR issues
       const { settingsStore, secureStorage } = await import('./settings-store');
       
-      const settings = settingsStore.get();
+      const settings = await settingsStore.get();
       let apiKey = await secureStorage.getApiKey(settings.provider);
       
       // If no stored API key, try environment variable

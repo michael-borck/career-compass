@@ -67,8 +67,9 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      // Load basic settings
-      const savedSettings = settingsStore.get();
+      // Load basic settings (now async)
+      const savedSettings = await settingsStore.get();
+      console.log('Loaded settings from store:', savedSettings);
       
       // Load API key from secure storage first, then try environment variables
       let apiKey = await secureStorage.getApiKey(savedSettings.provider);
@@ -182,10 +183,10 @@ export default function Settings() {
         return;
       }
 
-      // Save basic settings (without API key)
+      // Save basic settings (without API key) - now async
       const settingsToSave = { ...settings };
       delete (settingsToSave as any).apiKey;
-      settingsStore.set(settingsToSave);
+      await settingsStore.set(settingsToSave);
 
       // Save API key securely if provided, otherwise clear stored key to use env vars
       if (settings.apiKey.trim()) {
@@ -213,7 +214,7 @@ export default function Settings() {
         model: DefaultModels.ollama
       };
       setSettings(defaultSettings);
-      settingsStore.clear();
+      await settingsStore.clear();
       
       // Clear all API keys
       const providers: LLMProvider[] = ['ollama', 'openai', 'claude', 'groq', 'gemini'];

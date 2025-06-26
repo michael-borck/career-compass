@@ -22,16 +22,16 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
 
 // Settings store interface for both web and desktop
 export interface SettingsStore {
-  get(): SettingsConfig;
-  set(settings: SettingsConfig): void;
-  clear(): void;
+  get(): Promise<SettingsConfig>;
+  set(settings: SettingsConfig): Promise<void>;
+  clear(): Promise<void>;
 }
 
 // Web fallback using localStorage
 class WebSettingsStore implements SettingsStore {
   private key = 'career-compass-settings';
 
-  get(): SettingsConfig {
+  async get(): Promise<SettingsConfig> {
     try {
       const saved = localStorage.getItem(this.key);
       if (saved) {
@@ -43,7 +43,7 @@ class WebSettingsStore implements SettingsStore {
     return DEFAULT_SETTINGS;
   }
 
-  set(settings: SettingsConfig): void {
+  async set(settings: SettingsConfig): Promise<void> {
     try {
       localStorage.setItem(this.key, JSON.stringify(settings));
     } catch (error) {
@@ -51,7 +51,7 @@ class WebSettingsStore implements SettingsStore {
     }
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     localStorage.removeItem(this.key);
   }
 }
@@ -67,11 +67,12 @@ class ElectronSettingsStore implements SettingsStore {
     }
   }
 
-  get(): SettingsConfig {
+  async get(): Promise<SettingsConfig> {
     if (!this.store) return DEFAULT_SETTINGS;
     
     try {
-      const settings = this.store.get('settings', DEFAULT_SETTINGS);
+      const settings = await this.store.get('settings', DEFAULT_SETTINGS);
+      console.log('ElectronSettingsStore loaded:', settings);
       return { ...DEFAULT_SETTINGS, ...settings };
     } catch (error) {
       console.warn('Failed to load settings from electron-store:', error);
@@ -79,22 +80,23 @@ class ElectronSettingsStore implements SettingsStore {
     }
   }
 
-  set(settings: SettingsConfig): void {
+  async set(settings: SettingsConfig): Promise<void> {
     if (!this.store) {
       console.warn('Electron store not available, falling back to localStorage');
       return;
     }
 
     try {
-      this.store.set('settings', settings);
+      await this.store.set('settings', settings);
+      console.log('ElectronSettingsStore saved:', settings);
     } catch (error) {
       console.error('Failed to save settings to electron-store:', error);
     }
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     if (this.store) {
-      this.store.delete('settings');
+      await this.store.clear();
     }
   }
 }

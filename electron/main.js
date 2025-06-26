@@ -2,13 +2,15 @@ const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = requir
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
-// Import electron-store with proper destructuring
+// Import electron-store - only available in Electron context
 let Store;
 try {
   const ElectronStore = require('electron-store');
+  // Handle both CommonJS and ES6 module exports
   Store = ElectronStore.default || ElectronStore;
+  console.log('electron-store loaded successfully, constructor type:', typeof Store);
 } catch (error) {
-  console.warn('electron-store not available:', error);
+  console.error('Failed to load electron-store:', error);
 }
 // Only require electron-updater in production builds
 let autoUpdater;
@@ -22,24 +24,44 @@ let mainWindow;
 // Initialize electron-store
 let store;
 if (Store) {
-  store = new Store({
-    name: 'career-compass-settings',
-    defaults: {
-      settings: {
-        provider: 'ollama',
-        apiKey: '',
-        baseURL: 'http://localhost:11434/v1',
-        model: 'llama3.1:8b'
+  try {
+    store = new Store({
+      name: 'career-compass-settings',
+      cwd: app.getPath('userData'), // Explicitly set to user data directory
+      defaults: {
+        settings: {
+          provider: 'ollama',
+          apiKey: '',
+          baseURL: 'http://localhost:11434/v1',
+          model: 'llama3.1:8b'
+        }
       }
-    }
-  });
+    });
+    console.log('Store initialized at:', store.path);
+  } catch (error) {
+    console.error('Failed to initialize store:', error);
+    store = createFallbackStore();
+  }
 } else {
-  // Fallback store for development
-  store = {
-    get: (key, defaultValue) => defaultValue,
-    set: () => {},
-    delete: () => {},
-    clear: () => {}
+  console.warn('electron-store not available, using fallback');
+  store = createFallbackStore();
+}
+
+function createFallbackStore() {
+  return {
+    get: (key, defaultValue) => {
+      console.log('Fallback store: getting', key, 'returning default:', defaultValue);
+      return defaultValue;
+    },
+    set: (key, value) => {
+      console.log('Fallback store: would set', key, 'to', value);
+    },
+    delete: (key) => {
+      console.log('Fallback store: would delete', key);
+    },
+    clear: () => {
+      console.log('Fallback store: would clear all');
+    }
   };
 }
 
@@ -275,18 +297,28 @@ if (!isDev && autoUpdater) {
 
 // IPC handlers for settings store
 ipcMain.handle('store-get', (event, key, defaultValue) => {
-  return store.get(key, defaultValue);
+  const result = store.get(key, defaultValue);
+  console.log('Store GET:', key, 'defaultValue:', defaultValue, '→', result);
+  console.log('Store file path:', store.path);
+  console.log('Store all data:', store.store);
+  return result;
 });
 
 ipcMain.handle('store-set', (event, key, value) => {
+  console.log('Store SET:', key, '←', value);
   store.set(key, value);
+  // Verify it was saved
+  const saved = store.get(key);
+  console.log('Store VERIFY:', key, '→', saved);
 });
 
 ipcMain.handle('store-delete', (event, key) => {
+  console.log('Store DELETE:', key);
   store.delete(key);
 });
 
 ipcMain.handle('store-clear', (event) => {
+  console.log('Store CLEAR: all data');
   store.clear();
 });
 
