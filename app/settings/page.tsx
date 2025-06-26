@@ -5,16 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DefaultModels } from '@/lib/llm-providers';
+import { settingsStore, secureStorage, type SettingsConfig, type ModelInfo } from '@/lib/settings-store';
 import toast, { Toaster } from 'react-hot-toast';
 
 type LLMProvider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini';
-
-interface SettingsConfig {
-  provider: LLMProvider;
-  apiKey: string;
-  baseURL: string;
-  model: string;
-}
 
 const ProviderInfo = {
   ollama: {
@@ -63,15 +57,31 @@ export default function Settings() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{[key: string]: {success: boolean, error?: string}}>({});
 
   useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem('career-compass-settings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      setSettings(parsed);
-    }
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      // Load basic settings
+      const savedSettings = settingsStore.get();
+      
+      // Load API key separately from secure storage
+      const apiKey = await secureStorage.getApiKey(savedSettings.provider);
+      
+      setSettings({
+        ...savedSettings,
+        apiKey: apiKey || ''
+      });
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+      toast.error('Failed to load settings');
+    }
+  };
 
   const handleProviderChange = (provider: LLMProvider) => {
     const providerInfo = ProviderInfo[provider];
@@ -84,6 +94,51 @@ export default function Settings() {
     }));
   };
 
+  const loadOllamaModels = async () => {
+    setLoadingModels(true);
+    try {
+      if (typeof window !== 'undefined' && (window as any).electronAPI) {
+        const models = await (window as any).electronAPI.models.getOllamaModels(settings.baseURL.replace('/v1', ''));
+        setAvailableModels(models);
+        toast.success(`Loaded ${models.length} models from Ollama`);
+      } else {
+        // Fallback for web environment
+        const response = await fetch(`${settings.baseURL.replace('/v1', '')}/api/tags`);
+        const data = await response.json();
+        setAvailableModels(data.models || []);
+        toast.success(`Loaded ${data.models?.length || 0} models from Ollama`);
+      }
+    } catch (error) {
+      console.error('Failed to load Ollama models:', error);
+      toast.error('Failed to load models. Make sure Ollama is running.');
+      setAvailableModels([]);
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
+  const testConnection = async (provider: LLMProvider) => {
+    try {
+      setConnectionStatus(prev => ({ ...prev, [provider]: { success: false, error: 'Testing...' } }));
+      
+      if (typeof window !== 'undefined' && (window as any).electronAPI) {
+        const result = await (window as any).electronAPI.models.testConnection(provider, settings);
+        setConnectionStatus(prev => ({ ...prev, [provider]: result }));
+        if (result.success) {
+          toast.success(`${ProviderInfo[provider].name} connection successful`);
+        } else {
+          toast.error(`${ProviderInfo[provider].name} connection failed: ${result.error}`);
+        }
+      } else {
+        toast.error('Connection testing only available in desktop app');
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setConnectionStatus(prev => ({ ...prev, [provider]: { success: false, error: errorMsg } }));
+      toast.error(`Connection test failed: ${errorMsg}`);
+    }
+  };
+
   const handleSave = async () => {
     setIsLoading(true);
     try {
@@ -94,26 +149,45 @@ export default function Settings() {
         return;
       }
 
-      // Save to localStorage
-      localStorage.setItem('career-compass-settings', JSON.stringify(settings));
+      // Save basic settings (without API key)
+      const settingsToSave = { ...settings };
+      delete (settingsToSave as any).apiKey;
+      settingsStore.set(settingsToSave);
+
+      // Save API key securely if provided
+      if (settings.apiKey.trim()) {
+        await secureStorage.setApiKey(settings.provider, settings.apiKey);
+      }
+
       toast.success('Settings saved successfully!');
     } catch (error) {
+      console.error('Save error:', error);
       toast.error('Failed to save settings');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleReset = () => {
-    const defaultSettings: SettingsConfig = {
-      provider: 'ollama',
-      apiKey: '',
-      baseURL: 'http://localhost:11434/v1',
-      model: DefaultModels.ollama
-    };
-    setSettings(defaultSettings);
-    localStorage.removeItem('career-compass-settings');
-    toast.success('Settings reset to defaults');
+  const handleReset = async () => {
+    try {
+      const defaultSettings: SettingsConfig = {
+        provider: 'ollama',
+        apiKey: '',
+        baseURL: 'http://localhost:11434/v1',
+        model: DefaultModels.ollama
+      };
+      setSettings(defaultSettings);
+      settingsStore.clear();
+      
+      // Clear all API keys
+      const providers: LLMProvider[] = ['ollama', 'openai', 'claude', 'groq', 'gemini'];
+      await Promise.all(providers.map(provider => secureStorage.deleteApiKey(provider)));
+      
+      toast.success('Settings reset to defaults');
+    } catch (error) {
+      console.error('Reset error:', error);
+      toast.error('Failed to reset settings');
+    }
   };
 
   return (
@@ -191,19 +265,74 @@ export default function Settings() {
             )}
 
             <div>
-              <Label htmlFor="model" className="text-base font-medium">
-                Model
-              </Label>
-              <Input
-                id="model"
-                value={settings.model}
-                onChange={(e) => setSettings(prev => ({ ...prev, model: e.target.value }))}
-                placeholder="Enter model name"
-                className="mt-2"
-              />
-              <p className="text-sm text-gray-600 mt-2">
-                Default: {DefaultModels[settings.provider]}
-              </p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="model" className="text-base font-medium">
+                  Model
+                </Label>
+                {settings.provider === 'ollama' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadOllamaModels}
+                    disabled={loadingModels}
+                    className="ml-2"
+                  >
+                    {loadingModels ? 'Loading...' : 'Load Models'}
+                  </Button>
+                )}
+              </div>
+              
+              {settings.provider === 'ollama' && availableModels.length > 0 ? (
+                <select
+                  value={settings.model}
+                  onChange={(e) => setSettings(prev => ({ ...prev, model: e.target.value }))}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {availableModels.map((model) => (
+                    <option key={model.name} value={model.name}>
+                      {model.name} ({model.size})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  id="model"
+                  value={settings.model}
+                  onChange={(e) => setSettings(prev => ({ ...prev, model: e.target.value }))}
+                  placeholder="Enter model name"
+                  className="mt-2"
+                />
+              )}
+              
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-sm text-gray-600">
+                  Default: {DefaultModels[settings.provider]}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testConnection(settings.provider)}
+                  disabled={loadingModels}
+                  className="ml-2"
+                >
+                  Test Connection
+                </Button>
+              </div>
+              
+              {connectionStatus[settings.provider] && (
+                <div className={`mt-2 p-2 rounded text-sm ${
+                  connectionStatus[settings.provider].success 
+                    ? 'bg-green-50 text-green-800 border border-green-200' 
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  {connectionStatus[settings.provider].success 
+                    ? '✓ Connection successful' 
+                    : `✗ ${connectionStatus[settings.provider].error}`
+                  }
+                </div>
+              )}
             </div>
 
             {(settings.provider === 'ollama' || settings.baseURL !== ProviderInfo[settings.provider].defaultURL) && (

@@ -1,6 +1,15 @@
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
+
+// Import electron-store with proper destructuring
+let Store;
+try {
+  const ElectronStore = require('electron-store');
+  Store = ElectronStore.default || ElectronStore;
+} catch (error) {
+  console.warn('electron-store not available:', error);
+}
 // Only require electron-updater in production builds
 let autoUpdater;
 if (!isDev) {
@@ -9,6 +18,30 @@ if (!isDev) {
 
 // Keep a global reference of the window object
 let mainWindow;
+
+// Initialize electron-store
+let store;
+if (Store) {
+  store = new Store({
+    name: 'career-compass-settings',
+    defaults: {
+      settings: {
+        provider: 'ollama',
+        apiKey: '',
+        baseURL: 'http://localhost:11434/v1',
+        model: 'llama3.1:8b'
+      }
+    }
+  });
+} else {
+  // Fallback store for development
+  store = {
+    get: (key, defaultValue) => defaultValue,
+    set: () => {},
+    delete: () => {},
+    clear: () => {}
+  };
+}
 
 function createWindow() {
   // Create the browser window
@@ -23,6 +56,7 @@ function createWindow() {
       contextIsolation: true,
       enableRemoteModule: false,
       webSecurity: true,
+      preload: path.join(__dirname, 'preload.js')
     },
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
   });
@@ -238,3 +272,109 @@ if (!isDev && autoUpdater) {
     autoUpdater.quitAndInstall();
   });
 }
+
+// IPC handlers for settings store
+ipcMain.handle('store-get', (event, key, defaultValue) => {
+  return store.get(key, defaultValue);
+});
+
+ipcMain.handle('store-set', (event, key, value) => {
+  store.set(key, value);
+});
+
+ipcMain.handle('store-delete', (event, key) => {
+  store.delete(key);
+});
+
+ipcMain.handle('store-clear', (event) => {
+  store.clear();
+});
+
+// IPC handlers for secure storage (API keys)
+ipcMain.handle('secure-set-password', async (event, service, password) => {
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(password);
+      store.set(`secure-${service}`, encrypted);
+      return true;
+    } else {
+      // Fallback to regular store if encryption not available
+      console.warn('Encryption not available, storing password in plain text');
+      store.set(`insecure-${service}`, password);
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to store password:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('secure-get-password', async (event, service) => {
+  try {
+    // First try encrypted storage
+    const encrypted = store.get(`secure-${service}`);
+    if (encrypted && safeStorage.isEncryptionAvailable()) {
+      return safeStorage.decryptString(encrypted);
+    }
+    
+    // Fallback to insecure storage
+    return store.get(`insecure-${service}`, null);
+  } catch (error) {
+    console.error('Failed to retrieve password:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('secure-delete-password', async (event, service) => {
+  try {
+    store.delete(`secure-${service}`);
+    store.delete(`insecure-${service}`);
+  } catch (error) {
+    console.error('Failed to delete password:', error);
+    throw error;
+  }
+});
+
+// IPC handlers for model management
+ipcMain.handle('get-ollama-models', async (event, baseURL) => {
+  try {
+    const url = baseURL || 'http://localhost:11434';
+    const response = await fetch(`${url}/api/tags`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.models || [];
+  } catch (error) {
+    console.error('Failed to fetch Ollama models:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('test-connection', async (event, provider, config) => {
+  try {
+    // Simple connection test based on provider
+    switch (provider) {
+      case 'ollama':
+        const ollamaUrl = config.baseURL || 'http://localhost:11434';
+        const ollamaResponse = await fetch(`${ollamaUrl}/api/tags`);
+        return { success: ollamaResponse.ok, error: ollamaResponse.ok ? null : 'Ollama not reachable' };
+      
+      case 'openai':
+        const openaiResponse = await fetch('https://api.openai.com/v1/models', {
+          headers: { 'Authorization': `Bearer ${config.apiKey}` }
+        });
+        return { success: openaiResponse.ok, error: openaiResponse.ok ? null : 'Invalid OpenAI API key' };
+      
+      default:
+        return { success: false, error: 'Connection testing not implemented for this provider' };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// App info handlers
+ipcMain.handle('get-version', () => {
+  return app.getVersion();
+});

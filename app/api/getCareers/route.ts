@@ -9,7 +9,7 @@ interface GetCareersRequest {
 export async function POST(request: NextRequest) {
   const { resumeInfo, context } = (await request.json()) as GetCareersRequest;
 
-  const llmConfig = getLLMConfig();
+  const llmConfig = await getLLMConfig();
   const llmProvider = getLLMProvider(llmConfig);
 
   const careers = await llmProvider.createCompletion([

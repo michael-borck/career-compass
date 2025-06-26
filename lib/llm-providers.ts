@@ -115,22 +115,24 @@ export function getLLMProvider(config: LLMConfig): LLMProvider {
 }
 
 // Helper function to get LLM config from user settings or environment
-export function getLLMConfig(): LLMConfig {
-  // Check if we're in browser environment
+export async function getLLMConfig(): Promise<LLMConfig> {
+  // Check if we're in browser environment and have access to settings store
   if (typeof window !== 'undefined') {
-    const savedSettings = localStorage.getItem('career-compass-settings');
-    if (savedSettings) {
-      try {
-        const userSettings = JSON.parse(savedSettings);
-        return {
-          provider: userSettings.provider,
-          model: userSettings.model,
-          apiKey: userSettings.apiKey,
-          baseURL: userSettings.baseURL,
-        };
-      } catch (error) {
-        console.warn('Failed to parse user settings, falling back to defaults');
-      }
+    try {
+      // Import settings store dynamically to avoid SSR issues
+      const { settingsStore, secureStorage } = await import('./settings-store');
+      
+      const settings = settingsStore.get();
+      const apiKey = await secureStorage.getApiKey(settings.provider);
+      
+      return {
+        provider: settings.provider,
+        model: settings.model,
+        apiKey: apiKey || '',
+        baseURL: settings.baseURL,
+      };
+    } catch (error) {
+      console.warn('Failed to load settings from store, falling back to defaults:', error);
     }
   }
 
