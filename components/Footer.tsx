@@ -3,31 +3,29 @@ const Footer = () => (
     <div className='custom-screen pt-16'>
       <div className='mt-10 py-10 border-t items-center justify-between flex'>
         <p className='text-gray-600'>
-          Created by{' '}
-          <a
-            href='https://twitter.com/nutlope'
-            className='hover:underline transition'
-          >
-            Hassan
-          </a>{' '}
-          and{' '}
-          <a
-            href='https://twitter.com/youssefuiux'
-            className='hover:underline transition'
-          >
-            Youssef
-          </a>
-          .{' '}
+          Career Compass - Privacy-first career exploration
         </p>
         <div className='flex items-center gap-x-6 text-gray-400'>
           <a
-            className='tracking-tight flex gap-1 hover:underline transition'
-            href='https://togetherai.link'
+            className='hover:underline transition'
+            href='https://github.com/michael-borck/career-compass'
             target='_blank'
           >
-            <span className='text-gray-500'>
-              Powered by Together.ai and Llama-3.
-            </span>
+            GitHub
+          </a>
+          <a
+            className='hover:underline transition'
+            href='https://github.com/michael-borck'
+            target='_blank'
+          >
+            @michael-borck
+          </a>
+          <a
+            className='hover:underline transition'
+            href='https://x.com/Michael_Borck'
+            target='_blank'
+          >
+            @Michael_Borck
           </a>
         </div>
       </div>

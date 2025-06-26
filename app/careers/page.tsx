@@ -2,9 +2,8 @@
 
 import toast, { Toaster } from 'react-hot-toast';
 import CareerNode from '@/components/CareerNode';
-import { uploaderOptions } from '@/lib/utils';
-import { UrlBuilder } from '@bytescale/sdk';
-import { UploadDropzone } from '@bytescale/upload-widget-react';
+import { fileToArrayBuffer } from '@/lib/utils';
+import LocalFileUpload from '@/components/LocalFileUpload';
 import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Controls,
@@ -162,8 +161,8 @@ const initialEdges = [
 ];
 
 export default function Start() {
-  const [_, setName] = useState('');
-  const [url, setUrl] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(
     initialNodes as Node[]
   );
@@ -202,38 +201,51 @@ export default function Start() {
 
   const notify = () => toast.error('Failed to generate, please try again.');
 
-  async function parsePdf() {
+  async function parseFile() {
+    if (!selectedFile) return;
+    
     setLoading(true);
-    let response = await fetch('/api/parsePdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ resumeUrl: url }),
-    });
-    let data = await response.json();
+    try {
+      // Process file locally
+      const arrayBuffer = await fileToArrayBuffer(selectedFile);
+      let response = await fetch('/api/parsePdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          fileData: Array.from(new Uint8Array(arrayBuffer)),
+          filename: selectedFile.name
+        }),
+      });
+      let data = await response.json();
 
-    let response2 = await fetch('/api/getCareers', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        resumeInfo: data,
-        context: additionalContext,
-      }),
-    });
+      let response2 = await fetch('/api/getCareers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeInfo: data,
+          context: additionalContext,
+        }),
+      });
 
-    if (!response2.ok) {
-      console.error('Failed to fetch');
+      if (!response2.ok) {
+        console.error('Failed to fetch');
+        setLoading(false);
+        notify();
+        return;
+      }
+
+      let data2 = await response2.json();
+      setCareerInfo(data2);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error processing file:', error);
       setLoading(false);
       notify();
-      return;
     }
-
-    let data2 = await response2.json();
-    setCareerInfo(data2);
-    setLoading(false);
   }
 
   return (
@@ -257,28 +269,22 @@ export default function Start() {
             Upload your resume
           </h1>
           <p className='mb-8 text-center text-gray-600 max-w-3xl'>
-            Upload your resume to get started and add any extra context below.
+            Upload your resume (PDF, Markdown, or DOCX) to get started and add any extra context below.
             We'll analyze your resume along with the interests you provide and
             provide you with 6 personalized career paths for you.
           </p>
-          <UploadDropzone
-            options={uploaderOptions}
-            onUpdate={({ uploadedFiles }) => {
-              if (uploadedFiles.length !== 0) {
-                const file = uploadedFiles[0];
-                const fileName = file.originalFile.file.name;
-                const fileUrl = UrlBuilder.url({
-                  accountId: file.accountId,
-                  filePath: file.filePath,
-                });
-                setName(fileName);
-                setUrl(fileUrl);
-              }
+          <LocalFileUpload
+            onFileSelect={(file) => {
+              setSelectedFile(file);
+              setFileName(file.name);
             }}
-            onComplete={() => console.log('upload complete')}
-            width='695px'
-            height='350px'
+            className='w-full max-w-2xl mx-auto'
           />
+          {fileName && (
+            <p className='mt-4 text-sm text-gray-600'>
+              Selected: {fileName}
+            </p>
+          )}
           <Textarea
             placeholder='Describe any of your career interests and passions. This will help us match you with the right job paths (optional).'
             value={additionalContext}
@@ -287,9 +293,9 @@ export default function Start() {
             rows={6}
           />
           <Button
-            onClick={parsePdf}
+            onClick={parseFile}
             className='mt-10 text-base px-5 py-7 w-60'
-            disabled={url ? false : true}
+            disabled={selectedFile ? false : true}
           >
             {loading ? (
               <LoadingDots style='big' color='white' />

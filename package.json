@@ -1,25 +1,31 @@
 {
-  "name": "career-exploration",
+  "name": "career-compass",
   "version": "0.1.0",
+  "description": "Privacy-first career exploration powered by AI",
+  "author": "Michael Borck <https://github.com/michael-borck>",
+  "homepage": "https://github.com/michael-borck/career-compass",
+  "main": "electron/main.js",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:pack": "next build && next export && electron-builder --dir",
+    "electron:dist": "next build && next export && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "@bytescale/sdk": "^3.39.0",
-    "@bytescale/upload-widget-react": "^4.19.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.0.2",
-    "@vercel/analytics": "^1.2.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "electron-store": "^10.1.0",
     "lucide-react": "^0.378.0",
+    "mammoth": "^1.9.1",
     "next": "14.2.3",
-    "next-plausible": "^3.12.0",
     "openai": "^4.45.0",
     "pdf-parse": "^1.1.1",
     "react": "^18",
@@ -34,8 +40,43 @@
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "concurrently": "^9.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^37.1.0",
+    "electron-builder": "^26.0.12",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.michaelborck.career-compass",
+    "productName": "Career Compass",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg",
+      "icon": "public/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office",
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

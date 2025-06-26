@@ -11,26 +11,26 @@ export default function Hero() {
           <button
             className={`border py-2 rounded-2xl hover:bg-gray-100 transition px-5 text-sm text-gray-500 hover:text-gray-600`}
           >
-            Used by 2,000+ professionals for career inspiration
+            Privacy-first career exploration with AI
           </button>
           <h1 className='text-4xl text-gray-800 font-extrabold mx-auto sm:text-6xl'>
-            Find the right career for you using AI
+            Navigate your career path with AI guidance
           </h1>
           <p className='max-w-xl mx-auto'>
-            Explore Careers allows you to explore careers based on your skills
-            and interests <span className='font-semibold'>using AI</span> in
-            seconds, completely for free.
+            Career Compass helps you discover career paths based on your skills
+            and interests using <span className='font-semibold'>privacy-first AI</span> - 
+            your data stays on your device.
           </p>
           <div className='flex items-center justify-center gap-x-3 font-medium text-sm'>
             <NavLink
               href='/careers'
               className='text-white bg-gray-800 hover:bg-gray-600 active:bg-gray-900 '
             >
-              Explore alternative careers
+              Find your career path
             </NavLink>
             <NavLink
               target='_blank'
-              href='https://github.com/Nutlope/explorecareers'
+              href='https://github.com/michael-borck/career-compass'
               className='text-gray-700 border hover:bg-gray-50'
               scroll={false}
             >

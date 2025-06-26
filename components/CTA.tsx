@@ -6,13 +6,13 @@ const CTA = () => (
           className='text-gray-800 text-3xl font-semibold sm:text-4xl'
           id='oss'
         >
-          ExploreCareers is Proudly Open Source
+          Career Compass is Proudly Open Source
         </h2>
         <p className='mt-3 text-gray-600'>
-          Our source code is available on GitHub.
+          Our source code is available on GitHub - contribute to privacy-first career exploration.
         </p>
         <a
-          href='https://github.com/Nutlope/ExploreCareers'
+          href='https://github.com/michael-borck/career-compass'
           className='mt-4 inline-flex justify-center items-center gap-2 font-medium text-sm text-white bg-gray-800 hover:bg-gray-600 active:bg-gray-900 max-w-[200px] py-2.5 px-4 text-center rounded-lg duration-150'
         >
           <svg

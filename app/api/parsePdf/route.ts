@@ -1,20 +1,37 @@
 import { normalizeText } from '@/lib/utils';
+import { getFileProcessor, isFileTypeSupported } from '@/lib/file-processors';
 import { NextRequest } from 'next/server';
-import pdfParse from 'pdf-parse';
 
-interface PDFParseRequest {
-  resumeUrl: string;
+interface FileParseRequest {
+  fileData: number[]; // Array of bytes from the file
+  filename: string; // Original filename to determine file type
 }
 
 export async function POST(request: NextRequest) {
-  const { resumeUrl } = (await request.json()) as PDFParseRequest;
+  try {
+    const { fileData, filename } = (await request.json()) as FileParseRequest;
 
-  const response = await fetch(resumeUrl);
-  const arrayBuffer = await response.arrayBuffer();
-  const pdfData = await pdfParse(Buffer.from(arrayBuffer));
-  const normalizedText = normalizeText(pdfData.text);
+    if (!isFileTypeSupported(filename)) {
+      return new Response(JSON.stringify({ error: 'Unsupported file type' }), {
+        status: 400,
+      });
+    }
 
-  return new Response(JSON.stringify(normalizedText), {
-    status: 200,
-  });
+    // Convert the array of bytes back to Buffer
+    const buffer = Buffer.from(fileData);
+    
+    // Get the appropriate processor for this file type
+    const processor = getFileProcessor(filename);
+    const extractedText = await processor.processFile(buffer);
+    const normalizedText = normalizeText(extractedText);
+
+    return new Response(JSON.stringify(normalizedText), {
+      status: 200,
+    });
+  } catch (error) {
+    console.error('File parsing error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to parse file' }), {
+      status: 500,
+    });
+  }
 }

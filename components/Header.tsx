@@ -12,6 +12,8 @@ const Header = () => {
   const navigation = [
     { title: 'Homepage', path: '/' },
     { title: 'Explore Careers', path: '/careers' },
+    { title: 'About', path: '/about' },
+    { title: 'Settings', path: '/settings' },
   ];
 
   const pathname = usePathname();
@@ -41,9 +43,8 @@ const Header = () => {
         <div className='custom-screen items-center mx-auto md:flex'>
           <div className='flex items-center justify-between py-3 md:py-5 md:block'>
             <Link href='/' className='flex items-center gap-3'>
-              {/* <Image src='/box.svg' alt='logo' width={30} height={30} />
-              <div className='font-bold text-lg'>ExploreCareers</div> */}
-              <Image src='/logo.svg' alt='logo' width={230} height={100} />
+              <span className="text-2xl">🧭</span>
+              <div className='font-bold text-xl text-gray-800'>Career Compass</div>
             </Link>
             <div className='md:hidden'>
               <button

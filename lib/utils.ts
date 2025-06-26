@@ -21,21 +21,22 @@ export function normalizeText(input: string): string {
   return normalized.trim();
 }
 
-export const uploaderOptions = {
-  apiKey: !!process.env.NEXT_PUBLIC_BYTESCALE_API_KEY
-    ? process.env.NEXT_PUBLIC_BYTESCALE_API_KEY
-    : 'free',
-  maxFileCount: 1,
-  mimeTypes: ['application/pdf'],
-  editor: { images: { crop: false } },
-  styles: {
-    colors: {
-      primary: '#000',
-    },
-  },
-  tags: ['career_explorer'],
-  locale: {
-    orDragDropFile: 'Your resume is automatically deleted after 24h',
-    uploadFileBtn: 'Upload your Resume',
-  },
-};
+// Helper function to convert File to base64 for local processing
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+}
+
+// Helper function to convert File to ArrayBuffer for PDF parsing
+export function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = error => reject(error);
+  });
+}

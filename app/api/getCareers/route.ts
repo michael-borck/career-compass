@@ -1,13 +1,5 @@
 import { NextRequest } from 'next/server';
-import OpenAI from 'openai';
-
-const together = new OpenAI({
-  baseURL: 'https://together.hconeai.com/v1',
-  apiKey: process.env.TOGETHER_API_KEY,
-  defaultHeaders: {
-    'Helicone-Auth': `Bearer ${process.env.HELICONE_API_KEY}`,
-  },
-});
+import { getLLMConfig, getLLMProvider } from '@/lib/llm-providers';
 
 interface GetCareersRequest {
   resumeInfo: string;
@@ -17,15 +9,17 @@ interface GetCareersRequest {
 export async function POST(request: NextRequest) {
   const { resumeInfo, context } = (await request.json()) as GetCareersRequest;
 
-  const chatCompletion = await together.chat.completions.create({
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a helpful career expert that ONLY responds in JSON.',
-      },
-      {
-        role: 'user',
-        content: `Give me 6 career paths that the following user could transition into based on their resume and any additional context. Respond like this in JSON: {jobTitle: string, jobDescription: string, timeline: string, salary: string, difficulty: string}.
+  const llmConfig = getLLMConfig();
+  const llmProvider = getLLMProvider(llmConfig);
+
+  const careers = await llmProvider.createCompletion([
+    {
+      role: 'system',
+      content: 'You are a helpful career expert that ONLY responds in JSON.',
+    },
+    {
+      role: 'user',
+      content: `Give me 6 career paths that the following user could transition into based on their resume and any additional context. Respond like this in JSON: {jobTitle: string, jobDescription: string, timeline: string, salary: string, difficulty: string}.
 
       <example>
       [
@@ -77,27 +71,23 @@ export async function POST(request: NextRequest) {
 
     ONLY respond with JSON, nothing else.
       `,
-      },
-    ],
-    model: 'meta-llama/Llama-3-70b-chat-hf',
-  });
-  const careers = chatCompletion.choices[0].message.content;
+    }
+  ], llmConfig);
 
   const careerInfoJSON = JSON.parse(careers!);
 
   let finalResults = await Promise.all(
     careerInfoJSON.map(async (career: any) => {
       try {
-        const completion = await together.chat.completions.create({
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a helpful career expert that ONLY responds in JSON.',
-            },
-            {
-              role: 'user',
-              content: `You are helping a person transition into the ${career.jobTitle} role in ${career.timeline}. Given the context about the person, return more information about the ${career.jobTitle} role in JSON as follows: {workRequired: string, aboutTheRole: string, whyItsagoodfit: array[], roadmap: [{string: string}, ...]
+        const specificCareer = await llmProvider.createCompletion([
+          {
+            role: 'system',
+            content:
+              'You are a helpful career expert that ONLY responds in JSON.',
+          },
+          {
+            role: 'user',
+            content: `You are helping a person transition into the ${career.jobTitle} role in ${career.timeline}. Given the context about the person, return more information about the ${career.jobTitle} role in JSON as follows: {workRequired: string, aboutTheRole: string, whyItsagoodfit: array[], roadmap: [{string: string}, ...]
 
           <example>
           {"role": "DevOps Engineer",
@@ -127,12 +117,9 @@ export async function POST(request: NextRequest) {
           </context>
 
           ONLY respond with JSON, nothing else.`,
-            },
-          ],
-          model: 'meta-llama/Llama-3-70b-chat-hf',
-        });
-        const specificCareer = completion.choices[0].message.content;
-        const specificCareerJSON = JSON.parse(specificCareer!);
+          }
+        ], llmConfig);
+        const specificCareerJSON = JSON.parse(specificCareer);
 
         const individualCareerInfo = { ...career, ...specificCareerJSON };
         return individualCareerInfo;

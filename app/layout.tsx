@@ -3,16 +3,14 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '@/components/Footer';
-import { Analytics } from '@vercel/analytics/react';
-import PlausibleProvider from 'next-plausible';
 
 const inter = Inter({ subsets: ['latin'] });
 
-let title = 'Explore Careers';
-let description = 'Explore careers based on your interests & skills';
-let url = 'https://explorecareers.io/';
-let ogimage = 'https://explorecareers.io/og-image.png';
-let sitename = 'ExploreCareers.io';
+let title = 'Career Compass';
+let description = 'Navigate your career path privately';
+let url = 'https://careercompass.app/';
+let ogimage = 'https://careercompass.app/og-image.png';
+let sitename = 'Career Compass';
 
 export const metadata: Metadata = {
   metadataBase: new URL(url),
@@ -45,13 +43,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en'>
-      <head>
-        <PlausibleProvider domain='explorecareers.io' />
-      </head>
       <body className={inter.className}>
         <Header />
         <main>{children}</main>
-        <Analytics />
         <Footer />
       </body>
     </html>
