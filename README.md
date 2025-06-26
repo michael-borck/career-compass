@@ -1,5 +1,4 @@
 <a href="https://github.com/michael-borck/career-compass">
-  <img alt="Career Compass." src="./public/og-image.png">
   <h1 align="center">Career Compass</h1>
 </a>
 
