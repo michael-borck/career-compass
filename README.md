@@ -1,3 +1,7 @@
+<!-- BADGES:START -->
+[![edtech](https://img.shields.io/badge/-edtech-4caf50?style=flat-square)](https://github.com/topics/edtech) [![ai-powered](https://img.shields.io/badge/-ai--powered-blue?style=flat-square)](https://github.com/topics/ai-powered) [![career-development](https://img.shields.io/badge/-career--development-blue?style=flat-square)](https://github.com/topics/career-development) [![career-guidance](https://img.shields.io/badge/-career--guidance-blue?style=flat-square)](https://github.com/topics/career-guidance) [![desktop-app](https://img.shields.io/badge/-desktop--app-blue?style=flat-square)](https://github.com/topics/desktop-app) [![javascript](https://img.shields.io/badge/-javascript-f7df1e?style=flat-square)](https://github.com/topics/javascript) [![local-processing](https://img.shields.io/badge/-local--processing-blue?style=flat-square)](https://github.com/topics/local-processing) [![privacy-first](https://img.shields.io/badge/-privacy--first-blue?style=flat-square)](https://github.com/topics/privacy-first) [![resume-analysis](https://img.shields.io/badge/-resume--analysis-blue?style=flat-square)](https://github.com/topics/resume-analysis) [![tool](https://img.shields.io/badge/-tool-607d8b?style=flat-square)](https://github.com/topics/tool)
+<!-- BADGES:END -->
+
 <a href="https://github.com/michael-borck/career-compass">
   <h1 align="center">🧭 Career Compass</h1>
 </a>
