@@ -1,14 +1,16 @@
 import { NextRequest } from 'next/server';
 import { getLLMConfig, getLLMProvider, type LLMConfig } from '@/lib/llm-providers';
+import {
+  buildCareersPrompt,
+  buildCareerDetailPrompt,
+  type CareersInput,
+} from '@/lib/prompts/careers';
 
-interface GetCareersRequest {
-  resumeInfo: string;
-  context: string;
+interface GetCareersRequest extends CareersInput {
   llmConfig?: LLMConfig;
 }
 
 function cleanJSON(text: string): string {
-  // Strip markdown code fences that LLMs often wrap around JSON
   let cleaned = text.trim();
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
@@ -18,144 +20,64 @@ function cleanJSON(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { resumeInfo, context, llmConfig: clientConfig } = (await request.json()) as GetCareersRequest;
+    const body = (await request.json()) as GetCareersRequest;
+    const { llmConfig: clientConfig, ...input } = body;
 
-    // Use client-provided config if available, otherwise fall back to server-side env vars
-    const llmConfig = clientConfig || await getLLMConfig();
-
-    console.log('[getCareers] Using provider:', llmConfig.provider, 'model:', llmConfig.model, 'hasKey:', !!llmConfig.apiKey);
+    const llmConfig = clientConfig || (await getLLMConfig());
+    console.log(
+      '[getCareers] Using provider:',
+      llmConfig.provider,
+      'model:',
+      llmConfig.model,
+      'hasKey:',
+      !!llmConfig.apiKey
+    );
 
     const llmProvider = getLLMProvider(llmConfig);
+    const userPrompt = buildCareersPrompt(input);
 
-    const careers = await llmProvider.createCompletion([
-      {
-        role: 'system',
-        content: 'You are a helpful career expert that ONLY responds in JSON.',
-      },
-      {
-        role: 'user',
-        content: `Give me 6 career paths that the following user could transition into based on their resume and any additional context. Respond like this in JSON: {jobTitle: string, jobDescription: string, timeline: string, salary: string, difficulty: string}.
-
-      <example>
+    const careers = await llmProvider.createCompletion(
       [
         {
-        "jobTitle": "UX Designer",
-        "jobDescription": "Creates user-centered design solutions to improve product usability and user experience.",
-        "timeline": "3-6 months",
-        "salary": "$85k - $110k",
-        "difficulty": "Medium"
+          role: 'system',
+          content: 'You are a helpful career expert that ONLY responds in JSON.',
         },
-        {
-        "jobTitle": "Digital Marketing Specialist",
-        "jobDescription": "Develops and implements online marketing campaigns to drive business growth.",
-        "timeline": "2-4 months",
-        "salary": "$50k - $70k",
-        "difficulty": "Low"
-        },
-        {
-        "jobTitle": "Software Engineer",
-        "jobDescription": "Designs, develops, and tests software applications to meet business needs.",
-        "timeline": "6-12 months",
-        "salary": "$100k - $140k",
-        "difficulty": "High"
-        },
-        {
-        "jobTitle": "Business Analyst",
-        "jobDescription": "Analyzes business needs and develops solutions to improve operations and processes.",
-        "timeline": "3-6 months",
-        "salary": "$65k - $90k",
-        "difficulty": "Medium"
-        },
-        {
-        "jobTitle": "Cybersecurity Specialist",
-        "jobDescription": "Protects computer systems and networks from cyber threats by developing and implementing security protocols.",
-        "timeline": "6-12 months",
-        "salary": "$80k - $120k",
-        "difficulty": "High"
-        }
-        ]
-      </example>
-
-      <resume>
-      ${resumeInfo}
-      </resume>
-
-      <additionalContext>
-      ${context}
-      </additionalContext>
-
-    ONLY respond with JSON, nothing else.
-      `,
-      }
-    ], llmConfig);
+        { role: 'user', content: userPrompt },
+      ],
+      llmConfig
+    );
 
     console.log('[getCareers] Initial careers response length:', careers?.length);
-
     const careerInfoJSON = JSON.parse(cleanJSON(careers!));
 
-    let finalResults = await Promise.all(
+    const finalResults = await Promise.all(
       careerInfoJSON.map(async (career: any) => {
         try {
-          const specificCareer = await llmProvider.createCompletion([
-            {
-              role: 'system',
-              content:
-                'You are a helpful career expert that ONLY responds in JSON.',
-            },
-            {
-              role: 'user',
-              content: `You are helping a person transition into the ${career.jobTitle} role in ${career.timeline}. Given the context about the person, return more information about the ${career.jobTitle} role in JSON as follows: {workRequired: string, aboutTheRole: string, whyItsagoodfit: array[], roadmap: [{string: string}, ...]
-
-          <example>
-          {"role": "DevOps Engineer",
-          "workRequired": "20-30 hrs/week",
-          "whyItsagoodfit": [
-            "Leverages your extensive experience in software engineering and developer advocacy.",
-            "Utilizes your skills in Python, JavaScript, Node.js, React, and cloud services like AWS.",
-            "Aligns with your experience in building and maintaining large-scale applications and infrastructure.",
-            "Allows you to continue working with cutting-edge technologies and practices."
-          ],
-          "aboutTheRole": "As a DevOps Engineer, you will work closely with development, operations, and QA teams to streamline the software development lifecycle. Your responsibilities will include automating infrastructure provisioning, monitoring system performance, and ensuring security and compliance. The goal is to enhance the efficiency, reliability, and scalability of software deployments.",
-          "roadmap": [
-            {"Weeks 1-2": "Learn the basics of DevOps tools and practices, including Docker and Kubernetes. Start with online courses or tutorials to build foundational knowledge."},
-            {"Weeks 3-4": "Set up a local development environment with Docker and Kubernetes. Practice creating and managing containers and clusters."},
-            {"Weeks 5-6": "Explore continuous integration and continuous delivery (CI/CD) concepts. Implement a simple CI/CD pipeline using tools like Jenkins or GitLab CI."},
-            {"Weeks 7-8": "Familiarize yourself with configuration management tools like Ansible or Terraform. Practice writing scripts to automate infrastructure provisioning."},
-            {"Weeks 9-10": "Obtain a relevant certification such as AWS Certified DevOps Engineer or Google Cloud Professional DevOps Engineer to validate your skills."},
-            {"Weeks 11-12": "Set up monitoring and logging solutions using tools like Prometheus, Grafana, and ELK stack. Learn to monitor system performance and troubleshoot issues."},
-            {"Weeks 13-14": "Optimize your CI/CD pipelines for efficiency, scalability, and reliability. Implement advanced deployment strategies such as blue-green deployments or canary releases."},
-            {"Weeks 15-16": "Collaborate with development and operations teams on real projects to apply your skills in a practical setting. Seek feedback and continuously improve your processes."}
-          ]}
-          </example>
-
-          <context>
-          ${resumeInfo}
-          ${context}
-          </context>
-
-          ONLY respond with JSON, nothing else.`,
-            }
-          ], llmConfig);
+          const detailPrompt = buildCareerDetailPrompt(career, input);
+          const specificCareer = await llmProvider.createCompletion(
+            [
+              {
+                role: 'system',
+                content:
+                  'You are a helpful career expert that ONLY responds in JSON.',
+              },
+              { role: 'user', content: detailPrompt },
+            ],
+            llmConfig
+          );
           const specificCareerJSON = JSON.parse(cleanJSON(specificCareer));
-
-          const individualCareerInfo = { ...career, ...specificCareerJSON };
-          return individualCareerInfo;
+          return { ...career, ...specificCareerJSON };
         } catch (error) {
           console.error('[getCareers] Detail error for', career.jobTitle, ':', error);
-          // Return the basic career info without details rather than failing entirely
           return career;
         }
       })
     );
 
-    return new Response(JSON.stringify(finalResults), {
-      status: 200,
-    });
+    return new Response(JSON.stringify(finalResults), { status: 200 });
   } catch (error) {
     console.error('[getCareers] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-    });
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 }
