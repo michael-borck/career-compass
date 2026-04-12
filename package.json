@@ -15,7 +15,9 @@
     "electron:dev-unsafe": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron . --no-sandbox --disable-web-security\"",
     "electron:pack": "next build && electron-builder --dir",
     "electron:dist": "next build && electron-builder --publish never",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -35,7 +37,8 @@
     "react-hot-toast": "^2.4.1",
     "reactflow": "^11.11.3",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -49,6 +52,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
+    "vitest": "^4.1.4",
     "wait-on": "^8.0.3"
   },
   "build": {
@@ -67,7 +71,9 @@
       {
         "from": "public",
         "to": "public",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -75,7 +81,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "public/icon.png",
@@ -85,7 +94,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "public/icon.png",
@@ -95,7 +106,9 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Office",
