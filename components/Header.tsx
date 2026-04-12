@@ -2,30 +2,23 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import NavLink from './NavLink';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { Compass } from 'lucide-react';
 
 const Header = () => {
   const [state, setState] = useState(false);
+  const pathname = usePathname();
 
   const navigation = [
-    { title: 'Homepage', path: '/' },
-    { title: 'Explore Careers', path: '/careers' },
+    { title: 'Home', path: '/' },
+    { title: 'Explore careers', path: '/careers' },
     { title: 'About', path: '/about' },
     { title: 'Settings', path: '/settings' },
   ];
 
-  const pathname = usePathname();
-
   useEffect(() => {
-    // Add closing the navbar menu when navigating
-    const handleState = () => {
-      document.body.classList.remove('overflow-hidden');
-      setState(false);
-    };
-
-    handleState();
+    document.body.classList.remove('overflow-hidden');
+    setState(false);
   }, [pathname]);
 
   const handleNavMenu = () => {
@@ -36,21 +29,21 @@ const Header = () => {
   return (
     <header>
       <nav
-        className={`bg-white w-full md:static md:text-sm ${
+        className={`bg-paper w-full border-b border-border md:static md:text-sm ${
           state ? 'fixed z-10 h-full' : ''
         }`}
       >
         <div className='custom-screen items-center mx-auto md:flex'>
           <div className='flex items-center justify-between py-3 md:py-5 md:block'>
             <Link href='/' className='flex items-center gap-3'>
-              <span className="text-2xl">🧭</span>
-              <div className='font-bold text-xl text-gray-800'>Career Compass</div>
+              <Compass className="w-6 h-6 text-accent" />
+              <div className='font-semibold text-xl text-ink'>Career Compass</div>
             </Link>
             <div className='md:hidden'>
               <button
                 role='button'
                 aria-label='Open the menu'
-                className='text-gray-500 hover:text-gray-800'
+                className='text-ink-muted hover:text-ink'
                 onClick={handleNavMenu}
               >
                 {state ? (
@@ -90,11 +83,19 @@ const Header = () => {
               state ? '' : 'hidden'
             }`}
           >
-            <ul className='text-gray-700 justify-end items-center space-y-6 md:flex md:space-x-6 md:space-y-0 md:text-gray-600 md:font-medium'>
+            <ul className='text-ink-muted justify-end items-center space-y-6 md:flex md:space-x-6 md:space-y-0 md:font-medium'>
               {navigation.map((item, idx) => {
+                const isActive = pathname === item.path;
                 return (
-                  <li key={idx} className='duration-150 hover:text-gray-900'>
-                    <Link href={item.path} className='block'>
+                  <li key={idx} className='duration-[250ms] ease-[cubic-bezier(0.2,0,0,1)]'>
+                    <Link
+                      href={item.path}
+                      className={`block pb-1 border-b-2 ${
+                        isActive
+                          ? 'text-ink border-accent'
+                          : 'border-transparent hover:text-ink'
+                      }`}
+                    >
                       {item.title}
                     </Link>
                   </li>

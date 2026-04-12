@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Model management
   models: {
     getOllamaModels: (baseURL) => ipcRenderer.invoke('get-ollama-models', baseURL),
+    getProviderModels: (provider, config) => ipcRenderer.invoke('get-provider-models', provider, config),
     testConnection: (provider, config) => ipcRenderer.invoke('test-connection', provider, config)
   },
 

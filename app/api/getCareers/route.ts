@@ -1,25 +1,40 @@
 import { NextRequest } from 'next/server';
-import { getLLMConfig, getLLMProvider } from '@/lib/llm-providers';
+import { getLLMConfig, getLLMProvider, type LLMConfig } from '@/lib/llm-providers';
 
 interface GetCareersRequest {
   resumeInfo: string;
   context: string;
+  llmConfig?: LLMConfig;
+}
+
+function cleanJSON(text: string): string {
+  // Strip markdown code fences that LLMs often wrap around JSON
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+  }
+  return cleaned.trim();
 }
 
 export async function POST(request: NextRequest) {
-  const { resumeInfo, context } = (await request.json()) as GetCareersRequest;
+  try {
+    const { resumeInfo, context, llmConfig: clientConfig } = (await request.json()) as GetCareersRequest;
 
-  const llmConfig = await getLLMConfig();
-  const llmProvider = getLLMProvider(llmConfig);
+    // Use client-provided config if available, otherwise fall back to server-side env vars
+    const llmConfig = clientConfig || await getLLMConfig();
 
-  const careers = await llmProvider.createCompletion([
-    {
-      role: 'system',
-      content: 'You are a helpful career expert that ONLY responds in JSON.',
-    },
-    {
-      role: 'user',
-      content: `Give me 6 career paths that the following user could transition into based on their resume and any additional context. Respond like this in JSON: {jobTitle: string, jobDescription: string, timeline: string, salary: string, difficulty: string}.
+    console.log('[getCareers] Using provider:', llmConfig.provider, 'model:', llmConfig.model, 'hasKey:', !!llmConfig.apiKey);
+
+    const llmProvider = getLLMProvider(llmConfig);
+
+    const careers = await llmProvider.createCompletion([
+      {
+        role: 'system',
+        content: 'You are a helpful career expert that ONLY responds in JSON.',
+      },
+      {
+        role: 'user',
+        content: `Give me 6 career paths that the following user could transition into based on their resume and any additional context. Respond like this in JSON: {jobTitle: string, jobDescription: string, timeline: string, salary: string, difficulty: string}.
 
       <example>
       [
@@ -71,23 +86,25 @@ export async function POST(request: NextRequest) {
 
     ONLY respond with JSON, nothing else.
       `,
-    }
-  ], llmConfig);
+      }
+    ], llmConfig);
 
-  const careerInfoJSON = JSON.parse(careers!);
+    console.log('[getCareers] Initial careers response length:', careers?.length);
 
-  let finalResults = await Promise.all(
-    careerInfoJSON.map(async (career: any) => {
-      try {
-        const specificCareer = await llmProvider.createCompletion([
-          {
-            role: 'system',
-            content:
-              'You are a helpful career expert that ONLY responds in JSON.',
-          },
-          {
-            role: 'user',
-            content: `You are helping a person transition into the ${career.jobTitle} role in ${career.timeline}. Given the context about the person, return more information about the ${career.jobTitle} role in JSON as follows: {workRequired: string, aboutTheRole: string, whyItsagoodfit: array[], roadmap: [{string: string}, ...]
+    const careerInfoJSON = JSON.parse(cleanJSON(careers!));
+
+    let finalResults = await Promise.all(
+      careerInfoJSON.map(async (career: any) => {
+        try {
+          const specificCareer = await llmProvider.createCompletion([
+            {
+              role: 'system',
+              content:
+                'You are a helpful career expert that ONLY responds in JSON.',
+            },
+            {
+              role: 'user',
+              content: `You are helping a person transition into the ${career.jobTitle} role in ${career.timeline}. Given the context about the person, return more information about the ${career.jobTitle} role in JSON as follows: {workRequired: string, aboutTheRole: string, whyItsagoodfit: array[], roadmap: [{string: string}, ...]
 
           <example>
           {"role": "DevOps Engineer",
@@ -117,23 +134,28 @@ export async function POST(request: NextRequest) {
           </context>
 
           ONLY respond with JSON, nothing else.`,
-          }
-        ], llmConfig);
-        const specificCareerJSON = JSON.parse(specificCareer);
+            }
+          ], llmConfig);
+          const specificCareerJSON = JSON.parse(cleanJSON(specificCareer));
 
-        const individualCareerInfo = { ...career, ...specificCareerJSON };
-        return individualCareerInfo;
-      } catch (error) {
-        console.log('Career that errored: ', career.jobTitle);
-        console.log({ error });
-        return new Response(JSON.stringify({ error }), {
-          status: 500,
-        });
-      }
-    })
-  );
+          const individualCareerInfo = { ...career, ...specificCareerJSON };
+          return individualCareerInfo;
+        } catch (error) {
+          console.error('[getCareers] Detail error for', career.jobTitle, ':', error);
+          // Return the basic career info without details rather than failing entirely
+          return career;
+        }
+      })
+    );
 
-  return new Response(JSON.stringify(finalResults), {
-    status: 200,
-  });
+    return new Response(JSON.stringify(finalResults), {
+      status: 200,
+    });
+  } catch (error) {
+    console.error('[getCareers] Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+    });
+  }
 }

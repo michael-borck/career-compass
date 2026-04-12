@@ -9,70 +9,135 @@
 }
 
 .custom-screen {
-  @apply max-w-[1400px] mx-auto px-4 md:px-8;
+  @apply max-w-[1400px] mx-auto px-6 md:px-12;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Studio Calm — Career Compass (warm ochre) */
+    --paper:           44 24% 93%;    /* #F4F1EA */
+    --paper-warm:      43 38% 96%;    /* #FBF8F1 */
+    --ink:             48 10% 13%;    /* #252420 */
+    --ink-soft:        44 10% 21%;    /* #3B3830 */
+    --ink-muted:       40 10% 33%;    /* #5C564C */
+    --ink-quiet:       36 8% 50%;     /* #8A8377 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --hairline:        44 10% 13% / 0.10;
+    --hairline-strong: 44 10% 13% / 0.20;
+    --hairline-contrast: 44 10% 13% / 0.40;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --accent:          24 44% 47%;    /* #A86B47 warm ochre */
+    --accent-deep:     24 42% 35%;    /* #855030 */
+    --accent-soft:     24 44% 47% / 0.10;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --error:           12 58% 42%;    /* #A8442F muted rust */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Mapped to shadcn semantic tokens */
+    --background: var(--paper);
+    --foreground: var(--ink);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --card: var(--paper);
+    --card-foreground: var(--ink);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --primary: var(--ink);
+    --primary-foreground: var(--paper);
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --secondary: var(--paper-warm);
+    --secondary-foreground: var(--ink);
 
-    --radius: 0.5rem;
+    --muted: var(--paper-warm);
+    --muted-foreground: var(--ink-muted);
+
+    --accent-bg: var(--accent-soft);
+    --accent-foreground: var(--ink);
+
+    --destructive: var(--error);
+    --destructive-foreground: var(--paper);
+
+    --border: var(--hairline);
+    --input: var(--hairline-strong);
+    --ring: var(--accent);
+
+    --radius: 6px;
+
+    /* Studio Calm typography tokens */
+    --font-sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --text-xs:      0.72rem;
+    --text-sm:      0.82rem;
+    --text-base:    1rem;
+    --text-lg:      1.15rem;
+    --text-xl:      1.35rem;
+    --text-2xl:     1.6rem;
+    --text-3xl:     2rem;
+    --text-4xl:     2.5rem;
+    --text-display: clamp(2.5rem, 5vw, 4rem);
+
+    /* Studio Calm spacing */
+    --space-1: 4px;  --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+    --space-5: 20px; --space-6: 24px;  --space-8: 32px;  --space-10: 40px;
+    --space-12: 48px; --space-16: 64px;
+
+    /* Studio Calm motion */
+    --ease-out:       cubic-bezier(0.2, 0, 0, 1);
+    --ease-out-soft:  cubic-bezier(0.25, 0.1, 0.25, 1);
+    --duration-fast:  150ms;
+    --duration-normal: 250ms;
+    --duration-slow:  400ms;
+
+    /* Paper grain */
+    --grain-opacity: 0.2;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --paper:           48 8% 10%;     /* #1B1A17 warm near-black */
+    --paper-warm:      46 9% 13%;     /* #24231F */
+    --ink:             40 20% 92%;    /* #F1EEE6 */
+    --ink-soft:        38 12% 82%;    /* #DAD6CC */
+    --ink-muted:       36 6% 59%;     /* #9E9A90 */
+    --ink-quiet:       34 5% 41%;     /* #6F6C63 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --hairline:        40 20% 92% / 0.10;
+    --hairline-strong: 40 20% 92% / 0.20;
+    --hairline-contrast: 40 20% 92% / 0.40;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --accent:          24 50% 60%;    /* #D08963 */
+    --accent-deep:     24 56% 69%;    /* #E0A782 */
+    --accent-soft:     24 50% 60% / 0.12;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --error:           12 57% 58%;    /* #D66A54 brighter rust */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --background: var(--paper);
+    --foreground: var(--ink);
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --card: var(--paper);
+    --card-foreground: var(--ink);
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --primary: var(--ink);
+    --primary-foreground: var(--paper);
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --secondary: var(--paper-warm);
+    --secondary-foreground: var(--ink);
+
+    --muted: var(--paper-warm);
+    --muted-foreground: var(--ink-muted);
+
+    --accent-bg: var(--accent-soft);
+    --accent-foreground: var(--ink);
+
+    --destructive: var(--error);
+    --destructive-foreground: var(--paper);
+
+    --border: var(--hairline);
+    --input: var(--hairline-strong);
+    --ring: var(--accent);
   }
 }
 
@@ -82,5 +147,46 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
+}
+
+/* Paper grain overlay — light mode only */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+.dark body::after {
+  opacity: 0;
+}
+
+/* Editorial rule section marker */
+.editorial-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.editorial-rule::before {
+  content: '';
+  width: 36px;
+  height: 1px;
+  background: hsl(var(--accent));
+  flex-shrink: 0;
+}
+
+.editorial-rule span {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: hsl(var(--ink-quiet));
 }

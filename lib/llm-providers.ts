@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 export interface LLMConfig {
-  provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini';
+  provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
   apiKey?: string;
   baseURL?: string;
   model: string;
@@ -45,20 +45,38 @@ class OpenAIProvider implements LLMProvider {
 
 class ClaudeProvider implements LLMProvider {
   async createCompletion(messages: any[], config: LLMConfig): Promise<string> {
-    const client = new OpenAI({
-      baseURL: 'https://api.anthropic.com/v1',
-      apiKey: config.apiKey,
-      defaultHeaders: {
+    // Use native Anthropic Messages API (not OpenAI-compatible)
+    const systemMessage = messages.find((m: any) => m.role === 'system');
+    const userMessages = messages.filter((m: any) => m.role !== 'system');
+
+    const body: any = {
+      model: config.model,
+      max_tokens: 4096,
+      messages: userMessages,
+    };
+    if (systemMessage) {
+      body.system = systemMessage.content;
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.apiKey || '',
         'anthropic-version': '2023-06-01',
       },
+      body: JSON.stringify(body),
     });
 
-    const completion = await client.chat.completions.create({
-      model: config.model,
-      messages,
-    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(`Anthropic API error ${response.status}: ${err.error?.message || response.statusText}`);
+    }
 
-    return completion.choices[0].message.content || '';
+    const data = await response.json();
+    // Anthropic returns content as an array of blocks
+    const textBlock = data.content?.find((b: any) => b.type === 'text');
+    return textBlock?.text || '';
   }
 }
 
@@ -94,20 +112,60 @@ class GeminiProvider implements LLMProvider {
   }
 }
 
+class OpenRouterProvider implements LLMProvider {
+  async createCompletion(messages: any[], config: LLMConfig): Promise<string> {
+    const client = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: config.apiKey,
+    });
+
+    const completion = await client.chat.completions.create({
+      model: config.model,
+      messages,
+    });
+
+    return completion.choices[0].message.content || '';
+  }
+}
+
+class CustomProvider implements LLMProvider {
+  async createCompletion(messages: any[], config: LLMConfig): Promise<string> {
+    if (!config.baseURL) {
+      throw new Error('Server address is required for a custom provider');
+    }
+    const client = new OpenAI({
+      baseURL: config.baseURL,
+      apiKey: config.apiKey || 'no-key',
+    });
+
+    const completion = await client.chat.completions.create({
+      model: config.model,
+      messages,
+    });
+
+    return completion.choices[0].message.content || '';
+  }
+}
+
 export const LLMProviders = {
   ollama: new OllamaProvider(),
   openai: new OpenAIProvider(),
   claude: new ClaudeProvider(),
   groq: new GroqProvider(),
   gemini: new GeminiProvider(),
+  openrouter: new OpenRouterProvider(),
+  custom: new CustomProvider(),
 };
 
-export const DefaultModels = {
-  ollama: 'llama3.1:8b',
-  openai: 'gpt-4o-mini',
-  claude: 'claude-3-haiku-20240307',
-  groq: 'llama-3.1-70b-versatile',
-  gemini: 'gemini-1.5-flash',
+// No default models — user must explicitly select via Refresh models
+export const DefaultModels: Record<string, string> = {
+  ollama: '',
+  openai: '',
+  claude: '',
+  groq: '',
+  gemini: '',
+  openrouter: '',
+  custom: '',
 };
 
 export function getLLMProvider(config: LLMConfig): LLMProvider {
@@ -115,12 +173,14 @@ export function getLLMProvider(config: LLMConfig): LLMProvider {
 }
 
 // Environment variable mapping for each provider
-const ENV_VAR_MAP = {
+const ENV_VAR_MAP: Record<string, string> = {
   openai: 'OPENAI_API_KEY',
   claude: 'ANTHROPIC_API_KEY',
   groq: 'GROQ_API_KEY',
   gemini: 'GOOGLE_API_KEY',
-  ollama: ''
+  openrouter: 'OPENROUTER_API_KEY',
+  ollama: '',
+  custom: '',
 };
 
 // Helper function to get LLM config from user settings or environment

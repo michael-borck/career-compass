@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
 
 interface LocalFileUploadProps {
   onFileSelect: (file: File) => void;
@@ -9,8 +10,8 @@ interface LocalFileUploadProps {
   className?: string;
 }
 
-export default function LocalFileUpload({ 
-  onFileSelect, 
+export default function LocalFileUpload({
+  onFileSelect,
   accept = '.pdf,.md,.docx,.doc',
   className = ''
 }: LocalFileUploadProps) {
@@ -18,13 +19,13 @@ export default function LocalFileUpload({
     const validTypes = [
       'application/pdf',
       'text/markdown',
-      'text/plain', // for .md files that might not have proper MIME type
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword' // .doc
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
     ];
     const validExtensions = ['.pdf', '.md', '.docx', '.doc'];
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    
+
     return validTypes.includes(file.type) || validExtensions.includes(fileExtension);
   };
 
@@ -48,16 +49,16 @@ export default function LocalFileUpload({
   }, []);
 
   return (
-    <div 
-      className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors ${className}`}
+    <div
+      className={`border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-ink-muted transition-colors duration-[250ms] ${className}`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-        <div className="text-6xl text-gray-400">📄</div>
+        <FileText className="w-12 h-12 text-ink-quiet mx-auto" />
         <div>
-          <p className="text-lg font-medium text-gray-900">Drop your resume here</p>
-          <p className="text-sm text-gray-500">or click to browse files</p>
+          <p className="text-[var(--text-lg)] font-medium text-ink">Drop your resume here</p>
+          <p className="text-[var(--text-sm)] text-ink-quiet">or click to browse files</p>
         </div>
         <input
           type="file"
@@ -68,10 +69,10 @@ export default function LocalFileUpload({
         />
         <Button asChild variant="outline">
           <label htmlFor="file-upload" className="cursor-pointer">
-            Choose File
+            Choose file
           </label>
         </Button>
-        <p className="text-xs text-gray-400">PDF, Markdown, and DOCX files supported - processed locally</p>
+        <p className="text-[var(--text-xs)] text-ink-quiet">PDF, Markdown, and DOCX files supported &mdash; processed locally</p>
       </div>
     </div>
   );

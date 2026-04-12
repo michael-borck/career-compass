@@ -33,7 +33,7 @@ if (Store) {
           provider: 'ollama',
           apiKey: '',
           baseURL: 'http://localhost:11434/v1',
-          model: 'llama3.1:8b'
+          model: ''
         }
       }
     });
@@ -346,9 +346,17 @@ ipcMain.handle('secure-get-password', async (event, service) => {
     // First try encrypted storage
     const encrypted = store.get(`secure-${service}`);
     if (encrypted && safeStorage.isEncryptionAvailable()) {
-      return safeStorage.decryptString(encrypted);
+      // electron-store deserializes Buffer as {type:'Buffer', data:[...]}
+      // Convert back to a real Buffer before decrypting
+      let buf = encrypted;
+      if (encrypted && encrypted.type === 'Buffer' && Array.isArray(encrypted.data)) {
+        buf = Buffer.from(encrypted.data);
+      } else if (!(encrypted instanceof Buffer)) {
+        buf = Buffer.from(encrypted);
+      }
+      return safeStorage.decryptString(buf);
     }
-    
+
     // Fallback to insecure storage
     return store.get(`insecure-${service}`, null);
   } catch (error) {
@@ -379,6 +387,113 @@ ipcMain.handle('get-ollama-models', async (event, baseURL) => {
     return data.models || [];
   } catch (error) {
     console.error('Failed to fetch Ollama models:', error);
+    throw error;
+  }
+});
+
+// Fetch available models from any provider
+ipcMain.handle('get-provider-models', async (event, provider, config) => {
+  try {
+    let apiKey = config.apiKey;
+    if (!apiKey) {
+      const envVarMap = {
+        openai: 'OPENAI_API_KEY',
+        claude: 'ANTHROPIC_API_KEY',
+        groq: 'GROQ_API_KEY',
+        gemini: 'GOOGLE_API_KEY'
+      };
+      if (envVarMap[provider]) {
+        apiKey = process.env[envVarMap[provider]];
+      }
+    }
+
+    switch (provider) {
+      case 'ollama': {
+        const url = (config.baseURL || 'http://localhost:11434').replace(/\/v1\/?$/, '');
+        const response = await fetch(`${url}/api/tags`);
+        if (!response.ok) throw new Error(`Ollama not reachable`);
+        const data = await response.json();
+        return (data.models || []).map(m => ({ id: m.name, name: m.name, size: m.size }));
+      }
+
+      case 'openai': {
+        if (!apiKey) throw new Error('Secret key required');
+        const response = await fetch('https://api.openai.com/v1/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
+        return models.map(m => ({ id: m.id, name: m.id }));
+      }
+
+      case 'claude': {
+        if (!apiKey) throw new Error('Secret key required');
+        // Use the Anthropic /v1/models endpoint
+        const response = await fetch('https://api.anthropic.com/v1/models', {
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          }
+        });
+        if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.data || [])
+          .sort((a, b) => a.id.localeCompare(b.id));
+        return models.map(m => ({ id: m.id, name: m.id }));
+      }
+
+      case 'groq': {
+        if (!apiKey) throw new Error('Secret key required');
+        const response = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!response.ok) throw new Error(`Groq error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
+        return models.map(m => ({ id: m.id, name: m.id }));
+      }
+
+      case 'gemini': {
+        if (!apiKey) throw new Error('Secret key required');
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.models || []).sort((a, b) => a.name.localeCompare(b.name));
+        return models.map(m => ({
+          id: m.name.replace('models/', ''),
+          name: m.name.replace('models/', '')
+        }));
+      }
+
+      case 'openrouter': {
+        if (!apiKey) throw new Error('Secret key required');
+        const response = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
+        return models.map(m => ({ id: m.id, name: m.id }));
+      }
+
+      case 'custom': {
+        const baseURL = config.baseURL;
+        if (!baseURL) throw new Error('Server address required');
+        const headers = {};
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+        const response = await fetch(`${baseURL}/models`, { headers });
+        if (!response.ok) throw new Error(`Custom server error: ${response.status}`);
+        const data = await response.json();
+        const models = (data.data || data.models || []).sort((a, b) => (a.id || a.name || '').localeCompare(b.id || b.name || ''));
+        return models.map(m => ({ id: m.id || m.name, name: m.id || m.name }));
+      }
+
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+  } catch (error) {
+    console.error(`Failed to fetch models for ${provider}:`, error);
     throw error;
   }
 });
@@ -461,7 +576,7 @@ ipcMain.handle('test-connection', async (event, provider, config) => {
       
       case 'gemini':
         if (!apiKey) {
-          return { success: false, error: 'API key required (set GOOGLE_API_KEY or enter in settings)' };
+          return { success: false, error: 'Secret key required (set GOOGLE_API_KEY or enter in settings)' };
         }
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         if (!geminiResponse.ok) {
@@ -469,7 +584,36 @@ ipcMain.handle('test-connection', async (event, provider, config) => {
           return { success: false, error: `Gemini API error: ${geminiResponse.status}` };
         }
         return { success: true, error: null };
-      
+
+      case 'openrouter':
+        if (!apiKey) {
+          return { success: false, error: 'Secret key required (set OPENROUTER_API_KEY or enter in settings)' };
+        }
+        const orResponse = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!orResponse.ok) {
+          return { success: false, error: `OpenRouter API error: ${orResponse.status}` };
+        }
+        return { success: true, error: null };
+
+      case 'custom':
+        const customURL = config.baseURL;
+        if (!customURL) {
+          return { success: false, error: 'Server address is required' };
+        }
+        try {
+          const customHeaders = {};
+          if (apiKey) customHeaders['Authorization'] = `Bearer ${apiKey}`;
+          const customResponse = await fetch(`${customURL}/models`, { headers: customHeaders });
+          return {
+            success: customResponse.ok,
+            error: customResponse.ok ? null : `Server returned ${customResponse.status}`
+          };
+        } catch (e) {
+          return { success: false, error: `Cannot reach ${customURL}: ${e.message}` };
+        }
+
       default:
         return { success: false, error: `Unknown provider: ${provider}` };
     }

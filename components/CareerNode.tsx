@@ -4,12 +4,10 @@ import type { NodeProps } from 'reactflow';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from './ui/button';
 
 type CareerNodeProps = {
   jobTitle?: string;
@@ -40,33 +38,32 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   } = data;
   const position = connectPosition === 'top' ? Position.Top : Position.Bottom;
 
+  const difficultyColor =
+    difficulty?.toLowerCase() === 'low'
+      ? 'text-accent'
+      : difficulty?.toLowerCase() === 'high'
+      ? 'text-error'
+      : 'text-ink-muted';
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className='border border-gray-300 rounded-2xl py-4 px-7 max-w-[350px] bg-gray-50'>
+        <div className='border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer'>
           <Handle type='target' position={position} />
-          <h1 className='text-2xl font-bold mb-2'>{jobTitle}</h1>
-          <p className='mb-4 font-light'>{jobDescription}</p>
+          <h1 className='text-[var(--text-xl)] font-semibold mb-2 text-ink'>{jobTitle}</h1>
+          <p className='mb-4 text-ink-muted'>{jobDescription}</p>
           <div className='flex flex-col gap-1'>
             <div className='flex justify-between'>
-              <div className='font-light'>TIMELINE:</div>
-              <div className='font-medium text-lg'>{timeline}</div>
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Timeline</div>
+              <div className='font-medium text-ink'>{timeline}</div>
             </div>
             <div className='flex justify-between'>
-              <div className='font-light'>SALARY:</div>
-              <div className='font-medium text-lg'>{salary}</div>
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Salary</div>
+              <div className='font-medium text-ink'>{salary}</div>
             </div>
             <div className='flex justify-between'>
-              <div className='font-light'>DIFFICULTY:</div>
-              <div
-                className={`font-semibold ${
-                  difficulty?.toLowerCase() == 'low'
-                    ? 'text-green-600'
-                    : difficulty?.toLowerCase() == 'high'
-                    ? 'text-red-600'
-                    : 'text-orange-600'
-                } text-lg`}
-              >
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Difficulty</div>
+              <div className={`font-medium ${difficultyColor}`}>
                 {difficulty}
               </div>
             </div>
@@ -77,54 +74,45 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
         <DialogHeader>
           <DialogTitle className='flex justify-between'>
             <div className='flex items-center gap-3'>
-              <span className='text-2xl'>{jobTitle ?? 'SEO Specialist'}</span>
-              <span className='border rounded-3xl border-gray-200 px-3 py-1 text-sm'>
+              <span className='text-[var(--text-2xl)] font-semibold'>{jobTitle}</span>
+              <span className='border border-border rounded-lg px-3 py-1 text-[var(--text-sm)] text-ink-muted'>
                 {timeline}
               </span>
-              <span className='border rounded-3xl border-gray-200 px-3 py-1 text-sm'>
+              <span className='border border-border rounded-lg px-3 py-1 text-[var(--text-sm)] text-ink-muted'>
                 {salary}
               </span>
               <span
-                className={`border rounded-3xl border-gray-200 px-3 py-1 text-sm font-semibold ${
-                  difficulty?.toLowerCase() == 'low'
-                    ? 'text-green-600'
-                    : difficulty?.toLowerCase() == 'high'
-                    ? 'text-red-600'
-                    : 'text-orange-600'
-                } text-lg`}
+                className={`border border-border rounded-lg px-3 py-1 text-[var(--text-sm)] font-medium ${difficultyColor}`}
               >
                 {difficulty}
               </span>
             </div>
             <div className='flex items-center gap-3 mr-5'>
-              <div className='font-bold'>Work Required:</div>
-              <span className='border rounded-3xl border-gray-200 px-3 py-1 text-sm'>
+              <div className='font-semibold text-ink'>Work required:</div>
+              <span className='border border-border rounded-lg px-3 py-1 text-[var(--text-sm)] text-ink-muted'>
                 {workRequired ?? '10-20 hrs/week'}
               </span>
             </div>
           </DialogTitle>
         </DialogHeader>
-        <div className='flex gap-7 border-t border-black pt-6'>
+        <div className='flex gap-7 border-t border-border pt-6'>
           <div className='flex flex-col gap-4 w-2/5'>
             <div>
-              <h2 className='text-lg font-semibold mb-2'>
-                What's a {jobTitle}?
+              <h2 className='text-[var(--text-lg)] font-semibold mb-2 text-ink'>
+                What does a {jobTitle} do?
               </h2>
-              <p>
+              <p className='text-ink-muted leading-relaxed'>
                 {aboutTheRole ??
                   `SEO Specialists optimize websites to rank higher in search
                 engine results, aiming to increase online visibility, drive
-                organic traffic, and improve user engagement. They conduct
-                keyword research, analyze competitors, and implement SEO
-                strategies that include on-page optimization, link building, and
-                content creation.`}
+                organic traffic, and improve user engagement.`}
               </p>
             </div>
             <div>
-              <h2 className='text-lg font-semibold mb-2 mt-6'>
-                Why it's a good fit
+              <h2 className='text-[var(--text-lg)] font-semibold mb-2 mt-6 text-ink'>
+                Why it could be a good fit
               </h2>
-              <ul className='list-disc ml-4'>
+              <ul className='list-disc ml-4 text-ink-muted leading-relaxed'>
                 {whyItsagoodfit?.map((reason, index) => (
                   <li key={index}>{reason}</li>
                 ))}
@@ -132,22 +120,19 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
             </div>
           </div>
           <div className='w-3/5'>
-            <h2 className='text-lg font-semibold mb-2'>Roadmap</h2>
+            <h2 className='text-[var(--text-lg)] font-semibold mb-2 text-ink'>Roadmap</h2>
             <div className='flex flex-col gap-2'>
               {roadmap?.map((step, index) => (
                 <div key={index} className='flex gap-3'>
-                  <div className='font-light min-w-28'>
+                  <div className='text-ink-quiet min-w-28'>
                     {Object.keys(step)[0]}:
                   </div>
-                  <div>{Object.values(step)[0]}</div>
+                  <div className='text-ink-muted'>{Object.values(step)[0]}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button type='submit'>Save changes</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

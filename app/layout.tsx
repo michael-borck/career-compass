@@ -1,10 +1,10 @@
 import Header from '@/components/Header';
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Figtree } from 'next/font/google';
 import Footer from '@/components/Footer';
 
-const inter = Inter({ subsets: ['latin'] });
+const figtree = Figtree({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] });
 
 let title = 'Career Compass';
 let description = 'Navigate your career path privately';
@@ -42,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang='en'>
-      <body className={inter.className}>
+    <html lang='en' data-app='career'>
+      <body className={figtree.className}>
         <Header />
         <main>{children}</main>
         <Footer />

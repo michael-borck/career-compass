@@ -1,6 +1,6 @@
 // Settings store for desktop persistence using electron-store
 export interface SettingsConfig {
-  provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini';
+  provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
   apiKey: string;
   baseURL: string;
   model: string;
@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
   provider: 'ollama',
   apiKey: '',
   baseURL: 'http://localhost:11434/v1',
-  model: 'llama3.1:8b'
+  model: ''
 };
 
 // Settings store interface for both web and desktop
