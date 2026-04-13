@@ -26,7 +26,7 @@ export default function ChatPage() {
   const userMessageCount = messages.filter(
     (m) => m.role === 'user' && m.kind === 'message'
   ).length;
-  const canGenerate = userMessageCount >= 3 && !distilling;
+  const canGenerate = userMessageCount >= 1 && !distilling;
 
   async function handleSend(text: string) {
     if (!(await isLLMConfigured())) {
@@ -38,12 +38,16 @@ export default function ChatPage() {
     try {
       const llmConfig = await loadLLMConfig();
       const currentMessages = useSessionStore.getState().chatMessages;
+      const stateNow = useSessionStore.getState();
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: currentMessages,
-          currentFocus: useSessionStore.getState().currentFocus,
+          currentFocus: stateNow.currentFocus,
+          resumeText: stateNow.resumeText,
+          freeText: stateNow.freeText,
+          jobTitle: stateNow.jobTitle,
           llmConfig,
         }),
       });

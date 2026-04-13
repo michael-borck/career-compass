@@ -7,6 +7,9 @@ import type { ChatMessage } from '@/lib/session-store';
 interface ChatRequest {
   messages: ChatMessage[];
   currentFocus: string | null;
+  resumeText?: string | null;
+  freeText?: string;
+  jobTitle?: string;
   llmConfig?: LLMConfig;
 }
 
@@ -22,42 +25,75 @@ function isTokenLimitError(e: unknown): boolean {
   );
 }
 
+function buildContextBlock(
+  resumeText?: string | null,
+  freeText?: string,
+  jobTitle?: string
+): string | null {
+  const parts: string[] = [];
+  if (resumeText && resumeText.trim()) {
+    parts.push(`STUDENT RESUME:\n${resumeText.trim()}`);
+  }
+  if (freeText && freeText.trim()) {
+    parts.push(`STUDENT BACKGROUND NOTES:\n${freeText.trim()}`);
+  }
+  if (jobTitle && jobTitle.trim()) {
+    parts.push(`JOB OF INTEREST: ${jobTitle.trim()}`);
+  }
+  if (parts.length === 0) return null;
+  return `The student has shared the following context. Refer to it naturally when answering:\n\n${parts.join('\n\n')}`;
+}
+
 function toProviderMessages(
   messages: ChatMessage[],
-  systemPrompt: string
+  systemPrompt: string,
+  contextBlock: string | null
 ) {
   // Only 'message' and 'attachment-summary' kinds get sent to the LLM.
   // Focus-markers and notices are UI-only.
   const filtered = messages.filter(
     (m) => m.kind === 'message' || m.kind === 'attachment-summary'
   );
-  return [
-    { role: 'system' as const, content: systemPrompt },
-    ...filtered.map((m) => ({
+  const out: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+    { role: 'system', content: systemPrompt },
+  ];
+  if (contextBlock) {
+    out.push({ role: 'system', content: contextBlock });
+  }
+  for (const m of filtered) {
+    out.push({
       role: m.role === 'system' ? 'user' : m.role,
       content:
         m.kind === 'attachment-summary'
           ? `[Attachment shared by student]\n${m.content}`
           : m.content,
-    })),
-  ];
+    });
+  }
+  return out;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, currentFocus, llmConfig: clientConfig } =
-      (await request.json()) as ChatRequest;
+    const {
+      messages,
+      currentFocus,
+      resumeText,
+      freeText,
+      jobTitle,
+      llmConfig: clientConfig,
+    } = (await request.json()) as ChatRequest;
 
     const llmConfig = clientConfig || (await getLLMConfig());
     const provider = getLLMProvider(llmConfig);
     const systemPrompt = buildAdvisorSystemPrompt(currentFocus);
+    const contextBlock = buildContextBlock(resumeText, freeText, jobTitle);
 
     let trimmed = false;
     let reply: string;
 
     try {
       reply = await provider.createCompletion(
-        toProviderMessages(messages, systemPrompt),
+        toProviderMessages(messages, systemPrompt, contextBlock),
         llmConfig
       );
     } catch (err) {
@@ -65,7 +101,7 @@ export async function POST(request: NextRequest) {
       trimmed = true;
       const shorter = trimHistory(messages, 20);
       reply = await provider.createCompletion(
-        toProviderMessages(shorter, systemPrompt),
+        toProviderMessages(shorter, systemPrompt, contextBlock),
         llmConfig
       );
     }
