@@ -2,23 +2,31 @@
 
 import toast, { Toaster } from 'react-hot-toast';
 import { useState } from 'react';
-import { useSessionStore } from '@/lib/session-store';
+import { useRouter } from 'next/navigation';
+import { useSessionStore, type StudentProfile } from '@/lib/session-store';
 import ChatTopBar from '@/components/chat/ChatTopBar';
 import ChatMessageList from '@/components/chat/ChatMessageList';
 import ChatComposer from '@/components/chat/ChatComposer';
 import PaperclipMenu from '@/components/chat/PaperclipMenu';
+import ProfileReviewModal from '@/components/chat/ProfileReviewModal';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 
 export default function ChatPage() {
+  const router = useRouter();
   const store = useSessionStore();
   const messages = store.chatMessages;
+
   const [sending, setSending] = useState(false);
   const [paperclipOpen, setPaperclipOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewProfile, setReviewProfile] = useState<StudentProfile | null>(null);
+  const [reviewTrimmed, setReviewTrimmed] = useState(false);
+  const [distilling, setDistilling] = useState(false);
 
   const userMessageCount = messages.filter(
     (m) => m.role === 'user' && m.kind === 'message'
   ).length;
-  const canGenerate = userMessageCount >= 3;
+  const canGenerate = userMessageCount >= 3 && !distilling;
 
   async function handleSend(text: string) {
     if (!(await isLLMConfigured())) {
@@ -69,14 +77,52 @@ export default function ChatPage() {
     }
   }
 
-  function handleGenerateCareers() {
-    alert('Profile review modal — wired in Task 20.');
+  async function runDistillation(guidance?: string) {
+    setDistilling(true);
+    try {
+      const llmConfig = await loadLLMConfig();
+      const res = await fetch('/api/distillProfile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: useSessionStore.getState().chatMessages,
+          resume: store.resumeText ?? undefined,
+          freeText: store.freeText || undefined,
+          jobTitle: store.jobTitle || undefined,
+          guidance,
+          llmConfig,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Distillation failed');
+      }
+      const { profile, trimmed } = (await res.json()) as {
+        profile: StudentProfile;
+        trimmed: boolean;
+      };
+      setReviewProfile(profile);
+      setReviewTrimmed(trimmed);
+      setReviewOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Distillation failed');
+    } finally {
+      setDistilling(false);
+    }
+  }
+
+  function handleAcceptProfile(profile: StudentProfile) {
+    store.setDistilledProfile(profile);
+    store.setCareers(null);
+    setReviewOpen(false);
+    router.push('/careers');
   }
 
   return (
     <div className='h-[calc(100vh-4rem)] flex flex-col'>
       <ChatTopBar
-        onGenerateCareers={handleGenerateCareers}
+        onGenerateCareers={() => runDistillation()}
         canGenerate={canGenerate}
       />
       <ChatMessageList messages={messages} />
@@ -86,6 +132,14 @@ export default function ChatPage() {
         disabled={sending}
       />
       <PaperclipMenu open={paperclipOpen} onClose={() => setPaperclipOpen(false)} />
+      <ProfileReviewModal
+        open={reviewOpen}
+        profile={reviewProfile}
+        trimmed={reviewTrimmed}
+        onAccept={handleAcceptProfile}
+        onRedistill={(g) => runDistillation(g)}
+        onCancel={() => setReviewOpen(false)}
+      />
       <Toaster />
     </div>
   );
