@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
 import {
@@ -10,8 +11,11 @@ import {
 } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { useSessionStore } from '@/lib/session-store';
-import { MessageCircle } from 'lucide-react';
+import type { GapAnalysis, LearningPath } from '@/lib/session-store';
+import { MessageCircle, SearchCheck, Route as RouteIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
+import { loadLLMConfig } from '@/lib/llm-client';
 
 type CareerNodeProps = {
   jobTitle?: string;
@@ -42,8 +46,13 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   } = data;
   const position = connectPosition === 'top' ? Position.Top : Position.Bottom;
 
+  const router = useRouter();
   const setFocus = useSessionStore((s) => s.setFocus);
   const addChatMessage = useSessionStore((s) => s.addChatMessage);
+  const setGapAnalysis = useSessionStore((s) => s.setGapAnalysis);
+  const setLearningPath = useSessionStore((s) => s.setLearningPath);
+  const setStoreJobTitle = useSessionStore((s) => s.setJobTitle);
+  const [running, setRunning] = useState<'gaps' | 'learn' | null>(null);
 
   function handleChatAboutThis() {
     if (!jobTitle) return;
@@ -53,6 +62,72 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
       kind: 'focus-marker',
       content: `— Now focused on ${jobTitle} —`,
     });
+  }
+
+  async function handleAnalyseGaps() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    setRunning('gaps');
+    try {
+      const state = useSessionStore.getState();
+      const llmConfig = await loadLLMConfig();
+      const res = await fetch('/api/gapAnalysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle,
+          resume: state.resumeText ?? undefined,
+          aboutYou: state.freeText || undefined,
+          distilledProfile: state.distilledProfile ?? undefined,
+          llmConfig,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || 'Gap analysis failed');
+      }
+      const { analysis } = (await res.json()) as { analysis: GapAnalysis };
+      setGapAnalysis(analysis);
+      router.push('/gap-analysis');
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Gap analysis failed');
+    } finally {
+      setRunning(null);
+    }
+  }
+
+  async function handleLearningPath() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    setRunning('learn');
+    try {
+      const state = useSessionStore.getState();
+      const llmConfig = await loadLLMConfig();
+      const res = await fetch('/api/learningPath', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle,
+          resume: state.resumeText ?? undefined,
+          aboutYou: state.freeText || undefined,
+          distilledProfile: state.distilledProfile ?? undefined,
+          llmConfig,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || 'Learning path failed');
+      }
+      const { path } = (await res.json()) as { path: LearningPath };
+      setLearningPath(path);
+      router.push('/learning-path');
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Learning path failed');
+    } finally {
+      setRunning(null);
+    }
   }
 
   const difficultyColor =
@@ -150,12 +225,20 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
             </div>
           </div>
         </div>
-        <div className='flex justify-end border-t border-border pt-4 mt-4'>
+        <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-4 mt-4'>
           <Button asChild variant='outline' onClick={handleChatAboutThis}>
             <Link href='/chat'>
               <MessageCircle className='w-4 h-4 mr-2' />
               Chat about this
             </Link>
+          </Button>
+          <Button variant='outline' onClick={handleAnalyseGaps} disabled={running !== null}>
+            <SearchCheck className='w-4 h-4 mr-2' />
+            {running === 'gaps' ? 'Analysing…' : 'Analyse gaps for this role'}
+          </Button>
+          <Button variant='outline' onClick={handleLearningPath} disabled={running !== null}>
+            <RouteIcon className='w-4 h-4 mr-2' />
+            {running === 'learn' ? 'Building…' : 'Learning path for this role'}
           </Button>
         </div>
       </DialogContent>
