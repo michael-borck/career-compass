@@ -65,6 +65,12 @@ export type InterviewFeedback = {
   nextSteps: string[];
 };
 
+export type SourceRef = {
+  title: string;
+  url: string;
+  domain: string;
+};
+
 export type StudentProfile = {
   background: string;
   interests: string[];
@@ -94,6 +100,8 @@ export type SessionState = {
   freeText: string;
   jobTitle: string;
   jobAdvert: string;
+  urlInput: string;
+  urlFetchedTitle: string | null;
 
   // Chat
   chatMessages: ChatMessage[];
@@ -113,6 +121,12 @@ export type SessionState = {
   interviewPhase: InterviewPhase | null;
   interviewTurnInPhase: number;
   interviewFeedback: InterviewFeedback | null;
+
+  // Grounding sources
+  gapAnalysisSources: SourceRef[] | null;
+  learningPathSources: SourceRef[] | null;
+  interviewSources: SourceRef[];
+  chatSources: Record<string, SourceRef[]>;
 
   // Actions
   setResume: (text: string, filename: string) => void;
@@ -134,6 +148,12 @@ export type SessionState = {
   setInterviewTarget: (t: string | null) => void;
   setInterviewFeedback: (f: InterviewFeedback | null) => void;
   resetInterview: () => void;
+  setUrlInput: (url: string) => void;
+  setUrlFetchedTitle: (title: string | null) => void;
+  setGapAnalysisSources: (s: SourceRef[] | null) => void;
+  setLearningPathSources: (s: SourceRef[] | null) => void;
+  addInterviewSources: (sources: SourceRef[]) => void;
+  setChatSourcesForMessage: (messageId: string, sources: SourceRef[]) => void;
   reset: () => void;
 };
 
@@ -156,6 +176,12 @@ const initialState = {
   interviewPhase: null,
   interviewTurnInPhase: 0,
   interviewFeedback: null,
+  urlInput: '',
+  urlFetchedTitle: null,
+  gapAnalysisSources: null,
+  learningPathSources: null,
+  interviewSources: [],
+  chatSources: {},
 };
 
 function makeId() {
@@ -233,7 +259,25 @@ export const useSessionStore = create<SessionState>((set) => ({
       interviewPhase: null,
       interviewTurnInPhase: 0,
       interviewFeedback: null,
+      interviewSources: [],
     }),
+
+  setUrlInput: (url) => set({ urlInput: url }),
+  setUrlFetchedTitle: (title) => set({ urlFetchedTitle: title }),
+  setGapAnalysisSources: (s) => set({ gapAnalysisSources: s }),
+  setLearningPathSources: (s) => set({ learningPathSources: s }),
+
+  addInterviewSources: (sources) =>
+    set((state) => {
+      const existing = new Set(state.interviewSources.map((s) => s.url));
+      const fresh = sources.filter((s) => !existing.has(s.url));
+      return { interviewSources: [...state.interviewSources, ...fresh] };
+    }),
+
+  setChatSourcesForMessage: (messageId, sources) =>
+    set((state) => ({
+      chatSources: { ...state.chatSources, [messageId]: sources },
+    })),
 
   reset: () => set({ ...initialState }),
 }));

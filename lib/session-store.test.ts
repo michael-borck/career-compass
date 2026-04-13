@@ -26,6 +26,12 @@ describe('session store', () => {
     expect(s.interviewPhase).toBeNull();
     expect(s.interviewTurnInPhase).toBe(0);
     expect(s.interviewFeedback).toBeNull();
+    expect(s.urlInput).toBe('');
+    expect(s.urlFetchedTitle).toBeNull();
+    expect(s.gapAnalysisSources).toBeNull();
+    expect(s.learningPathSources).toBeNull();
+    expect(s.interviewSources).toEqual([]);
+    expect(s.chatSources).toEqual({});
   });
 });
 
@@ -109,6 +115,12 @@ describe('session store actions', () => {
       summary: 's', strengths: [], improvements: [],
       perPhase: [], overallRating: 'developing', nextSteps: [],
     });
+    s.setUrlInput('http://x');
+    s.setUrlFetchedTitle('T');
+    s.setGapAnalysisSources([{ title: 'A', url: 'u', domain: 'd' }]);
+    s.setLearningPathSources([{ title: 'A', url: 'u', domain: 'd' }]);
+    s.addInterviewSources([{ title: 'A', url: 'u2', domain: 'd' }]);
+    s.setChatSourcesForMessage('m', [{ title: 'A', url: 'u3', domain: 'd' }]);
     s.reset();
     const after = useSessionStore.getState();
     expect(after.resumeText).toBeNull();
@@ -126,6 +138,12 @@ describe('session store actions', () => {
     expect(after.interviewPhase).toBeNull();
     expect(after.interviewTurnInPhase).toBe(0);
     expect(after.interviewFeedback).toBeNull();
+    expect(after.urlInput).toBe('');
+    expect(after.urlFetchedTitle).toBeNull();
+    expect(after.gapAnalysisSources).toBeNull();
+    expect(after.learningPathSources).toBeNull();
+    expect(after.interviewSources).toEqual([]);
+    expect(after.chatSources).toEqual({});
   });
 
   it('setJobAdvert writes the field', () => {
@@ -223,5 +241,59 @@ describe('session store actions', () => {
     expect(after.interviewMessages).toEqual([]);
     expect(after.interviewDifficulty).toBe('standard');
     expect(after.interviewPhase).toBeNull();
+  });
+
+  it('setUrlInput and setUrlFetchedTitle write fields', () => {
+    const s = useSessionStore.getState();
+    s.setUrlInput('https://example.com/job');
+    s.setUrlFetchedTitle('Data Analyst — Example');
+    const after = useSessionStore.getState();
+    expect(after.urlInput).toBe('https://example.com/job');
+    expect(after.urlFetchedTitle).toBe('Data Analyst — Example');
+  });
+
+  it('setGapAnalysisSources writes the field', () => {
+    useSessionStore.getState().setGapAnalysisSources([
+      { title: 'Glassdoor', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
+    ]);
+    expect(useSessionStore.getState().gapAnalysisSources).toHaveLength(1);
+  });
+
+  it('addInterviewSources dedupes by URL', () => {
+    const s = useSessionStore.getState();
+    s.addInterviewSources([
+      { title: 'A', url: 'https://a.com', domain: 'a.com' },
+      { title: 'B', url: 'https://b.com', domain: 'b.com' },
+    ]);
+    s.addInterviewSources([
+      { title: 'A duplicate', url: 'https://a.com', domain: 'a.com' },
+      { title: 'C', url: 'https://c.com', domain: 'c.com' },
+    ]);
+    const sources = useSessionStore.getState().interviewSources;
+    expect(sources).toHaveLength(3);
+    expect(sources.map((x) => x.url)).toEqual([
+      'https://a.com',
+      'https://b.com',
+      'https://c.com',
+    ]);
+  });
+
+  it('setChatSourcesForMessage stores sources under the message id', () => {
+    useSessionStore.getState().setChatSourcesForMessage('msg-1', [
+      { title: 'A', url: 'https://a.com', domain: 'a.com' },
+    ]);
+    useSessionStore.getState().setChatSourcesForMessage('msg-2', [
+      { title: 'B', url: 'https://b.com', domain: 'b.com' },
+    ]);
+    const cs = useSessionStore.getState().chatSources;
+    expect(cs['msg-1']).toHaveLength(1);
+    expect(cs['msg-2']).toHaveLength(1);
+  });
+
+  it('resetInterview clears interviewSources', () => {
+    const s = useSessionStore.getState();
+    s.addInterviewSources([{ title: 'A', url: 'https://a.com', domain: 'a.com' }]);
+    s.resetInterview();
+    expect(useSessionStore.getState().interviewSources).toEqual([]);
   });
 });
