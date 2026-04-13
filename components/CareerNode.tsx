@@ -8,6 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import Link from 'next/link';
+import { useSessionStore } from '@/lib/session-store';
+import { MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type CareerNodeProps = {
   jobTitle?: string;
@@ -37,6 +41,19 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     roadmap,
   } = data;
   const position = connectPosition === 'top' ? Position.Top : Position.Bottom;
+
+  const setFocus = useSessionStore((s) => s.setFocus);
+  const addChatMessage = useSessionStore((s) => s.addChatMessage);
+
+  function handleChatAboutThis() {
+    if (!jobTitle) return;
+    setFocus(jobTitle);
+    addChatMessage({
+      role: 'system',
+      kind: 'focus-marker',
+      content: `— Now focused on ${jobTitle} —`,
+    });
+  }
 
   const difficultyColor =
     difficulty?.toLowerCase() === 'low'
@@ -132,6 +149,14 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
               ))}
             </div>
           </div>
+        </div>
+        <div className='flex justify-end border-t border-border pt-4 mt-4'>
+          <Button asChild variant='outline' onClick={handleChatAboutThis}>
+            <Link href='/chat'>
+              <MessageCircle className='w-4 h-4 mr-2' />
+              Chat about this
+            </Link>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
