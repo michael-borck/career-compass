@@ -32,16 +32,16 @@ function buildContextBlock(
 ): string | null {
   const parts: string[] = [];
   if (resumeText && resumeText.trim()) {
-    parts.push(`STUDENT RESUME:\n${resumeText.trim()}`);
+    parts.push(`RESUME (full text, shared directly with you):\n${resumeText.trim()}`);
   }
   if (freeText && freeText.trim()) {
-    parts.push(`STUDENT BACKGROUND NOTES:\n${freeText.trim()}`);
+    parts.push(`BACKGROUND NOTES (shared directly with you):\n${freeText.trim()}`);
   }
   if (jobTitle && jobTitle.trim()) {
     parts.push(`JOB OF INTEREST: ${jobTitle.trim()}`);
   }
   if (parts.length === 0) return null;
-  return `The student has shared the following context. Refer to it naturally when answering:\n\n${parts.join('\n\n')}`;
+  return `The student has shared the following information with you. The full text is included below — you CAN read it. When the student refers to "my resume", "the resume", "my attachment", "what I uploaded", or similar phrases, they mean this content. Refer to it by its details, not as a separate file:\n\n${parts.join('\n\n')}`;
 }
 
 function toProviderMessages(
@@ -49,11 +49,12 @@ function toProviderMessages(
   systemPrompt: string,
   contextBlock: string | null
 ) {
-  // Only 'message' and 'attachment-summary' kinds get sent to the LLM.
-  // Focus-markers and notices are UI-only.
-  const filtered = messages.filter(
-    (m) => m.kind === 'message' || m.kind === 'attachment-summary'
-  );
+  // Only real conversation messages go to the LLM. Attachment-summary,
+  // focus-marker, and notice messages are UI chrome — sending them
+  // confuses the model (e.g., "[Attachment shared]" made Claude think
+  // it was being handed a multimodal file it couldn't read, so it
+  // refused even though the actual text was in the system prompt).
+  const filtered = messages.filter((m) => m.kind === 'message');
   const out: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
     { role: 'system', content: systemPrompt },
   ];
@@ -63,10 +64,7 @@ function toProviderMessages(
   for (const m of filtered) {
     out.push({
       role: m.role === 'system' ? 'user' : m.role,
-      content:
-        m.kind === 'attachment-summary'
-          ? `[Attachment shared by student]\n${m.content}`
-          : m.content,
+      content: m.content,
     });
   }
   return out;
