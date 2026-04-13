@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getLLMConfig, getLLMProvider, type LLMConfig } from '@/lib/llm-providers';
 import { buildAdvisorSystemPrompt } from '@/lib/prompts/advisor';
 import { trimHistory } from '@/lib/chat-history';
+import { isTokenLimitError } from '@/lib/token-limit';
 import type { ChatMessage } from '@/lib/session-store';
 
 interface ChatRequest {
@@ -11,18 +12,6 @@ interface ChatRequest {
   freeText?: string;
   jobTitle?: string;
   llmConfig?: LLMConfig;
-}
-
-function isTokenLimitError(e: unknown): boolean {
-  const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
-  return (
-    msg.includes('context length') ||
-    msg.includes('context_length') ||
-    msg.includes('maximum context') ||
-    msg.includes('too many tokens') ||
-    msg.includes('token limit') ||
-    msg.includes('reduce the length')
-  );
 }
 
 function buildContextBlock(

@@ -6,21 +6,10 @@ import {
   type DistillationInput,
 } from '@/lib/prompts/distill';
 import { trimHistory } from '@/lib/chat-history';
+import { isTokenLimitError } from '@/lib/token-limit';
 
 interface DistillRequest extends Omit<DistillationInput, 'trimmed'> {
   llmConfig?: LLMConfig;
-}
-
-function isTokenLimitError(e: unknown): boolean {
-  const msg = e instanceof Error ? e.message.toLowerCase() : String(e).toLowerCase();
-  return (
-    msg.includes('context length') ||
-    msg.includes('context_length') ||
-    msg.includes('maximum context') ||
-    msg.includes('too many tokens') ||
-    msg.includes('token limit') ||
-    msg.includes('reduce the length')
-  );
 }
 
 export async function POST(request: NextRequest) {
