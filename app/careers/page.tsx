@@ -91,6 +91,22 @@ export default function CareersPage() {
     setEdges(makeEdges(Math.min(careers.length, 6)));
   }, [careers, setNodes, setEdges]);
 
+  // Clear focus if the focused career is no longer in the new set.
+  useEffect(() => {
+    if (!careers) return;
+    const focus = useSessionStore.getState().currentFocus;
+    if (!focus) return;
+    const stillPresent = careers.some((c) => c.jobTitle === focus);
+    if (!stillPresent) {
+      useSessionStore.getState().setFocus(null);
+      useSessionStore.getState().addChatMessage({
+        role: 'system',
+        kind: 'focus-marker',
+        content: '— focus cleared, new careers generated —',
+      });
+    }
+  }, [careers]);
+
   // Generate careers on mount if we have inputs but no careers yet.
   useEffect(() => {
     const hasInput =
