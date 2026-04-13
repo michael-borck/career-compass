@@ -45,6 +45,10 @@ export default function LearningPathView({ path }: Props) {
     router.push('/');
   }
 
+  function handlePracticeInterview() {
+    router.push('/interview');
+  }
+
   async function handleChainToGapAnalysis() {
     setChaining(true);
     try {
@@ -164,13 +168,16 @@ export default function LearningPathView({ path }: Props) {
         </div>
       )}
 
-      {hasProfile && (
-        <div className='flex justify-end'>
+      <div className='flex flex-wrap justify-end gap-3'>
+        {hasProfile && (
           <Button variant='outline' onClick={handleChainToGapAnalysis} disabled={chaining}>
             {chaining ? 'Analysing…' : 'Run gap analysis for this target →'}
           </Button>
-        </div>
-      )}
+        )}
+        <Button variant='outline' onClick={handlePracticeInterview}>
+          Practice interview for this target →
+        </Button>
+      </div>
     </div>
   );
 }

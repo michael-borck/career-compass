@@ -42,6 +42,10 @@ export default function GapAnalysisView({ analysis }: Props) {
     router.push('/');
   }
 
+  function handlePracticeInterview() {
+    router.push('/interview');
+  }
+
   async function handleChainToLearningPath() {
     setChaining(true);
     try {
@@ -141,7 +145,10 @@ export default function GapAnalysisView({ analysis }: Props) {
         </p>
       </div>
 
-      <div className='flex justify-end'>
+      <div className='flex flex-wrap justify-end gap-3'>
+        <Button variant='outline' onClick={handlePracticeInterview}>
+          Practice interview for this target →
+        </Button>
         <Button onClick={handleChainToLearningPath} disabled={chaining}>
           {chaining ? 'Building…' : 'Turn this into a learning path →'}
         </Button>
