@@ -1,7 +1,7 @@
 const Footer = () => (
-  <footer>
-    <div className='custom-screen pt-16'>
-      <div className='mt-10 py-8 border-t border-border items-center justify-between flex'>
+  <footer className='flex-shrink-0'>
+    <div className='custom-screen'>
+      <div className='py-3 border-t border-border items-center justify-between flex'>
         <p className='text-ink-quiet text-[var(--text-xs)]'>
           Career Compass &middot; part of the Buddy suite
         </p>

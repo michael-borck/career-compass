@@ -42,10 +42,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang='en' data-app='career'>
-      <body className={figtree.className}>
+    <html lang='en' data-app='career' className='h-full'>
+      <body className={`${figtree.className} h-full flex flex-col overflow-hidden`}>
         <Header />
-        <main>{children}</main>
+        <main className='flex-1 min-h-0 overflow-y-auto'>{children}</main>
         <Footer />
       </body>
     </html>
