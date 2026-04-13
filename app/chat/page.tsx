@@ -60,7 +60,7 @@ export default function ChatPage() {
           role: 'system',
           kind: 'notice',
           content:
-            'Earlier messages were trimmed to fit — I still have your resume and recent context.',
+            'Earlier messages were trimmed to fit. I still have your resume and recent context.',
         });
       }
       store.addChatMessage({ role: 'assistant', content: reply });
@@ -70,7 +70,7 @@ export default function ChatPage() {
       store.addChatMessage({
         role: 'assistant',
         content:
-          "The advisor couldn't respond — check your provider settings and try again.",
+          "The advisor couldn't respond. Check your provider settings and try again.",
       });
     } finally {
       setSending(false);

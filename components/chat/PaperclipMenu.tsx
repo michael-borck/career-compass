@@ -113,7 +113,7 @@ export default function PaperclipMenu({ open, onClose }: Props) {
               rows={5}
               value={textValue}
               onChange={(e) => setTextValue(e.target.value)}
-              placeholder='Paste anything — a description, a transcript, notes…'
+              placeholder='Paste anything: a description, a transcript, notes…'
             />
             <div className='flex justify-end gap-2'>
               <Button variant='outline' onClick={() => setMode('menu')}>Back</Button>

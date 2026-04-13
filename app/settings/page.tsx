@@ -26,7 +26,7 @@ const ProviderInfo: Record<LLMProvider, {
 }> = {
   ollama: {
     name: 'Ollama (runs on your computer)',
-    description: 'Keep everything private — no data leaves your device',
+    description: 'Keep everything private. No data leaves your device',
     requiresApiKey: false,
     requiresBaseURL: false,
     defaultURL: 'http://localhost:11434/v1',

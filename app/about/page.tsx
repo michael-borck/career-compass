@@ -69,7 +69,7 @@ export default function About() {
           <div className="space-y-3 text-ink-muted">
             <p className="flex items-start">
               <span className="text-accent mr-2 font-medium">&#10003;</span>
-              <span>No data collection &mdash; your files are processed entirely on your device</span>
+              <span>No data collection. Your files are processed entirely on your device</span>
             </p>
             <p className="flex items-start">
               <span className="text-accent mr-2 font-medium">&#10003;</span>
@@ -81,7 +81,7 @@ export default function About() {
             </p>
             <p className="flex items-start">
               <span className="text-accent mr-2 font-medium">&#10003;</span>
-              <span>Open source &mdash; inspect the code yourself</span>
+              <span>Open source. Inspect the code yourself</span>
             </p>
           </div>
         </div>

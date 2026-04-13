@@ -33,7 +33,7 @@ export default function ChatCard() {
         rows={7}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Say anything to start — a job title, what you're curious about, what's on your mind… or leave blank and the advisor will open the conversation."
+        placeholder="Say anything to start: a job title, what you're curious about, what's on your mind. Or leave blank and the advisor will open the conversation."
         className='flex-1 resize-none'
       />
 

@@ -42,7 +42,7 @@ export default function SessionBanner() {
     <div className='mx-auto w-full max-w-3xl mb-6 border border-accent/30 bg-accent-soft rounded-lg px-5 py-3 flex items-center gap-4'>
       <span className='block w-2 h-2 rounded-full bg-accent flex-shrink-0' />
       <div className='flex-1 text-[var(--text-sm)] text-ink'>
-        Session in progress — {parts.join(', ') || 'ready to go'}.
+        Session in progress: {parts.join(', ') || 'ready to go'}.
       </div>
       <Link
         href={continueHref}

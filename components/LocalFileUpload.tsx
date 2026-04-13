@@ -72,7 +72,7 @@ export default function LocalFileUpload({
             Choose file
           </label>
         </Button>
-        <p className="text-[var(--text-xs)] text-ink-quiet">PDF, Markdown, and DOCX files supported &mdash; processed locally</p>
+        <p className="text-[var(--text-xs)] text-ink-quiet">PDF, Markdown, and DOCX files supported</p>
       </div>
     </div>
   );
