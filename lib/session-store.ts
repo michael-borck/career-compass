@@ -39,6 +39,32 @@ export type LearningPath = {
   caveats: string[];
 };
 
+export type InterviewDifficulty = 'friendly' | 'standard' | 'tough';
+
+export type InterviewPhase =
+  | 'warm-up'
+  | 'behavioural'
+  | 'role-specific'
+  | 'your-questions'
+  | 'wrap-up';
+
+export type InterviewImprovement = {
+  area: string;
+  why: string;
+  example: string;
+};
+
+export type InterviewFeedback = {
+  target: string;
+  difficulty: InterviewDifficulty;
+  summary: string;
+  strengths: string[];
+  improvements: InterviewImprovement[];
+  perPhase: { phase: InterviewPhase; note: string }[];
+  overallRating: 'developing' | 'on-track' | 'strong';
+  nextSteps: string[];
+};
+
 export type StudentProfile = {
   background: string;
   interests: string[];
@@ -80,6 +106,14 @@ export type SessionState = {
   gapAnalysis: GapAnalysis | null;
   learningPath: LearningPath | null;
 
+  // Interview
+  interviewMessages: ChatMessage[];
+  interviewTarget: string | null;
+  interviewDifficulty: InterviewDifficulty;
+  interviewPhase: InterviewPhase | null;
+  interviewTurnInPhase: number;
+  interviewFeedback: InterviewFeedback | null;
+
   // Actions
   setResume: (text: string, filename: string) => void;
   clearResume: () => void;
@@ -93,6 +127,13 @@ export type SessionState = {
   setJobAdvert: (text: string) => void;
   setGapAnalysis: (g: GapAnalysis | null) => void;
   setLearningPath: (l: LearningPath | null) => void;
+  setInterviewSession: (target: string, difficulty: InterviewDifficulty) => void;
+  addInterviewMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> & Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>) => void;
+  advanceInterviewPhase: (phase: InterviewPhase | null, turnInPhase: number) => void;
+  setInterviewDifficulty: (d: InterviewDifficulty) => void;
+  setInterviewTarget: (t: string | null) => void;
+  setInterviewFeedback: (f: InterviewFeedback | null) => void;
+  resetInterview: () => void;
   reset: () => void;
 };
 
@@ -109,6 +150,12 @@ const initialState = {
   selectedCareerId: null,
   gapAnalysis: null,
   learningPath: null,
+  interviewMessages: [],
+  interviewTarget: null,
+  interviewDifficulty: 'standard' as InterviewDifficulty,
+  interviewPhase: null,
+  interviewTurnInPhase: 0,
+  interviewFeedback: null,
 };
 
 function makeId() {
@@ -146,6 +193,47 @@ export const useSessionStore = create<SessionState>((set) => ({
   setJobAdvert: (text) => set({ jobAdvert: text }),
   setGapAnalysis: (g) => set({ gapAnalysis: g }),
   setLearningPath: (l) => set({ learningPath: l }),
+
+  setInterviewSession: (target, difficulty) =>
+    set({
+      interviewTarget: target,
+      interviewDifficulty: difficulty,
+      interviewMessages: [],
+      interviewPhase: 'warm-up',
+      interviewTurnInPhase: 0,
+      interviewFeedback: null,
+    }),
+
+  addInterviewMessage: (msg) =>
+    set((s) => ({
+      interviewMessages: [
+        ...s.interviewMessages,
+        {
+          id: msg.id ?? makeId(),
+          timestamp: msg.timestamp ?? Date.now(),
+          kind: msg.kind ?? 'message',
+          role: msg.role,
+          content: msg.content,
+        },
+      ],
+    })),
+
+  advanceInterviewPhase: (phase, turnInPhase) =>
+    set({ interviewPhase: phase, interviewTurnInPhase: turnInPhase }),
+
+  setInterviewDifficulty: (d) => set({ interviewDifficulty: d }),
+  setInterviewTarget: (t) => set({ interviewTarget: t }),
+  setInterviewFeedback: (f) => set({ interviewFeedback: f }),
+
+  resetInterview: () =>
+    set({
+      interviewMessages: [],
+      interviewTarget: null,
+      interviewDifficulty: 'standard',
+      interviewPhase: null,
+      interviewTurnInPhase: 0,
+      interviewFeedback: null,
+    }),
 
   reset: () => set({ ...initialState }),
 }));

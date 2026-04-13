@@ -20,6 +20,12 @@ describe('session store', () => {
     expect(s.selectedCareerId).toBeNull();
     expect(s.gapAnalysis).toBeNull();
     expect(s.learningPath).toBeNull();
+    expect(s.interviewMessages).toEqual([]);
+    expect(s.interviewTarget).toBeNull();
+    expect(s.interviewDifficulty).toBe('standard');
+    expect(s.interviewPhase).toBeNull();
+    expect(s.interviewTurnInPhase).toBe(0);
+    expect(s.interviewFeedback).toBeNull();
   });
 });
 
@@ -96,6 +102,13 @@ describe('session store actions', () => {
       }],
       portfolioProject: 'P', totalDuration: 'D', caveats: [],
     });
+    s.setInterviewSession('Z', 'friendly');
+    s.addInterviewMessage({ role: 'user', content: 'm' });
+    s.setInterviewFeedback({
+      target: 'Z', difficulty: 'friendly',
+      summary: 's', strengths: [], improvements: [],
+      perPhase: [], overallRating: 'developing', nextSteps: [],
+    });
     s.reset();
     const after = useSessionStore.getState();
     expect(after.resumeText).toBeNull();
@@ -107,6 +120,12 @@ describe('session store actions', () => {
     expect(after.distilledProfile).toBeNull();
     expect(after.gapAnalysis).toBeNull();
     expect(after.learningPath).toBeNull();
+    expect(after.interviewMessages).toEqual([]);
+    expect(after.interviewTarget).toBeNull();
+    expect(after.interviewDifficulty).toBe('standard');
+    expect(after.interviewPhase).toBeNull();
+    expect(after.interviewTurnInPhase).toBe(0);
+    expect(after.interviewFeedback).toBeNull();
   });
 
   it('setJobAdvert writes the field', () => {
@@ -141,5 +160,68 @@ describe('session store actions', () => {
     };
     useSessionStore.getState().setLearningPath(l);
     expect(useSessionStore.getState().learningPath).toEqual(l);
+  });
+
+  it('setInterviewSession primes a fresh interview', () => {
+    const s = useSessionStore.getState();
+    s.addInterviewMessage({ role: 'user', content: 'old message' });
+    s.setInterviewSession('Data Analyst', 'tough');
+    const after = useSessionStore.getState();
+    expect(after.interviewTarget).toBe('Data Analyst');
+    expect(after.interviewDifficulty).toBe('tough');
+    expect(after.interviewMessages).toEqual([]);
+    expect(after.interviewPhase).toBe('warm-up');
+    expect(after.interviewTurnInPhase).toBe(0);
+    expect(after.interviewFeedback).toBeNull();
+  });
+
+  it('addInterviewMessage appends with auto id/timestamp/kind', () => {
+    useSessionStore.getState().addInterviewMessage({
+      role: 'assistant',
+      content: 'first question',
+    });
+    const msgs = useSessionStore.getState().interviewMessages;
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].role).toBe('assistant');
+    expect(msgs[0].content).toBe('first question');
+    expect(msgs[0].id).toBeTruthy();
+    expect(msgs[0].kind).toBe('message');
+    expect(typeof msgs[0].timestamp).toBe('number');
+  });
+
+  it('advanceInterviewPhase updates phase and turn counter', () => {
+    useSessionStore.getState().advanceInterviewPhase('behavioural', 0);
+    const s = useSessionStore.getState();
+    expect(s.interviewPhase).toBe('behavioural');
+    expect(s.interviewTurnInPhase).toBe(0);
+  });
+
+  it('setInterviewFeedback writes the field', () => {
+    const fb = {
+      target: 'Data Analyst',
+      difficulty: 'standard' as const,
+      summary: 's',
+      strengths: ['a'],
+      improvements: [{ area: 'x', why: 'y', example: 'z' }],
+      perPhase: [],
+      overallRating: 'on-track' as const,
+      nextSteps: ['n'],
+    };
+    useSessionStore.getState().setInterviewFeedback(fb);
+    expect(useSessionStore.getState().interviewFeedback).toEqual(fb);
+  });
+
+  it('resetInterview clears interview state but not other state', () => {
+    const s = useSessionStore.getState();
+    s.setResume('a', 'b');
+    s.setInterviewSession('X', 'tough');
+    s.addInterviewMessage({ role: 'user', content: 'c' });
+    s.resetInterview();
+    const after = useSessionStore.getState();
+    expect(after.resumeText).toBe('a'); // preserved
+    expect(after.interviewTarget).toBeNull();
+    expect(after.interviewMessages).toEqual([]);
+    expect(after.interviewDifficulty).toBe('standard');
+    expect(after.interviewPhase).toBeNull();
   });
 });
