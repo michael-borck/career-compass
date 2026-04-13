@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis): string {
   const lines: string[] = [];
@@ -90,6 +90,78 @@ export function learningPathToMarkdown(p: LearningPath): string {
   }
 
   lines.push('*AI-generated. Treat specific course names as starting points, not final recommendations.*');
+
+  return lines.join('\n');
+}
+
+const RATING_LABEL: Record<InterviewFeedback['overallRating'], string> = {
+  'developing': 'Developing',
+  'on-track': 'On track',
+  'strong': 'Strong',
+};
+
+const PHASE_LABEL: Record<InterviewPhase, string> = {
+  'warm-up': 'Warm-up',
+  'behavioural': 'Behavioural',
+  'role-specific': 'Role-specific',
+  'your-questions': 'Your questions',
+  'wrap-up': 'Wrap-up',
+};
+
+const DIFFICULTY_LABEL: Record<'friendly' | 'standard' | 'tough', string> = {
+  friendly: 'Friendly',
+  standard: 'Standard',
+  tough: 'Tough',
+};
+
+export function interviewFeedbackToMarkdown(f: InterviewFeedback): string {
+  const lines: string[] = [];
+
+  lines.push(`# Interview Feedback: ${f.target}`);
+  lines.push('');
+  lines.push(`**Difficulty:** ${DIFFICULTY_LABEL[f.difficulty]}`);
+  lines.push(`**Overall rating:** ${RATING_LABEL[f.overallRating]}`);
+  lines.push('');
+  lines.push(f.summary);
+  lines.push('');
+
+  if (f.strengths.length > 0) {
+    lines.push('## What you did well');
+    for (const s of f.strengths) {
+      lines.push(`- ${s}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('## What to work on');
+  lines.push('');
+  f.improvements.forEach((imp, idx) => {
+    lines.push(`### ${idx + 1}. ${imp.area}`);
+    if (imp.why) lines.push(`**Why it matters:** ${imp.why}`);
+    if (imp.example) {
+      lines.push(`**Example reframe of your answer:**`);
+      lines.push(`> ${imp.example}`);
+    }
+    lines.push('');
+  });
+
+  if (f.perPhase.length > 0) {
+    lines.push('## By phase');
+    for (const p of f.perPhase) {
+      lines.push(`- **${PHASE_LABEL[p.phase]}:** ${p.note}`);
+    }
+    lines.push('');
+  }
+
+  if (f.nextSteps.length > 0) {
+    lines.push('## Next steps');
+    f.nextSteps.forEach((step, idx) => {
+      lines.push(`${idx + 1}. ${step}`);
+    });
+    lines.push('');
+  }
+
+  lines.push('*AI-generated feedback. Treat as one perspective, not a verdict.*');
 
   return lines.join('\n');
 }
