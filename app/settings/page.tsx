@@ -294,6 +294,7 @@ export default function Settings() {
   };
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="container mx-auto p-8 max-w-4xl">
       <div className="space-y-8">
         {/* Section marker */}
@@ -482,6 +483,7 @@ export default function Settings() {
         </div>
       </div>
       <Toaster />
+    </div>
     </div>
   );
 }

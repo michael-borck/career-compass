@@ -45,7 +45,7 @@ export default function RootLayout({
     <html lang='en' data-app='career' className='h-full'>
       <body className={`${figtree.className} h-full flex flex-col overflow-hidden`}>
         <Header />
-        <main className='flex-1 min-h-0 overflow-y-auto'>{children}</main>
+        <main className='flex-1 min-h-0'>{children}</main>
         <Footer />
       </body>
     </html>

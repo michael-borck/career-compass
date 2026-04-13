@@ -159,7 +159,7 @@ export default function CareersPage() {
 
   if (needsSetup) {
     return (
-      <div className='p-10 flex flex-col items-center'>
+      <div className='h-full flex flex-col items-center justify-center p-10'>
         <h1 className='text-[var(--text-2xl)] font-semibold text-ink mb-4'>
           Set up an AI provider
         </h1>
@@ -172,7 +172,7 @@ export default function CareersPage() {
 
   if (loading) {
     return (
-      <div className='p-10 flex flex-col items-center gap-4'>
+      <div className='h-full flex flex-col items-center justify-center gap-4'>
         <LoadingDots style='big' color='gray' />
         <p className='text-ink-muted'>Generating career paths…</p>
       </div>
@@ -181,7 +181,7 @@ export default function CareersPage() {
 
   if (!careers || careers.length === 0) {
     return (
-      <div className='p-10 flex flex-col items-center gap-4'>
+      <div className='h-full flex flex-col items-center justify-center gap-4'>
         <p className='text-ink-muted'>No careers yet.</p>
         <Link href='/' className='underline'>Back to start</Link>
       </div>
@@ -189,13 +189,13 @@ export default function CareersPage() {
   }
 
   return (
-    <div>
-      <div className='flex justify-end p-4 gap-3'>
+    <div className='h-full flex flex-col'>
+      <div className='flex justify-end p-3 gap-3 flex-shrink-0'>
         <Button variant='outline' onClick={handleStartOver}>
           Start over
         </Button>
       </div>
-      <div className='w-screen h-[1200px] mx-auto'>
+      <div className='flex-1 min-h-0'>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -203,6 +203,7 @@ export default function CareersPage() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          fitView
         >
           <Controls />
         </ReactFlow>

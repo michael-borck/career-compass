@@ -2,6 +2,7 @@ import { Shield, Bot, FileText, Target } from 'lucide-react';
 
 export default function About() {
   return (
+    <div className="h-full overflow-y-auto">
     <div className="container mx-auto p-8 max-w-4xl">
       <div className="space-y-12">
 
@@ -182,6 +183,7 @@ export default function About() {
         </div>
 
       </div>
+    </div>
     </div>
   );
 }
