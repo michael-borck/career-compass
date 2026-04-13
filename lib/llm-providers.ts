@@ -45,8 +45,12 @@ class OpenAIProvider implements LLMProvider {
 
 class ClaudeProvider implements LLMProvider {
   async createCompletion(messages: any[], config: LLMConfig): Promise<string> {
-    // Use native Anthropic Messages API (not OpenAI-compatible)
-    const systemMessage = messages.find((m: any) => m.role === 'system');
+    // Use native Anthropic Messages API (not OpenAI-compatible).
+    // Anthropic accepts a single `system` field, so concatenate ALL system
+    // messages we were given. Previously this used .find() which silently
+    // dropped every system message after the first — e.g., any per-turn
+    // context block containing an attached resume was lost.
+    const systemMessages = messages.filter((m: any) => m.role === 'system');
     const userMessages = messages.filter((m: any) => m.role !== 'system');
 
     const body: any = {
@@ -54,8 +58,8 @@ class ClaudeProvider implements LLMProvider {
       max_tokens: 4096,
       messages: userMessages,
     };
-    if (systemMessage) {
-      body.system = systemMessage.content;
+    if (systemMessages.length > 0) {
+      body.system = systemMessages.map((m: any) => m.content).join('\n\n');
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
