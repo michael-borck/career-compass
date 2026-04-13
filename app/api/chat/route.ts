@@ -4,6 +4,7 @@ import { buildAdvisorSystemPrompt } from '@/lib/prompts/advisor';
 import { trimHistory } from '@/lib/chat-history';
 import { isTokenLimitError } from '@/lib/token-limit';
 import type { ChatMessage } from '@/lib/session-store';
+import { buildContextBlock } from '@/lib/context-block';
 
 interface ChatRequest {
   messages: ChatMessage[];
@@ -13,29 +14,6 @@ interface ChatRequest {
   jobTitle?: string;
   jobAdvert?: string;
   llmConfig?: LLMConfig;
-}
-
-function buildContextBlock(
-  resumeText?: string | null,
-  freeText?: string,
-  jobTitle?: string,
-  jobAdvert?: string
-): string | null {
-  const parts: string[] = [];
-  if (resumeText && resumeText.trim()) {
-    parts.push(`RESUME (full text, shared directly with you):\n${resumeText.trim()}`);
-  }
-  if (freeText && freeText.trim()) {
-    parts.push(`BACKGROUND NOTES (shared directly with you):\n${freeText.trim()}`);
-  }
-  if (jobTitle && jobTitle.trim()) {
-    parts.push(`JOB OF INTEREST: ${jobTitle.trim()}`);
-  }
-  if (jobAdvert && jobAdvert.trim()) {
-    parts.push(`JOB ADVERT (full text, shared directly with you):\n${jobAdvert.trim()}`);
-  }
-  if (parts.length === 0) return null;
-  return `The student has shared the following information with you. The full text is included below — you CAN read it. When the student refers to "my resume", "the resume", "my attachment", "the job", "the advert", "what I uploaded", or similar phrases, they mean this content. Refer to it by its details, not as a separate file:\n\n${parts.join('\n\n')}`;
 }
 
 function toProviderMessages(
