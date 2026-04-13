@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Compass, MessageCircle, SearchCheck, Route as RouteIcon } from 'lucide-react';
+import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
@@ -14,7 +14,7 @@ type Props = {
   clearMissingHints: () => void;
 };
 
-type ActionId = 'careers' | 'chat' | 'gaps' | 'learn';
+type ActionId = 'careers' | 'chat' | 'gaps' | 'learn' | 'interview';
 
 export default function ActionsZone({ setMissingHints, clearMissingHints }: Props) {
   const router = useRouter();
@@ -180,10 +180,29 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     }
   }
 
+  async function handleInterview() {
+    clearMissingHints();
+    const hasTarget = !!store.jobAdvert.trim() || !!store.jobTitle.trim();
+    if (!hasTarget) {
+      setMissingHints({
+        resume: false,
+        jobTitle: true,
+        aboutYou: false,
+        jobAdvert: true,
+        message: 'Practice interview needs a job. Paste a job advert or enter a job title.',
+      });
+      focusFirstHint();
+      return;
+    }
+    // No LLM call here — the setup card on /interview is the universal preamble.
+    // The student picks difficulty there before the first API call fires.
+    router.push('/interview');
+  }
+
   const anyRunning = running !== null;
 
   return (
-    <div className='w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3 mt-6'>
+    <div className='w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-3 mt-6'>
       <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
         <Compass className='w-4 h-4 mr-2' />
         Find my careers
@@ -199,6 +218,10 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
       <Button onClick={handleLearningPath} disabled={anyRunning} variant='outline' className='py-6'>
         <RouteIcon className='w-4 h-4 mr-2' />
         {running === 'learn' ? 'Building…' : 'Learning path'}
+      </Button>
+      <Button onClick={handleInterview} disabled={anyRunning} variant='outline' className='py-6'>
+        <Mic className='w-4 h-4 mr-2' />
+        Practice interview
       </Button>
     </div>
   );
