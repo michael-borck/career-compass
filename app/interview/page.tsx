@@ -30,7 +30,7 @@ export default function InterviewPage() {
   }
 
   return (
-    <div className='h-full overflow-hidden'>
+    <div className='h-full overflow-y-auto'>
       {showSetupCard && <InterviewSetupCard initialTarget={deriveInitialTarget()} />}
       {showChat && <InterviewChat onFeedbackReady={() => { /* no-op; store change re-renders */ }} />}
       {showFeedback && feedback && <InterviewFeedbackView feedback={feedback} />}
