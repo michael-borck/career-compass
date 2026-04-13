@@ -29,13 +29,13 @@ const Header = () => {
   return (
     <header>
       <nav
-        className={`bg-paper w-full border-b border-border md:static md:text-sm ${
+        className={`drag-region bg-paper w-full border-b border-border md:static md:text-sm md:pl-20 ${
           state ? 'fixed z-10 h-full' : ''
         }`}
       >
         <div className='custom-screen items-center mx-auto md:flex'>
           <div className='flex items-center justify-between py-3 md:py-5 md:block'>
-            <Link href='/' className='flex items-center gap-3'>
+            <Link href='/' className='no-drag flex items-center gap-3'>
               <Compass className="w-6 h-6 text-accent" />
               <div className='font-semibold text-xl text-ink'>Career Compass</div>
             </Link>
@@ -43,7 +43,7 @@ const Header = () => {
               <button
                 role='button'
                 aria-label='Open the menu'
-                className='text-ink-muted hover:text-ink'
+                className='no-drag text-ink-muted hover:text-ink'
                 onClick={handleNavMenu}
               >
                 {state ? (
@@ -90,7 +90,7 @@ const Header = () => {
                   <li key={idx} className='duration-[250ms] ease-[cubic-bezier(0.2,0,0,1)]'>
                     <Link
                       href={item.path}
-                      className={`block pb-1 border-b-2 ${
+                      className={`no-drag block pb-1 border-b-2 ${
                         isActive
                           ? 'text-ink border-accent'
                           : 'border-transparent hover:text-ink'

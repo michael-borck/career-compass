@@ -12,6 +12,16 @@
   @apply max-w-[1400px] mx-auto px-6 md:px-12;
 }
 
+/* Electron drag regions — lets the user drag the window from the header on
+ * platforms where the native title bar is hidden (macOS hiddenInset). Any
+ * interactive child inside a drag region must opt out via .no-drag. */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
 @layer base {
   :root {
     /* Studio Calm — Career Compass (warm ochre) */
