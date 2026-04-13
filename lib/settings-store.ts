@@ -1,9 +1,19 @@
 // Settings store for desktop persistence using electron-store
+export type SearchEngine =
+  | 'disabled'
+  | 'duckduckgo'
+  | 'brave'
+  | 'bing'
+  | 'serper'
+  | 'searxng';
+
 export interface SettingsConfig {
   provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
   apiKey: string;
   baseURL: string;
   model: string;
+  searchEngine: SearchEngine;
+  searchUrl: string;
 }
 
 export interface ModelInfo {
@@ -17,7 +27,9 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
   provider: 'ollama',
   apiKey: '',
   baseURL: 'http://localhost:11434/v1',
-  model: ''
+  model: '',
+  searchEngine: 'duckduckgo',
+  searchUrl: '',
 };
 
 // Settings store interface for both web and desktop
@@ -117,49 +129,122 @@ export const settingsStore = createSettingsStore();
 
 // Secure storage interface for API keys
 export interface SecureStorage {
+  // Generic namespaced primitives
+  getKey(namespace: string, id: string): Promise<string | null>;
+  setKey(namespace: string, id: string, value: string): Promise<void>;
+  deleteKey(namespace: string, id: string): Promise<void>;
+  // Back-compat wrappers for LLM provider keys
   setApiKey(provider: string, apiKey: string): Promise<void>;
   getApiKey(provider: string): Promise<string | null>;
   deleteApiKey(provider: string): Promise<void>;
+  // Search engine key wrappers
+  getSearchApiKey(engine: SearchEngine): Promise<string | null>;
+  setSearchApiKey(engine: SearchEngine, key: string): Promise<void>;
 }
 
 class ElectronSecureStorage implements SecureStorage {
-  async setApiKey(provider: string, apiKey: string): Promise<void> {
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.secureStorage) {
-      await (window as any).electronAPI.secureStorage.setPassword(`career-compass-${provider}`, apiKey);
+  async getKey(namespace: string, id: string): Promise<string | null> {
+    if (typeof window === 'undefined' || !(window as any).electronAPI?.secureStorage) {
+      return null;
     }
-  }
-
-  async getApiKey(provider: string): Promise<string | null> {
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.secureStorage) {
-      return await (window as any).electronAPI.secureStorage.getPassword(`career-compass-${provider}`);
+    const keyName = `career-compass-${namespace}-${id}`;
+    try {
+      const result = await (window as any).electronAPI.secureStorage.getPassword(keyName);
+      if (result) return result;
+    } catch {
+      // ignore
+    }
+    // Migration fallback: older installs stored LLM keys without the namespace.
+    if (namespace === 'llm') {
+      const legacyKeyName = `career-compass-${id}`;
+      try {
+        const legacy = await (window as any).electronAPI.secureStorage.getPassword(legacyKeyName);
+        if (legacy) return legacy;
+      } catch {
+        // ignore
+      }
     }
     return null;
   }
 
+  async setKey(namespace: string, id: string, value: string): Promise<void> {
+    if (typeof window === 'undefined' || !(window as any).electronAPI?.secureStorage) return;
+    const keyName = `career-compass-${namespace}-${id}`;
+    await (window as any).electronAPI.secureStorage.setPassword(keyName, value);
+  }
+
+  async deleteKey(namespace: string, id: string): Promise<void> {
+    if (typeof window === 'undefined' || !(window as any).electronAPI?.secureStorage) return;
+    const keyName = `career-compass-${namespace}-${id}`;
+    await (window as any).electronAPI.secureStorage.deletePassword(keyName);
+  }
+
+  // Back-compat wrappers for LLM provider keys
+  async setApiKey(provider: string, apiKey: string): Promise<void> {
+    return this.setKey('llm', provider, apiKey);
+  }
+
+  async getApiKey(provider: string): Promise<string | null> {
+    return this.getKey('llm', provider);
+  }
+
   async deleteApiKey(provider: string): Promise<void> {
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.secureStorage) {
-      await (window as any).electronAPI.secureStorage.deletePassword(`career-compass-${provider}`);
-    }
+    return this.deleteKey('llm', provider);
+  }
+
+  // Search engine key wrappers
+  async getSearchApiKey(engine: SearchEngine): Promise<string | null> {
+    return this.getKey('search', engine);
+  }
+
+  async setSearchApiKey(engine: SearchEngine, key: string): Promise<void> {
+    return this.setKey('search', engine, key);
   }
 }
 
 // Web fallback (not secure, but functional for development)
 class WebSecureStorage implements SecureStorage {
+  async getKey(namespace: string, id: string): Promise<string | null> {
+    // Migration fallback for LLM keys stored without namespace
+    if (namespace === 'llm') {
+      const legacy = localStorage.getItem(`career-compass-key-${id}`);
+      if (legacy) return legacy;
+    }
+    return localStorage.getItem(`career-compass-key-${namespace}-${id}`);
+  }
+
+  async setKey(namespace: string, id: string, value: string): Promise<void> {
+    localStorage.setItem(`career-compass-key-${namespace}-${id}`, value);
+  }
+
+  async deleteKey(namespace: string, id: string): Promise<void> {
+    localStorage.removeItem(`career-compass-key-${namespace}-${id}`);
+  }
+
+  // Back-compat wrappers for LLM provider keys
   async setApiKey(provider: string, apiKey: string): Promise<void> {
-    // In web context, store in localStorage (not actually secure)
-    localStorage.setItem(`career-compass-key-${provider}`, apiKey);
+    return this.setKey('llm', provider, apiKey);
   }
 
   async getApiKey(provider: string): Promise<string | null> {
-    return localStorage.getItem(`career-compass-key-${provider}`);
+    return this.getKey('llm', provider);
   }
 
   async deleteApiKey(provider: string): Promise<void> {
-    localStorage.removeItem(`career-compass-key-${provider}`);
+    return this.deleteKey('llm', provider);
+  }
+
+  // Search engine key wrappers
+  async getSearchApiKey(engine: SearchEngine): Promise<string | null> {
+    return this.getKey('search', engine);
+  }
+
+  async setSearchApiKey(engine: SearchEngine, key: string): Promise<void> {
+    return this.setKey('search', engine, key);
   }
 }
 
-export const secureStorage: SecureStorage = 
+export const secureStorage: SecureStorage =
   typeof window !== 'undefined' && (window as any).electronAPI?.secureStorage
     ? new ElectronSecureStorage()
     : new WebSecureStorage();

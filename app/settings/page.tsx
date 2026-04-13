@@ -87,7 +87,9 @@ export default function Settings() {
     provider: 'ollama',
     apiKey: '',
     baseURL: 'http://localhost:11434/v1',
-    model: ''
+    model: '',
+    searchEngine: 'duckduckgo',
+    searchUrl: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -278,7 +280,9 @@ export default function Settings() {
         provider: 'ollama',
         apiKey: '',
         baseURL: 'http://localhost:11434/v1',
-        model: ''
+        model: '',
+        searchEngine: 'duckduckgo',
+        searchUrl: '',
       };
       setSettings(defaultSettings);
       await settingsStore.clear();
