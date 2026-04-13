@@ -12,11 +12,14 @@ describe('session store', () => {
     expect(s.resumeFilename).toBeNull();
     expect(s.freeText).toBe('');
     expect(s.jobTitle).toBe('');
+    expect(s.jobAdvert).toBe('');
     expect(s.chatMessages).toEqual([]);
     expect(s.currentFocus).toBeNull();
     expect(s.distilledProfile).toBeNull();
     expect(s.careers).toBeNull();
     expect(s.selectedCareerId).toBeNull();
+    expect(s.gapAnalysis).toBeNull();
+    expect(s.learningPath).toBeNull();
   });
 });
 
@@ -75,18 +78,68 @@ describe('session store actions', () => {
     s.setResume('a', 'b');
     s.setFreeText('c');
     s.setJobTitle('d');
-    s.addChatMessage({ role: 'user', content: 'e' });
-    s.setFocus('f');
+    s.setJobAdvert('e');
+    s.addChatMessage({ role: 'user', content: 'f' });
+    s.setFocus('g');
     s.setDistilledProfile({
-      background: 'g', interests: [], skills: [], constraints: [], goals: [],
+      background: 'h', interests: [], skills: [], constraints: [], goals: [],
+    });
+    s.setGapAnalysis({
+      target: 'X', summary: 'Y', matches: [], gaps: [{
+        title: 't', category: 'technical', severity: 'critical',
+        why: 'w', targetLevel: 'tl', currentLevel: null, evidenceIdeas: ['e'],
+      }], realisticTimeline: 'Z',
+    });
+    s.setLearningPath({
+      target: 'X', summary: 'Y', prerequisites: [], milestones: [{
+        weekRange: 'W1', focus: 'f', activities: ['a'], outcome: 'o',
+      }],
+      portfolioProject: 'P', totalDuration: 'D', caveats: [],
     });
     s.reset();
     const after = useSessionStore.getState();
     expect(after.resumeText).toBeNull();
     expect(after.freeText).toBe('');
     expect(after.jobTitle).toBe('');
+    expect(after.jobAdvert).toBe('');
     expect(after.chatMessages).toEqual([]);
     expect(after.currentFocus).toBeNull();
     expect(after.distilledProfile).toBeNull();
+    expect(after.gapAnalysis).toBeNull();
+    expect(after.learningPath).toBeNull();
+  });
+
+  it('setJobAdvert writes the field', () => {
+    useSessionStore.getState().setJobAdvert('a posting');
+    expect(useSessionStore.getState().jobAdvert).toBe('a posting');
+  });
+
+  it('setGapAnalysis writes the field', () => {
+    const g = {
+      target: 'Data Analyst',
+      summary: 's',
+      matches: ['m'],
+      gaps: [{
+        title: 'SQL', category: 'technical' as const, severity: 'critical' as const,
+        why: 'w', targetLevel: 't', currentLevel: null, evidenceIdeas: ['e'],
+      }],
+      realisticTimeline: '3 months',
+    };
+    useSessionStore.getState().setGapAnalysis(g);
+    expect(useSessionStore.getState().gapAnalysis).toEqual(g);
+  });
+
+  it('setLearningPath writes the field', () => {
+    const l = {
+      target: 'Data Analyst',
+      summary: 's',
+      prerequisites: ['p'],
+      milestones: [{ weekRange: 'W1-2', focus: 'f', activities: ['a'], outcome: 'o' }],
+      portfolioProject: 'pp',
+      totalDuration: '12 weeks',
+      caveats: ['c'],
+    };
+    useSessionStore.getState().setLearningPath(l);
+    expect(useSessionStore.getState().learningPath).toEqual(l);
   });
 });
