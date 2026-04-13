@@ -94,11 +94,17 @@ export default function InputsZone({ missingHints, onClearHints }: Props) {
       )}
 
       <div className='grid md:grid-cols-2 gap-4'>
-        <div className={fieldClass(missingHints.resume)}>
+        {/* Left column: Resume drop zone (fills the column height) */}
+        <div className={`flex flex-col ${fieldClass(missingHints.resume)}`}>
           <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
             Resume
           </label>
-          <LocalFileUpload onFileSelect={handleResumeSelect} />
+          <div className='flex-1 flex flex-col'>
+            <LocalFileUpload
+              onFileSelect={handleResumeSelect}
+              className='flex-1 flex items-center justify-center'
+            />
+          </div>
           {store.resumeFilename && (
             <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
               Selected: {store.resumeFilename}
@@ -106,54 +112,57 @@ export default function InputsZone({ missingHints, onClearHints }: Props) {
           )}
         </div>
 
-        <div className={fieldClass(missingHints.jobTitle)}>
-          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-            Job title
-          </label>
-          <Input
-            placeholder='e.g., Data Analyst'
-            value={store.jobTitle}
-            onChange={(e) => {
-              store.setJobTitle(e.target.value);
-              if (e.target.value.trim()) onClearHints();
-            }}
-          />
-        </div>
+        {/* Right column: three stacked inputs */}
+        <div className='flex flex-col gap-4'>
+          <div className={fieldClass(missingHints.jobTitle)}>
+            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+              Job title
+            </label>
+            <Input
+              placeholder='e.g., Data Analyst'
+              value={store.jobTitle}
+              onChange={(e) => {
+                store.setJobTitle(e.target.value);
+                if (e.target.value.trim()) onClearHints();
+              }}
+            />
+          </div>
 
-        <div className={fieldClass(missingHints.aboutYou)}>
-          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-            About you
-          </label>
-          {showPrefillHint && (
-            <p className='text-[var(--text-xs)] text-ink-quiet mb-1 italic'>
-              Pre-filled from your advisor chat. Edit freely.
-            </p>
-          )}
-          <Textarea
-            rows={4}
-            placeholder='A few words about your background, interests, and goals.'
-            value={store.freeText}
-            onChange={(e) => {
-              store.setFreeText(e.target.value);
-              setAboutYouEdited(true);
-              if (e.target.value.trim()) onClearHints();
-            }}
-          />
-        </div>
+          <div className={fieldClass(missingHints.aboutYou)}>
+            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+              About you
+            </label>
+            {showPrefillHint && (
+              <p className='text-[var(--text-xs)] text-ink-quiet mb-1 italic'>
+                Pre-filled from your advisor chat. Edit freely.
+              </p>
+            )}
+            <Textarea
+              rows={3}
+              placeholder='A few words about your background, interests, and goals.'
+              value={store.freeText}
+              onChange={(e) => {
+                store.setFreeText(e.target.value);
+                setAboutYouEdited(true);
+                if (e.target.value.trim()) onClearHints();
+              }}
+            />
+          </div>
 
-        <div className={fieldClass(missingHints.jobAdvert)}>
-          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-            Job advert
-          </label>
-          <Textarea
-            rows={6}
-            placeholder='Paste a job posting you want to analyse or work toward.'
-            value={store.jobAdvert}
-            onChange={(e) => {
-              store.setJobAdvert(e.target.value);
-              if (e.target.value.trim()) onClearHints();
-            }}
-          />
+          <div className={fieldClass(missingHints.jobAdvert)}>
+            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+              Job advert
+            </label>
+            <Textarea
+              rows={4}
+              placeholder='Paste a job posting you want to analyse or work toward.'
+              value={store.jobAdvert}
+              onChange={(e) => {
+                store.setJobAdvert(e.target.value);
+                if (e.target.value.trim()) onClearHints();
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
