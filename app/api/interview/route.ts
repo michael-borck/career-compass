@@ -98,12 +98,28 @@ export async function POST(request: NextRequest) {
       hasContextBlock: !!fullContext,
     });
 
+    // Anthropic (and some other providers) require at least one user/assistant
+    // message — system messages alone are rejected. On the opening turn we
+    // seed a synthetic kickoff so the model produces its warm-up question.
+    const seededMessages: ChatMessage[] =
+      messages.length === 0
+        ? [
+            {
+              id: 'seed-start',
+              role: 'user',
+              content: `I'm ready to begin the practice interview for ${target}. Please start with your first question.`,
+              timestamp: Date.now(),
+              kind: 'message',
+            },
+          ]
+        : messages;
+
     let trimmed = false;
     let reply: string;
 
     try {
       reply = await provider.createCompletion(
-        toProviderMessages(messages, systemPrompt, fullContext),
+        toProviderMessages(seededMessages, systemPrompt, fullContext),
         llmConfig
       );
     } catch (err) {
@@ -124,13 +140,13 @@ export async function POST(request: NextRequest) {
 
       try {
         reply = await provider.createCompletion(
-          toProviderMessages(messages, systemPrompt, trimmedContext),
+          toProviderMessages(seededMessages, systemPrompt, trimmedContext),
           llmConfig
         );
       } catch (err2) {
         if (!isTokenLimitError(err2)) throw err2;
         // Second retry: trim message history to last 20
-        const shortMessages = messages.slice(-MESSAGE_TRIM_COUNT);
+        const shortMessages = seededMessages.slice(-MESSAGE_TRIM_COUNT);
         reply = await provider.createCompletion(
           toProviderMessages(shortMessages, systemPrompt, trimmedContext),
           llmConfig
