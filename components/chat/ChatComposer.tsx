@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
   onSend: (text: string) => void;
-  onPaperclip: () => void;
+  onPaperclip?: () => void;
   disabled?: boolean;
 };
 
@@ -30,15 +30,17 @@ export default function ChatComposer({ onSend, onPaperclip, disabled }: Props) {
 
   return (
     <div className='border-t border-border px-6 py-4 flex items-end gap-2'>
-      <Button
-        type='button'
-        variant='outline'
-        onClick={onPaperclip}
-        disabled={disabled}
-        aria-label='Attach'
-      >
-        <Paperclip className='w-4 h-4' />
-      </Button>
+      {onPaperclip && (
+        <Button
+          type='button'
+          variant='outline'
+          onClick={onPaperclip}
+          disabled={disabled}
+          aria-label='Attach'
+        >
+          <Paperclip className='w-4 h-4' />
+        </Button>
+      )}
       <Textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
