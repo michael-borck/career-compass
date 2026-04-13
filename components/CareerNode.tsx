@@ -12,7 +12,7 @@ import {
 import Link from 'next/link';
 import { useSessionStore } from '@/lib/session-store';
 import type { GapAnalysis, LearningPath } from '@/lib/session-store';
-import { MessageCircle, SearchCheck, Route as RouteIcon } from 'lucide-react';
+import { MessageCircle, SearchCheck, Route as RouteIcon, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import { loadLLMConfig } from '@/lib/llm-client';
@@ -130,6 +130,12 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     }
   }
 
+  function handlePracticeInterview() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    router.push('/interview');
+  }
+
   const difficultyColor =
     difficulty?.toLowerCase() === 'low'
       ? 'text-accent'
@@ -239,6 +245,10 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
           <Button variant='outline' onClick={handleLearningPath} disabled={running !== null}>
             <RouteIcon className='w-4 h-4 mr-2' />
             {running === 'learn' ? 'Building…' : 'Learning path for this role'}
+          </Button>
+          <Button variant='outline' onClick={handlePracticeInterview} disabled={running !== null}>
+            <Mic className='w-4 h-4 mr-2' />
+            Practice interview for this role
           </Button>
         </div>
       </DialogContent>
