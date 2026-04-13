@@ -62,14 +62,13 @@ export default function UploadCard() {
   }
 
   return (
-    <div className='border border-border rounded-lg p-8 bg-paper flex flex-col gap-5 w-full max-w-xl'>
+    <div className='border border-border rounded-lg p-6 bg-paper flex flex-col gap-4 w-full max-w-xl'>
       <div>
-        <h2 className='text-[var(--text-xl)] font-semibold text-ink mb-2'>
-          Upload & Explore
+        <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-1'>
+          Upload &amp; Explore
         </h2>
         <p className='text-ink-muted text-[var(--text-sm)]'>
-          Upload a resume, describe yourself, or just tell us a job title you're
-          curious about. Any combination works.
+          Resume, a few words, or a job title. Any combination works.
         </p>
       </div>
 
@@ -80,20 +79,20 @@ export default function UploadCard() {
         }}
       />
       {fileName && (
-        <p className='text-[var(--text-sm)] text-ink-muted'>Selected: {fileName}</p>
+        <p className='text-[var(--text-xs)] text-ink-muted -mt-2'>Selected: {fileName}</p>
       )}
 
-      <Textarea
-        placeholder='Or describe your background, interests, and goals.'
-        value={localFreeText}
-        onChange={(e) => setLocalFreeText(e.target.value)}
-        rows={4}
-      />
-
       <Input
-        placeholder='Or just tell me a job title (e.g., Data Analyst)'
+        placeholder='Job title (e.g., Data Analyst)'
         value={localJobTitle}
         onChange={(e) => setLocalJobTitle(e.target.value)}
+      />
+
+      <Textarea
+        placeholder='Or a few words about your background, interests, goals…'
+        value={localFreeText}
+        onChange={(e) => setLocalFreeText(e.target.value)}
+        rows={3}
       />
 
       <Button

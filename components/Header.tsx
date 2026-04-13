@@ -11,7 +11,6 @@ const Header = () => {
 
   const navigation = [
     { title: 'Home', path: '/' },
-    { title: 'Explore careers', path: '/careers' },
     { title: 'About', path: '/about' },
     { title: 'Settings', path: '/settings' },
   ];
