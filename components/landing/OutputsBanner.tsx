@@ -10,6 +10,8 @@ export default function OutputsBanner() {
     careers,
     gapAnalysis,
     learningPath,
+    interviewMessages,
+    interviewFeedback,
   } = store;
 
   const userMessageCount = chatMessages.filter(
@@ -19,8 +21,18 @@ export default function OutputsBanner() {
   const hasChat = userMessageCount > 0;
   const hasGap = !!gapAnalysis;
   const hasPath = !!learningPath;
+  const hasInterviewFeedback = !!interviewFeedback;
+  const hasInterviewInProgress =
+    interviewMessages.length > 0 && !hasInterviewFeedback;
 
-  if (!hasCareers && !hasChat && !hasGap && !hasPath) return null;
+  if (
+    !hasCareers &&
+    !hasChat &&
+    !hasGap &&
+    !hasPath &&
+    !hasInterviewInProgress &&
+    !hasInterviewFeedback
+  ) return null;
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;
@@ -50,6 +62,16 @@ export default function OutputsBanner() {
         {hasPath && (
           <Link href='/learning-path' className='underline hover:text-accent'>
             learning path ready
+          </Link>
+        )}
+        {hasInterviewInProgress && (
+          <Link href='/interview' className='underline hover:text-accent'>
+            interview in progress
+          </Link>
+        )}
+        {hasInterviewFeedback && (
+          <Link href='/interview' className='underline hover:text-accent'>
+            interview feedback ready
           </Link>
         )}
       </div>
