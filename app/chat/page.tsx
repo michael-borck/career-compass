@@ -1,7 +1,7 @@
 'use client';
 
 import toast, { Toaster } from 'react-hot-toast';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionStore, type StudentProfile } from '@/lib/session-store';
 import ChatTopBar from '@/components/chat/ChatTopBar';
@@ -118,6 +118,18 @@ export default function ChatPage() {
     setReviewOpen(false);
     router.push('/careers');
   }
+
+  // On mount, if the landing page staged a pending message, send it once.
+  const pendingHandledRef = useRef(false);
+  useEffect(() => {
+    if (pendingHandledRef.current) return;
+    const pending = useSessionStore.getState().pendingChatMessage;
+    if (!pending) return;
+    pendingHandledRef.current = true;
+    useSessionStore.getState().setPendingChatMessage(null);
+    handleSend(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className='h-[calc(100vh-4rem)] flex flex-col'>

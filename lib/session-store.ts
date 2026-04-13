@@ -33,6 +33,7 @@ export type SessionState = {
   // Chat
   chatMessages: ChatMessage[];
   currentFocus: string | null;
+  pendingChatMessage: string | null;
 
   // Outputs
   distilledProfile: StudentProfile | null;
@@ -47,6 +48,7 @@ export type SessionState = {
   addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> & Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>) => void;
   replaceChatMessages: (msgs: ChatMessage[]) => void;
   setFocus: (career: string | null) => void;
+  setPendingChatMessage: (text: string | null) => void;
   setDistilledProfile: (profile: StudentProfile | null) => void;
   setCareers: (careers: finalCareerInfo[] | null) => void;
   reset: () => void;
@@ -59,6 +61,7 @@ const initialState = {
   jobTitle: '',
   chatMessages: [],
   currentFocus: null,
+  pendingChatMessage: null,
   distilledProfile: null,
   careers: null,
   selectedCareerId: null,
@@ -94,6 +97,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   replaceChatMessages: (msgs) => set({ chatMessages: msgs }),
 
   setFocus: (career) => set({ currentFocus: career }),
+  setPendingChatMessage: (text) => set({ pendingChatMessage: text }),
   setDistilledProfile: (profile) => set({ distilledProfile: profile }),
   setCareers: (careers) => set({ careers }),
 
