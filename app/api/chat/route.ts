@@ -88,6 +88,15 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildAdvisorSystemPrompt(currentFocus);
     const contextBlock = buildContextBlock(resumeText, freeText, jobTitle);
 
+    console.log('[chat] incoming:', {
+      messageCount: messages?.length,
+      currentFocus,
+      resumeTextLen: resumeText ? resumeText.length : 0,
+      freeTextLen: freeText ? freeText.length : 0,
+      jobTitle: jobTitle || null,
+      contextBlockPresent: !!contextBlock,
+    });
+
     let trimmed = false;
     let reply: string;
 
