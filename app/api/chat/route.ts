@@ -11,13 +11,15 @@ interface ChatRequest {
   resumeText?: string | null;
   freeText?: string;
   jobTitle?: string;
+  jobAdvert?: string;
   llmConfig?: LLMConfig;
 }
 
 function buildContextBlock(
   resumeText?: string | null,
   freeText?: string,
-  jobTitle?: string
+  jobTitle?: string,
+  jobAdvert?: string
 ): string | null {
   const parts: string[] = [];
   if (resumeText && resumeText.trim()) {
@@ -29,8 +31,11 @@ function buildContextBlock(
   if (jobTitle && jobTitle.trim()) {
     parts.push(`JOB OF INTEREST: ${jobTitle.trim()}`);
   }
+  if (jobAdvert && jobAdvert.trim()) {
+    parts.push(`JOB ADVERT (full text, shared directly with you):\n${jobAdvert.trim()}`);
+  }
   if (parts.length === 0) return null;
-  return `The student has shared the following information with you. The full text is included below — you CAN read it. When the student refers to "my resume", "the resume", "my attachment", "what I uploaded", or similar phrases, they mean this content. Refer to it by its details, not as a separate file:\n\n${parts.join('\n\n')}`;
+  return `The student has shared the following information with you. The full text is included below — you CAN read it. When the student refers to "my resume", "the resume", "my attachment", "the job", "the advert", "what I uploaded", or similar phrases, they mean this content. Refer to it by its details, not as a separate file:\n\n${parts.join('\n\n')}`;
 }
 
 function toProviderMessages(
@@ -67,13 +72,14 @@ export async function POST(request: NextRequest) {
       resumeText,
       freeText,
       jobTitle,
+      jobAdvert,
       llmConfig: clientConfig,
     } = (await request.json()) as ChatRequest;
 
     const llmConfig = clientConfig || (await getLLMConfig());
     const provider = getLLMProvider(llmConfig);
     const systemPrompt = buildAdvisorSystemPrompt(currentFocus);
-    const contextBlock = buildContextBlock(resumeText, freeText, jobTitle);
+    const contextBlock = buildContextBlock(resumeText, freeText, jobTitle, jobAdvert);
 
     console.log('[chat] incoming:', {
       messageCount: messages?.length,
@@ -81,6 +87,7 @@ export async function POST(request: NextRequest) {
       resumeTextLen: resumeText ? resumeText.length : 0,
       freeTextLen: freeText ? freeText.length : 0,
       jobTitle: jobTitle || null,
+      jobAdvertLen: jobAdvert ? jobAdvert.length : 0,
       contextBlockPresent: !!contextBlock,
     });
 

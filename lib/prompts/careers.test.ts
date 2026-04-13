@@ -64,4 +64,10 @@ describe('buildCareersPrompt', () => {
     const out = buildCareersPrompt({ freeText: 'x' });
     expect(out).toMatch(/JSON/i);
   });
+
+  it('includes job advert when provided', () => {
+    const out = buildCareersPrompt({ jobAdvert: 'We are hiring a Data Analyst...' });
+    expect(out).toContain('We are hiring a Data Analyst');
+    expect(out).toContain('<jobAdvert>');
+  });
 });

@@ -4,6 +4,7 @@ export type CareersInput = {
   resume?: string;
   freeText?: string;
   jobTitle?: string;
+  jobAdvert?: string;
   distilledProfile?: StudentProfile;
 };
 
@@ -37,12 +38,13 @@ function formatProfile(p: StudentProfile): string {
 }
 
 export function buildCareersPrompt(input: CareersInput): string {
-  const { resume, freeText, jobTitle, distilledProfile } = input;
+  const { resume, freeText, jobTitle, jobAdvert, distilledProfile } = input;
 
   const hasAny =
     (resume && resume.trim()) ||
     (freeText && freeText.trim()) ||
     (jobTitle && jobTitle.trim()) ||
+    (jobAdvert && jobAdvert.trim()) ||
     distilledProfile;
 
   if (!hasAny) {
@@ -61,6 +63,10 @@ export function buildCareersPrompt(input: CareersInput): string {
     sections.push(
       `<jobTitleOfInterest>\nThe student is curious about becoming a ${jobTitle.trim()}. Generate 6 adjacent or alternative career paths they might explore, including the stated one and variants/progressions.\n</jobTitleOfInterest>`
     );
+  }
+
+  if (jobAdvert && jobAdvert.trim()) {
+    sections.push(`<jobAdvert>\n${jobAdvert.trim()}\n</jobAdvert>`);
   }
 
   if (resume && resume.trim()) {
@@ -90,6 +96,7 @@ export function buildCareerDetailPrompt(
   if (input.resume) parts.push(input.resume);
   if (input.freeText) parts.push(input.freeText);
   if (input.jobTitle) parts.push(`Student stated interest: ${input.jobTitle}`);
+  if (input.jobAdvert) parts.push(`Job advert of interest:\n${input.jobAdvert}`);
   if (input.distilledProfile) parts.push(formatProfile(input.distilledProfile));
 
   const context = parts.join('\n\n');
