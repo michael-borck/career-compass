@@ -20,6 +20,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.0.2",
@@ -27,6 +28,7 @@
     "clsx": "^2.1.1",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.6.2",
+    "jsdom": "^29.0.2",
     "lucide-react": "^0.378.0",
     "mammoth": "^1.9.1",
     "next": "14.2.3",
@@ -41,6 +43,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@types/jsdom": "^28.0.1",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
