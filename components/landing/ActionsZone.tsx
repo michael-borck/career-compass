@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { settingsStore } from '@/lib/settings-store';
-import { ensureUrlFetched } from '@/lib/url-fetch-client';
 import type { MissingHints } from './InputsZone';
 
 type Props = {
@@ -39,15 +38,12 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
   }
 
   async function handleFindCareers() {
-    const fetched = await ensureUrlFetched();
-    if (!fetched) return;
     clearMissingHints();
-    const s = useSessionStore.getState();
     const has =
-      !!s.resumeText ||
-      !!s.jobTitle.trim() ||
-      !!s.freeText.trim() ||
-      !!s.jobAdvert.trim();
+      !!store.resumeText ||
+      !!store.jobTitle.trim() ||
+      !!store.freeText.trim() ||
+      !!store.jobAdvert.trim();
     if (!has) {
       setMissingHints({
         resume: true,
@@ -65,20 +61,15 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
   }
 
   async function handleStartChatting() {
-    const fetched = await ensureUrlFetched();
-    if (!fetched) return;
     clearMissingHints();
     if (!(await ensureProvider())) return;
     router.push('/chat');
   }
 
   async function handleGapAnalysis() {
-    const fetched = await ensureUrlFetched();
-    if (!fetched) return;
     clearMissingHints();
-    const s = useSessionStore.getState();
-    const hasTarget = !!s.jobAdvert.trim() || !!s.jobTitle.trim();
-    const hasProfile = !!s.resumeText || !!s.freeText.trim() || !!s.distilledProfile;
+    const hasTarget = !!store.jobAdvert.trim() || !!store.jobTitle.trim();
+    const hasProfile = !!store.resumeText || !!store.freeText.trim() || !!store.distilledProfile;
     if (!hasTarget && !hasProfile) {
       setMissingHints({
         resume: true,
@@ -123,11 +114,11 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobAdvert: s.jobAdvert || undefined,
-          jobTitle: s.jobTitle || undefined,
-          resume: s.resumeText ?? undefined,
-          aboutYou: s.freeText || undefined,
-          distilledProfile: s.distilledProfile ?? undefined,
+          jobAdvert: store.jobAdvert || undefined,
+          jobTitle: store.jobTitle || undefined,
+          resume: store.resumeText ?? undefined,
+          aboutYou: store.freeText || undefined,
+          distilledProfile: store.distilledProfile ?? undefined,
           grounded,
           llmConfig,
         }),
@@ -148,11 +139,8 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
   }
 
   async function handleLearningPath() {
-    const fetched = await ensureUrlFetched();
-    if (!fetched) return;
     clearMissingHints();
-    const s = useSessionStore.getState();
-    const hasTarget = !!s.jobAdvert.trim() || !!s.jobTitle.trim();
+    const hasTarget = !!store.jobAdvert.trim() || !!store.jobTitle.trim();
     if (!hasTarget) {
       setMissingHints({
         resume: false,
@@ -175,11 +163,11 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobAdvert: s.jobAdvert || undefined,
-          jobTitle: s.jobTitle || undefined,
-          resume: s.resumeText ?? undefined,
-          aboutYou: s.freeText || undefined,
-          distilledProfile: s.distilledProfile ?? undefined,
+          jobAdvert: store.jobAdvert || undefined,
+          jobTitle: store.jobTitle || undefined,
+          resume: store.resumeText ?? undefined,
+          aboutYou: store.freeText || undefined,
+          distilledProfile: store.distilledProfile ?? undefined,
           grounded,
           llmConfig,
         }),
@@ -200,11 +188,8 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
   }
 
   async function handleInterview() {
-    const fetched = await ensureUrlFetched();
-    if (!fetched) return;
     clearMissingHints();
-    const s = useSessionStore.getState();
-    const hasTarget = !!s.jobAdvert.trim() || !!s.jobTitle.trim();
+    const hasTarget = !!store.jobAdvert.trim() || !!store.jobTitle.trim();
     if (!hasTarget) {
       setMissingHints({
         resume: false,

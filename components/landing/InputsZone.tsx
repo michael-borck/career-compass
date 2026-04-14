@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useSessionStore } from '@/lib/session-store';
 import { fileToArrayBuffer } from '@/lib/utils';
 import { profileToReadableText } from '@/lib/profile-text';
-import UrlInputField from './UrlInputField';
 
 export type MissingHints = {
   resume: boolean;
@@ -94,7 +93,6 @@ export default function InputsZone({ missingHints, onClearHints }: Props) {
         </div>
       )}
 
-      <UrlInputField />
       <div className='grid md:grid-cols-2 gap-4'>
         {/* Left column: Resume drop zone (fills the column height) */}
         <div className={`flex flex-col ${fieldClass(missingHints.resume)}`}>
