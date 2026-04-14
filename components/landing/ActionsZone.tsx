@@ -7,6 +7,7 @@ import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic } from 'lu
 import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
+import { settingsStore } from '@/lib/settings-store';
 import type { MissingHints } from './InputsZone';
 
 type Props = {
@@ -107,6 +108,8 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     setRunning('gaps');
     try {
       const llmConfig = await loadLLMConfig();
+      const settings = await settingsStore.get();
+      const grounded = (settings.searchEngine ?? 'duckduckgo') !== 'disabled';
       const res = await fetch('/api/gapAnalysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,6 +119,7 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           resume: store.resumeText ?? undefined,
           aboutYou: store.freeText || undefined,
           distilledProfile: store.distilledProfile ?? undefined,
+          grounded,
           llmConfig,
         }),
       });
@@ -153,6 +157,8 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     setRunning('learn');
     try {
       const llmConfig = await loadLLMConfig();
+      const settings = await settingsStore.get();
+      const grounded = (settings.searchEngine ?? 'duckduckgo') !== 'disabled';
       const res = await fetch('/api/learningPath', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,6 +168,7 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           resume: store.resumeText ?? undefined,
           aboutYou: store.freeText || undefined,
           distilledProfile: store.distilledProfile ?? undefined,
+          grounded,
           llmConfig,
         }),
       });
