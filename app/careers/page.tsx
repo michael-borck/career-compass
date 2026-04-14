@@ -67,6 +67,7 @@ export default function CareersPage() {
     resumeText,
     freeText,
     jobTitle,
+    jobAdvert,
     distilledProfile,
     careers,
   } = store;
@@ -113,6 +114,7 @@ export default function CareersPage() {
       !!resumeText ||
       !!freeText.trim() ||
       !!jobTitle.trim() ||
+      !!jobAdvert.trim() ||
       !!distilledProfile;
     if (!hasInput || careers || loading || needsSetup) return;
 
@@ -127,6 +129,7 @@ export default function CareersPage() {
             resume: resumeText ?? undefined,
             freeText: freeText || undefined,
             jobTitle: jobTitle || undefined,
+            jobAdvert: jobAdvert || undefined,
             distilledProfile: distilledProfile ?? undefined,
             llmConfig,
           }),
@@ -144,7 +147,7 @@ export default function CareersPage() {
         setLoading(false);
       }
     })();
-  }, [resumeText, freeText, jobTitle, distilledProfile, careers, loading, needsSetup, store]);
+  }, [resumeText, freeText, jobTitle, jobAdvert, distilledProfile, careers, loading, needsSetup, store]);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
