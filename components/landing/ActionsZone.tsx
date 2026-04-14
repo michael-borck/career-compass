@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic } from 'lucide-react';
+import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
@@ -206,30 +206,63 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     router.push('/interview');
   }
 
+  async function handleOdyssey() {
+    clearMissingHints();
+    if (!(await ensureProvider())) return;
+    router.push('/odyssey');
+  }
+
   const anyRunning = running !== null;
 
   return (
-    <div className='w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-3 mt-6'>
-      <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
-        <Compass className='w-4 h-4 mr-2' />
-        Find my careers
-      </Button>
-      <Button onClick={handleStartChatting} disabled={anyRunning} variant='outline' className='py-6'>
-        <MessageCircle className='w-4 h-4 mr-2' />
-        Start chatting
-      </Button>
-      <Button onClick={handleGapAnalysis} disabled={anyRunning} variant='outline' className='py-6'>
-        <SearchCheck className='w-4 h-4 mr-2' />
-        {running === 'gaps' ? 'Analysing…' : 'Gap analysis'}
-      </Button>
-      <Button onClick={handleLearningPath} disabled={anyRunning} variant='outline' className='py-6'>
-        <RouteIcon className='w-4 h-4 mr-2' />
-        {running === 'learn' ? 'Building…' : 'Learning path'}
-      </Button>
-      <Button onClick={handleInterview} disabled={anyRunning} variant='outline' className='py-6'>
-        <Mic className='w-4 h-4 mr-2' />
-        Practice interview
-      </Button>
+    <div className='w-full max-w-5xl mt-6 space-y-8'>
+      <section>
+        <div className='editorial-rule justify-center mb-3'>
+          <span>Discover</span>
+        </div>
+        <div className='grid grid-cols-2 gap-3'>
+          <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
+            <Compass className='w-4 h-4 mr-2' />
+            Find my careers
+          </Button>
+          <Button onClick={handleStartChatting} disabled={anyRunning} variant='outline' className='py-6'>
+            <MessageCircle className='w-4 h-4 mr-2' />
+            Start chatting
+          </Button>
+        </div>
+      </section>
+
+      <section>
+        <div className='editorial-rule justify-center mb-3'>
+          <span>Assess</span>
+        </div>
+        <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+          <Button onClick={handleGapAnalysis} disabled={anyRunning} variant='outline' className='py-6'>
+            <SearchCheck className='w-4 h-4 mr-2' />
+            {running === 'gaps' ? 'Analysing…' : 'Gap analysis'}
+          </Button>
+          <Button onClick={handleLearningPath} disabled={anyRunning} variant='outline' className='py-6'>
+            <RouteIcon className='w-4 h-4 mr-2' />
+            {running === 'learn' ? 'Building…' : 'Learning path'}
+          </Button>
+          <Button onClick={handleInterview} disabled={anyRunning} variant='outline' className='py-6'>
+            <Mic className='w-4 h-4 mr-2' />
+            Practice interview
+          </Button>
+        </div>
+      </section>
+
+      <section>
+        <div className='editorial-rule justify-center mb-3'>
+          <span>Reflect</span>
+        </div>
+        <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+          <Button onClick={handleOdyssey} disabled={anyRunning} variant='outline' className='py-6'>
+            <Sparkles className='w-4 h-4 mr-2' />
+            Imagine three lives
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
