@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildGapAnalysisPrompt, parseGapAnalysis } from './gaps';
+import type { SourceRef } from '@/lib/session-store';
 
 describe('buildGapAnalysisPrompt', () => {
   it('throws when no target is provided', () => {
@@ -58,6 +59,38 @@ describe('buildGapAnalysisPrompt', () => {
     expect(out).toContain('targetLevel');
     expect(out).toContain('evidenceIdeas');
     expect(out).toContain('realisticTimeline');
+  });
+
+  it('includes sources block when sources are provided', () => {
+    const sources: SourceRef[] = [
+      { title: 'Glassdoor', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
+    ];
+    const out = buildGapAnalysisPrompt({
+      jobTitle: 'Data Analyst',
+      resume: 'r',
+      sources,
+    });
+    expect(out).toContain('<sources>');
+    expect(out).toContain('Glassdoor');
+    expect(out).toContain('[1]');
+    expect(out).toMatch(/inline marker/i);
+  });
+
+  it('does not include sources block when sources are absent', () => {
+    const out = buildGapAnalysisPrompt({
+      jobTitle: 'Data Analyst',
+      resume: 'r',
+    });
+    expect(out).not.toContain('<sources>');
+  });
+
+  it('does not include sources block when sources are empty', () => {
+    const out = buildGapAnalysisPrompt({
+      jobTitle: 'Data Analyst',
+      resume: 'r',
+      sources: [],
+    });
+    expect(out).not.toContain('<sources>');
   });
 });
 

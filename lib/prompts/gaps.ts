@@ -1,4 +1,5 @@
-import type { GapAnalysis, StudentProfile } from '@/lib/session-store';
+import type { GapAnalysis, StudentProfile, SourceRef } from '@/lib/session-store';
+import { formatSourcesForInlineCite } from '@/lib/search-prompt';
 
 export type GapAnalysisInput = {
   jobAdvert?: string;
@@ -6,6 +7,7 @@ export type GapAnalysisInput = {
   resume?: string;
   aboutYou?: string;
   distilledProfile?: StudentProfile;
+  sources?: SourceRef[];
 };
 
 function formatProfile(p: StudentProfile): string {
@@ -19,7 +21,7 @@ function formatProfile(p: StudentProfile): string {
 }
 
 export function buildGapAnalysisPrompt(input: GapAnalysisInput): string {
-  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile } = input;
+  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, sources } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
   const hasProfile =
@@ -50,7 +52,7 @@ export function buildGapAnalysisPrompt(input: GapAnalysisInput): string {
   }
   const profileSection = `<profile>\n${profileParts.join('\n\n')}\n</profile>`;
 
-  return [
+  const sections: string[] = [
     `Read the target role and the student's profile below. Identify specific gaps the student needs to close to be a strong candidate. Be honest but encouraging — always call out what the student already has. Never fabricate specific course names, URLs, certifications, or pricing. Describe the type of evidence that would close each gap, not named products. If the profile is thin, say so in the summary.`,
     `Respond with JSON in EXACTLY this shape (no extra fields, no prose, no code fences):
 
@@ -74,8 +76,14 @@ Each Gap has the shape:
 }`,
     targetSection,
     profileSection,
-    'ONLY respond with JSON. No prose, no code fences.',
-  ].join('\n\n');
+  ];
+
+  if (sources && sources.length > 0) {
+    sections.push(formatSourcesForInlineCite(sources));
+  }
+
+  sections.push('ONLY respond with JSON. No prose, no code fences.');
+  return sections.join('\n\n');
 }
 
 function cleanJSON(text: string): string {
