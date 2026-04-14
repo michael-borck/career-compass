@@ -11,6 +11,8 @@ export type UrlFetchErrorCode =
   | 'invalid'
   | 'timeout'
   | 'linkedin-blocked'
+  | 'forbidden'
+  | 'not-found'
   | 'network'
   | 'no-content';
 
@@ -71,8 +73,27 @@ export async function fetchAndExtract(rawUrl: string): Promise<FetchResult> {
   }
 
   if (!response.ok) {
+    // 401 / 403 / 429 / 451 all mean "this site actively blocks automated fetches".
+    // The right answer for the student is to copy-paste the content manually.
+    if (
+      response.status === 401 ||
+      response.status === 403 ||
+      response.status === 429 ||
+      response.status === 451
+    ) {
+      throw new UrlFetchError(
+        `${url.hostname.replace(/^www\./, '')} blocks automated page fetches. Copy the content from your browser and paste it into Job advert or About you manually.`,
+        'forbidden'
+      );
+    }
+    if (response.status === 404) {
+      throw new UrlFetchError(
+        'That page was not found (404). Check the URL or try a different link.',
+        'not-found'
+      );
+    }
     throw new UrlFetchError(
-      `The page returned ${response.status} ${response.statusText}.`,
+      `The page returned ${response.status} ${response.statusText}. Try copying the content manually.`,
       'network'
     );
   }
