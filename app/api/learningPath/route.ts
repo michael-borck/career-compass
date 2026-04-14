@@ -2,9 +2,13 @@ import { NextRequest } from 'next/server';
 import { getLLMConfig, getLLMProvider, type LLMConfig } from '@/lib/llm-providers';
 import { buildLearningPathPrompt, parseLearningPath, type LearningPathInput } from '@/lib/prompts/learningPath';
 import { isTokenLimitError } from '@/lib/token-limit';
+import { search } from '@/lib/search-service';
+import { loadSearchSettings, isSearchConfigured } from '@/lib/search-settings';
+import type { SourceRef } from '@/lib/session-store';
 
 interface LearningPathRequest extends LearningPathInput {
   llmConfig?: LLMConfig;
+  grounded?: boolean;
 }
 
 const ADVERT_TRIM_CHARS = 4000;
@@ -18,7 +22,7 @@ function trimInput(input: LearningPathInput): LearningPathInput {
 
 export async function POST(request: NextRequest) {
   try {
-    const { llmConfig: clientConfig, ...input } =
+    const { llmConfig: clientConfig, grounded, ...input } =
       (await request.json()) as LearningPathRequest;
 
     const hasTarget = !!((input.jobAdvert && input.jobAdvert.trim()) || (input.jobTitle && input.jobTitle.trim()));
@@ -31,6 +35,33 @@ export async function POST(request: NextRequest) {
 
     const llmConfig = clientConfig || (await getLLMConfig());
     const provider = getLLMProvider(llmConfig);
+
+    let sources: SourceRef[] = [];
+    let groundingFailed = false;
+    const searchSettings = await loadSearchSettings();
+    if (grounded && isSearchConfigured(searchSettings)) {
+      try {
+        const targetForSearch =
+          (input.jobTitle && input.jobTitle.trim()) ||
+          (input.jobAdvert && input.jobAdvert.trim().split('\n')[0].slice(0, 100)) ||
+          'this role';
+        const topGaps = input.gapAnalysis
+          ? input.gapAnalysis.gaps
+              .filter((g) => g.severity === 'critical')
+              .slice(0, 3)
+              .map((g) => g.title)
+              .join(' ')
+          : '';
+        const query = topGaps
+          ? `${targetForSearch} courses ${topGaps}`
+          : `${targetForSearch} learning path courses certifications`;
+        sources = await search({ query, intent: 'course' });
+      } catch (err) {
+        console.error('[learningPath] search failed:', err);
+        groundingFailed = true;
+        sources = [];
+      }
+    }
 
     console.log('[learningPath] incoming:', {
       hasJobAdvert: !!input.jobAdvert,
@@ -48,7 +79,7 @@ export async function POST(request: NextRequest) {
       raw = await provider.createCompletion(
         [
           { role: 'system', content: 'You are a career learning-path designer that ONLY responds in JSON.' },
-          { role: 'user', content: buildLearningPathPrompt(input) },
+          { role: 'user', content: buildLearningPathPrompt({ ...input, sources }) },
         ],
         llmConfig
       );
@@ -59,14 +90,17 @@ export async function POST(request: NextRequest) {
       raw = await provider.createCompletion(
         [
           { role: 'system', content: 'You are a career learning-path designer that ONLY responds in JSON.' },
-          { role: 'user', content: buildLearningPathPrompt(shorter) },
+          { role: 'user', content: buildLearningPathPrompt({ ...shorter, sources }) },
         ],
         llmConfig
       );
     }
 
     const path = parseLearningPath(raw);
-    return new Response(JSON.stringify({ path, trimmed }), { status: 200 });
+    return new Response(
+      JSON.stringify({ path, trimmed, sources, groundingFailed }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error('[learningPath] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
