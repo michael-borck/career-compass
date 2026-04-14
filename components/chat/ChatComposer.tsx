@@ -4,14 +4,16 @@ import { useState, type KeyboardEvent } from 'react';
 import { Send, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import LookUpButton from './LookUpButton';
 
 type Props = {
   onSend: (text: string) => void;
   onPaperclip?: () => void;
+  onLookUp?: (query: string) => void;
   disabled?: boolean;
 };
 
-export default function ChatComposer({ onSend, onPaperclip, disabled }: Props) {
+export default function ChatComposer({ onSend, onPaperclip, onLookUp, disabled }: Props) {
   const [text, setText] = useState('');
 
   function handleSend() {
@@ -41,6 +43,7 @@ export default function ChatComposer({ onSend, onPaperclip, disabled }: Props) {
           <Paperclip className='w-4 h-4' />
         </Button>
       )}
+      {onLookUp && <LookUpButton onLookUp={onLookUp} disabled={disabled} />}
       <Textarea
         value={text}
         onChange={(e) => setText(e.target.value)}

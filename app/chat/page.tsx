@@ -3,7 +3,7 @@
 import toast, { Toaster } from 'react-hot-toast';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSessionStore, type StudentProfile } from '@/lib/session-store';
+import { useSessionStore, type StudentProfile, type SourceRef } from '@/lib/session-store';
 import ChatTopBar from '@/components/chat/ChatTopBar';
 import ChatMessageList from '@/components/chat/ChatMessageList';
 import ChatComposer from '@/components/chat/ChatComposer';
@@ -28,7 +28,7 @@ export default function ChatPage() {
   ).length;
   const canGenerate = userMessageCount >= 1 && !distilling;
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, searchSources?: SourceRef[]) {
     if (!(await isLLMConfigured())) {
       toast.error('Set up an LLM provider first.');
       return;
@@ -48,6 +48,8 @@ export default function ChatPage() {
           resumeText: stateNow.resumeText,
           freeText: stateNow.freeText,
           jobTitle: stateNow.jobTitle,
+          jobAdvert: stateNow.jobAdvert,
+          searchSources,
           llmConfig,
         }),
       });
@@ -78,6 +80,33 @@ export default function ChatPage() {
       });
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleLookUp(query: string) {
+    try {
+      const res = await fetch('/api/chatSearch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) throw new Error('Look-up failed');
+      const { results } = (await res.json()) as { results: SourceRef[] };
+
+      await handleSend(query, results);
+
+      if (results.length > 0) {
+        const latestMessages = useSessionStore.getState().chatMessages;
+        const lastAssistant = [...latestMessages]
+          .reverse()
+          .find((m) => m.role === 'assistant');
+        if (lastAssistant) {
+          useSessionStore.getState().setChatSourcesForMessage(lastAssistant.id, results);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Look-up failed');
     }
   }
 
@@ -133,6 +162,7 @@ export default function ChatPage() {
       <ChatComposer
         onSend={handleSend}
         onPaperclip={() => setPaperclipOpen(true)}
+        onLookUp={handleLookUp}
         disabled={sending}
       />
       <PaperclipMenu open={paperclipOpen} onClose={() => setPaperclipOpen(false)} />

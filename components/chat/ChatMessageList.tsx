@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/lib/session-store';
+import SourcesList from '@/components/results/SourcesList';
+import { useSessionStore } from '@/lib/session-store';
 
 type Props = { messages: ChatMessage[] };
 
 export default function ChatMessageList({ messages }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
+  const chatSources = useSessionStore((s) => s.chatSources);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,16 +42,20 @@ export default function ChatMessageList({ messages }: Props) {
 
         const isUser = m.role === 'user';
         return (
-          <div
-            key={m.id}
-            className={`max-w-[75%] px-4 py-3 rounded-lg ${
-              isUser
-                ? 'self-end bg-accent-soft text-ink'
-                : 'self-start bg-paper border border-border text-ink'
-            }`}
-          >
-            <div className='whitespace-pre-wrap leading-relaxed'>{m.content}</div>
-          </div>
+          <Fragment key={m.id}>
+            <div
+              className={`max-w-[75%] px-4 py-3 rounded-lg ${
+                isUser
+                  ? 'self-end bg-accent-soft text-ink'
+                  : 'self-start bg-paper border border-border text-ink'
+              }`}
+            >
+              <div className='whitespace-pre-wrap leading-relaxed'>{m.content}</div>
+            </div>
+            {m.role === 'assistant' && chatSources[m.id] && chatSources[m.id].length > 0 && (
+              <SourcesList sources={chatSources[m.id]} compact />
+            )}
+          </Fragment>
         );
       })}
       <div ref={endRef} />
