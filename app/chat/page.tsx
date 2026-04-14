@@ -145,6 +145,46 @@ export default function ChatPage() {
     }
   }
 
+  async function handleOdyssey() {
+    if (!(await isLLMConfigured())) {
+      toast.error('Set up an LLM provider first.');
+      return;
+    }
+    setDistilling(true);
+    try {
+      const llmConfig = await loadLLMConfig();
+      const res = await fetch('/api/distillProfile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: useSessionStore.getState().chatMessages,
+          resume: store.resumeText ?? undefined,
+          freeText: store.freeText || undefined,
+          jobTitle: store.jobTitle || undefined,
+          guidance:
+            'Produce a one-to-two sentence aspirational summary suitable as the opening seed for a "Current Path" life in an Odyssey Plan — what the student seems to be heading toward based on this conversation. Write it in first person. Put this in the "background" field.',
+          llmConfig,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Could not distil the chat');
+      }
+      const { profile } = (await res.json()) as { profile: StudentProfile };
+      const seedText = profile.background || '';
+      const seedLabel = (profile.goals[0] ?? 'Current path').slice(0, 60);
+      store.setOdysseySeed('current', seedLabel, seedText);
+      router.push('/odyssey');
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err instanceof Error ? err.message : 'Could not set up Odyssey plan from this chat.'
+      );
+    } finally {
+      setDistilling(false);
+    }
+  }
+
   function handleAcceptProfile(profile: StudentProfile) {
     store.setDistilledProfile(profile);
     store.setCareers(null);
@@ -164,6 +204,8 @@ export default function ChatPage() {
         onPaperclip={() => setPaperclipOpen(true)}
         onLookUp={handleLookUp}
         disabled={sending}
+        onOdyssey={handleOdyssey}
+        odysseyDisabled={distilling || userMessageCount < 3}
       />
       <PaperclipMenu open={paperclipOpen} onClose={() => setPaperclipOpen(false)} />
       <ProfileReviewModal
