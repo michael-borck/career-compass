@@ -1,11 +1,13 @@
-import type { InterviewDifficulty, InterviewPhase } from '@/lib/session-store';
+import type { InterviewDifficulty, InterviewPhase, SourceRef } from '@/lib/session-store';
 import { PHASE_CONFIG } from '@/lib/interview-phases';
+import { formatSourcesForFootnote } from '@/lib/search-prompt';
 
 export type InterviewPromptInput = {
   target: string;
   difficulty: InterviewDifficulty;
   phase: InterviewPhase;
   turnInPhase: number;
+  sources?: SourceRef[];
 };
 
 const DIFFICULTY_TONE: Record<InterviewDifficulty, string> = {
@@ -15,10 +17,10 @@ const DIFFICULTY_TONE: Record<InterviewDifficulty, string> = {
 };
 
 export function buildInterviewSystemPrompt(input: InterviewPromptInput): string {
-  const { target, difficulty, phase, turnInPhase } = input;
+  const { target, difficulty, phase, turnInPhase, sources } = input;
   const config = PHASE_CONFIG[phase];
 
-  return `You are conducting a practice job interview for the role of ${target}. The student is using this to prepare for real interviews.
+  const baseSystemPrompt = `You are conducting a practice job interview for the role of ${target}. The student is using this to prepare for real interviews.
 
 DIFFICULTY: ${difficulty}
 ${DIFFICULTY_TONE[difficulty]}
@@ -36,4 +38,14 @@ GLOBAL RULES:
 - If the student goes off-topic, politely steer back to the interview.
 
 The full system prompt is followed by additional context the student has shared (resume, background notes, job of interest). Use that context to make your questions feel grounded and personal.`;
+
+  if (sources && sources.length > 0 && phase === 'role-specific') {
+    return `${baseSystemPrompt}
+
+${formatSourcesForFootnote(sources)}
+
+Use the sources above to understand what the role actually requires today. Do NOT mention the sources or cite them in your questions — just let them inform what you ask.`;
+  }
+
+  return baseSystemPrompt;
 }

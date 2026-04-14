@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildInterviewSystemPrompt } from './interview';
+import type { SourceRef } from '@/lib/session-store';
 
 describe('buildInterviewSystemPrompt', () => {
   it('includes the target role name', () => {
@@ -71,5 +72,45 @@ describe('buildInterviewSystemPrompt', () => {
     });
     expect(out).toContain('exactly ONE question');
     expect(out).toContain('Do not break character');
+  });
+
+  it('includes sources block when sources are provided in role-specific phase', () => {
+    const sources: SourceRef[] = [
+      { title: 'Example', url: 'https://example.com', domain: 'example.com' },
+    ];
+    const out = buildInterviewSystemPrompt({
+      target: 'X',
+      difficulty: 'standard',
+      phase: 'role-specific',
+      turnInPhase: 0,
+      sources,
+    });
+    expect(out).toContain('<sources>');
+    expect(out).toContain('Example');
+  });
+
+  it('does NOT include sources block in warm-up phase even with sources provided', () => {
+    const sources: SourceRef[] = [
+      { title: 'Example', url: 'https://example.com', domain: 'example.com' },
+    ];
+    const out = buildInterviewSystemPrompt({
+      target: 'X',
+      difficulty: 'standard',
+      phase: 'warm-up',
+      turnInPhase: 0,
+      sources,
+    });
+    expect(out).not.toContain('<sources>');
+  });
+
+  it('does NOT include sources block when sources are empty', () => {
+    const out = buildInterviewSystemPrompt({
+      target: 'X',
+      difficulty: 'standard',
+      phase: 'role-specific',
+      turnInPhase: 0,
+      sources: [],
+    });
+    expect(out).not.toContain('<sources>');
   });
 });
