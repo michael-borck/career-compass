@@ -4,11 +4,14 @@ import { buildInterviewSystemPrompt } from '@/lib/prompts/interview';
 import { buildContextBlock } from '@/lib/context-block';
 import { nextPhase } from '@/lib/interview-phases';
 import { isTokenLimitError } from '@/lib/token-limit';
+import { search } from '@/lib/search-service';
+import { loadSearchSettings, isSearchConfigured } from '@/lib/search-settings';
 import type {
   ChatMessage,
   InterviewDifficulty,
   InterviewPhase,
   StudentProfile,
+  SourceRef,
 } from '@/lib/session-store';
 
 interface InterviewRequest {
@@ -74,11 +77,30 @@ export async function POST(request: NextRequest) {
 
     const llmConfig = clientConfig || (await getLLMConfig());
     const provider = getLLMProvider(llmConfig);
+
+    // Grounding — only for role-specific phase
+    let sources: SourceRef[] = [];
+    let groundingFailed = false;
+    if (phase === 'role-specific') {
+      const searchSettings = await loadSearchSettings();
+      if (isSearchConfigured(searchSettings)) {
+        try {
+          const query = `${target} interview questions common technical behavioural`;
+          sources = await search({ query, intent: 'general' });
+        } catch (err) {
+          console.error('[interview] search failed:', err);
+          groundingFailed = true;
+          sources = [];
+        }
+      }
+    }
+
     const systemPrompt = buildInterviewSystemPrompt({
       target,
       difficulty,
       phase,
       turnInPhase,
+      sources: sources.length > 0 ? sources : undefined,
     });
 
     const fullContext = buildContextBlock(
@@ -162,6 +184,8 @@ export async function POST(request: NextRequest) {
         nextTurnInPhase: next.turnInPhase,
         isComplete: next.isComplete,
         trimmed,
+        sources,
+        groundingFailed,
       }),
       { status: 200 }
     );

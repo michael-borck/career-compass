@@ -3,8 +3,9 @@ import { getLLMConfig, getLLMProvider, type LLMConfig } from '@/lib/llm-provider
 import { buildAdvisorSystemPrompt } from '@/lib/prompts/advisor';
 import { trimHistory } from '@/lib/chat-history';
 import { isTokenLimitError } from '@/lib/token-limit';
-import type { ChatMessage } from '@/lib/session-store';
+import type { ChatMessage, SourceRef } from '@/lib/session-store';
 import { buildContextBlock } from '@/lib/context-block';
+import { formatSourcesForFootnote } from '@/lib/search-prompt';
 
 interface ChatRequest {
   messages: ChatMessage[];
@@ -14,12 +15,14 @@ interface ChatRequest {
   jobTitle?: string;
   jobAdvert?: string;
   llmConfig?: LLMConfig;
+  searchSources?: SourceRef[];
 }
 
 function toProviderMessages(
   messages: ChatMessage[],
   systemPrompt: string,
-  contextBlock: string | null
+  contextBlock: string | null,
+  searchSources?: SourceRef[]
 ) {
   // Only real conversation messages go to the LLM. Attachment-summary,
   // focus-marker, and notice messages are UI chrome — sending them
@@ -32,6 +35,12 @@ function toProviderMessages(
   ];
   if (contextBlock) {
     out.push({ role: 'system', content: contextBlock });
+  }
+  if (searchSources && searchSources.length > 0) {
+    out.push({
+      role: 'system',
+      content: formatSourcesForFootnote(searchSources),
+    });
   }
   for (const m of filtered) {
     out.push({
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
       jobTitle,
       jobAdvert,
       llmConfig: clientConfig,
+      searchSources,
     } = (await request.json()) as ChatRequest;
 
     const llmConfig = clientConfig || (await getLLMConfig());
@@ -74,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     try {
       reply = await provider.createCompletion(
-        toProviderMessages(messages, systemPrompt, contextBlock),
+        toProviderMessages(messages, systemPrompt, contextBlock, searchSources),
         llmConfig
       );
     } catch (err) {
@@ -82,7 +92,7 @@ export async function POST(request: NextRequest) {
       trimmed = true;
       const shorter = trimHistory(messages, 20);
       reply = await provider.createCompletion(
-        toProviderMessages(shorter, systemPrompt, contextBlock),
+        toProviderMessages(shorter, systemPrompt, contextBlock, searchSources),
         llmConfig
       );
     }
