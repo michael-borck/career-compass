@@ -1,6 +1,6 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef } from './session-store';
 
-export function gapAnalysisToMarkdown(g: GapAnalysis): string {
+export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
 
   lines.push(`# Gap Analysis: ${g.target}`);
@@ -35,12 +35,21 @@ export function gapAnalysisToMarkdown(g: GapAnalysis): string {
   lines.push('## Rough timeline');
   lines.push(g.realisticTimeline);
   lines.push('');
+
+  if (sources && sources.length > 0) {
+    lines.push('## Sources');
+    sources.forEach((s, i) => {
+      lines.push(`${i + 1}. [${s.title}](${s.url}) — ${s.domain}`);
+    });
+    lines.push('');
+  }
+
   lines.push('*AI-generated. Verify suggestions against your own situation.*');
 
   return lines.join('\n');
 }
 
-export function learningPathToMarkdown(p: LearningPath): string {
+export function learningPathToMarkdown(p: LearningPath, sources?: SourceRef[]): string {
   const lines: string[] = [];
 
   lines.push(`# Learning Path: ${p.target}`);
@@ -89,6 +98,14 @@ export function learningPathToMarkdown(p: LearningPath): string {
     lines.push('');
   }
 
+  if (sources && sources.length > 0) {
+    lines.push('## Sources');
+    sources.forEach((s, i) => {
+      lines.push(`${i + 1}. [${s.title}](${s.url}) — ${s.domain}`);
+    });
+    lines.push('');
+  }
+
   lines.push('*AI-generated. Treat specific course names as starting points, not final recommendations.*');
 
   return lines.join('\n');
@@ -114,7 +131,7 @@ const DIFFICULTY_LABEL: Record<'friendly' | 'standard' | 'tough', string> = {
   tough: 'Tough',
 };
 
-export function interviewFeedbackToMarkdown(f: InterviewFeedback): string {
+export function interviewFeedbackToMarkdown(f: InterviewFeedback, sources?: SourceRef[]): string {
   const lines: string[] = [];
 
   lines.push(`# Interview Feedback: ${f.target}`);
@@ -157,6 +174,14 @@ export function interviewFeedbackToMarkdown(f: InterviewFeedback): string {
     lines.push('## Next steps');
     f.nextSteps.forEach((step, idx) => {
       lines.push(`${idx + 1}. ${step}`);
+    });
+    lines.push('');
+  }
+
+  if (sources && sources.length > 0) {
+    lines.push('## Sources consulted');
+    sources.forEach((s, i) => {
+      lines.push(`${i + 1}. [${s.title}](${s.url}) — ${s.domain}`);
     });
     lines.push('');
   }

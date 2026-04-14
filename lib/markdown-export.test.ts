@@ -4,7 +4,7 @@ import {
   learningPathToMarkdown,
   interviewFeedbackToMarkdown,
 } from './markdown-export';
-import type { GapAnalysis, LearningPath, InterviewFeedback } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef } from './session-store';
 
 const gap: GapAnalysis = {
   target: 'Data Analyst',
@@ -182,5 +182,34 @@ describe('interviewFeedbackToMarkdown', () => {
   it('includes the AI-generated footnote', () => {
     const md = interviewFeedbackToMarkdown(feedback);
     expect(md).toContain('AI-generated');
+  });
+});
+
+const sources: SourceRef[] = [
+  { title: 'Glassdoor — Data Analyst', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
+  { title: 'Seek — Data Analyst Perth', url: 'https://seek.com.au/y', domain: 'seek.com.au' },
+];
+
+describe('source rendering in markdown', () => {
+  it('gap analysis markdown includes sources section when provided', () => {
+    const md = gapAnalysisToMarkdown(gap, sources);
+    expect(md).toContain('## Sources');
+    expect(md).toContain('[Glassdoor — Data Analyst](https://glassdoor.com/x)');
+    expect(md).toContain('[Seek — Data Analyst Perth](https://seek.com.au/y)');
+  });
+
+  it('gap analysis markdown omits sources section when no sources', () => {
+    const md = gapAnalysisToMarkdown(gap);
+    expect(md).not.toContain('## Sources');
+  });
+
+  it('learning path markdown includes sources section when provided', () => {
+    const md = learningPathToMarkdown(path, sources);
+    expect(md).toContain('## Sources');
+  });
+
+  it('interview feedback markdown includes sources section when provided', () => {
+    const md = interviewFeedbackToMarkdown(feedback, sources);
+    expect(md).toContain('## Sources consulted');
   });
 });
