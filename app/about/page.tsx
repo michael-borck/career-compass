@@ -70,7 +70,12 @@ export default function About() {
           <div className="space-y-3 text-ink-muted">
             <p className="flex items-start">
               <span className="text-accent mr-2 font-medium">&#10003;</span>
-              <span>No data collection. Your files are processed entirely on your device</span>
+              <span>
+                  No data collection. Your files are processed entirely on your device. The
+                  only outbound traffic is to your configured AI provider and, if enabled,
+                  your configured search engine. Search queries are derived from your
+                  inputs, never the full text.
+                </span>
             </p>
             <p className="flex items-start">
               <span className="text-accent mr-2 font-medium">&#10003;</span>

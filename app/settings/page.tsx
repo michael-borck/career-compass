@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DefaultModels } from '@/lib/llm-providers';
-import { settingsStore, secureStorage, type SettingsConfig } from '@/lib/settings-store';
+import { settingsStore, secureStorage, type SettingsConfig, type SearchEngine } from '@/lib/settings-store';
 import toast, { Toaster } from 'react-hot-toast';
 
 type LLMProvider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
@@ -82,6 +82,24 @@ const ProviderInfo: Record<LLMProvider, {
   }
 };
 
+const SEARCH_ENGINE_LABEL: Record<SearchEngine, string> = {
+  disabled: 'Disabled — no web search',
+  duckduckgo: 'DuckDuckGo — free, no setup',
+  brave: 'Brave Search — free tier 2000/month',
+  bing: 'Bing — paid',
+  serper: 'Serper (Google) — paid',
+  searxng: 'SearXNG — self-hosted',
+};
+
+const SEARCH_ENGINE_DESCRIPTION: Record<SearchEngine, string> = {
+  disabled: 'All grounding is off. Career Compass runs offline for AI calls.',
+  duckduckgo: 'Default. HTML scraping of the DuckDuckGo lite page.',
+  brave: 'Needs an API key. Reliable and reasonably generous free tier.',
+  bing: 'Needs an API key. Pay per query.',
+  serper: 'Google results via Serper. Needs an API key.',
+  searxng: 'Point to your own SearXNG instance URL.',
+};
+
 export default function Settings() {
   const [settings, setSettings] = useState<SettingsConfig>({
     provider: 'ollama',
@@ -96,6 +114,11 @@ export default function Settings() {
   const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{[key: string]: {success: boolean, error?: string}}>({});
+
+  const [searchEngine, setSearchEngine] = useState<SearchEngine>('duckduckgo');
+  const [searchApiKey, setSearchApiKey] = useState('');
+  const [searchUrl, setSearchUrl] = useState('');
+  const [testingSearch, setTestingSearch] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -117,6 +140,14 @@ export default function Settings() {
         ...savedSettings,
         apiKey: apiKey || ''
       });
+
+      const eng = savedSettings.searchEngine ?? 'duckduckgo';
+      setSearchEngine(eng);
+      setSearchUrl(savedSettings.searchUrl ?? '');
+      if (eng === 'brave' || eng === 'bing' || eng === 'serper') {
+        const key = await secureStorage.getSearchApiKey(eng);
+        setSearchApiKey(key ?? '');
+      }
     } catch (error) {
       console.error('Failed to load settings:', error);
       toast.error('Failed to load settings');
@@ -234,6 +265,39 @@ export default function Settings() {
     return false;
   };
 
+  const handleTestSearch = async () => {
+    setTestingSearch(true);
+    try {
+      // Persist current search settings first so the route sees them
+      const current = await settingsStore.get();
+      await settingsStore.set({
+        ...current,
+        searchEngine,
+        searchUrl,
+      });
+      if (searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') {
+        await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
+      }
+
+      const res = await fetch('/api/getSources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'career compass test query', intent: 'general' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).error || 'Search test failed');
+      }
+      const { results } = (await res.json()) as { results: unknown[] };
+      toast.success(`Search working — ${results.length} results returned.`);
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Search test failed');
+    } finally {
+      setTestingSearch(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsLoading(true);
     try {
@@ -254,7 +318,7 @@ export default function Settings() {
         }
       }
 
-      const settingsToSave = { ...settings };
+      const settingsToSave = { ...settings, searchEngine, searchUrl };
       delete (settingsToSave as any).apiKey;
       await settingsStore.set(settingsToSave);
 
@@ -263,6 +327,10 @@ export default function Settings() {
       } else {
         // Clear stored key — env var will be used as fallback
         await secureStorage.deleteApiKey(settings.provider);
+      }
+
+      if (searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') {
+        await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
       }
 
       toast.success('Settings saved');
@@ -467,6 +535,78 @@ export default function Settings() {
             Your secret keys are stored safely on your computer and never sent to our servers.
             For the most private experience, use Ollama to run AI models entirely on your own device.
           </p>
+        </div>
+
+        <div>
+          <div className='editorial-rule'>
+            <span>Research & Grounding</span>
+          </div>
+          <h2 className='text-[var(--text-2xl)] font-semibold text-ink mb-2'>
+            Web search
+          </h2>
+          <p className='text-ink-muted mb-6 text-[var(--text-sm)]'>
+            Grounding fetches current web data to back up gap analysis, learning
+            paths, and interview questions. Disable if you prefer fully offline.
+          </p>
+
+          <div className='space-y-2'>
+            {(['disabled', 'duckduckgo', 'brave', 'bing', 'serper', 'searxng'] as const).map((eng) => (
+              <label key={eng} className='flex items-start gap-3 cursor-pointer'>
+                <input
+                  type='radio'
+                  name='searchEngine'
+                  value={eng}
+                  checked={searchEngine === eng}
+                  onChange={() => setSearchEngine(eng)}
+                  className='mt-1'
+                />
+                <div>
+                  <div className='text-ink font-medium'>{SEARCH_ENGINE_LABEL[eng]}</div>
+                  <div className='text-[var(--text-sm)] text-ink-muted'>
+                    {SEARCH_ENGINE_DESCRIPTION[eng]}
+                  </div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {(searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') && (
+            <div className='mt-4'>
+              <Label>API key</Label>
+              <Input
+                type='password'
+                value={searchApiKey}
+                onChange={(e) => setSearchApiKey(e.target.value)}
+                placeholder={`Your ${searchEngine} API key`}
+              />
+            </div>
+          )}
+
+          {searchEngine === 'searxng' && (
+            <div className='mt-4'>
+              <Label>SearXNG URL</Label>
+              <Input
+                value={searchUrl}
+                onChange={(e) => setSearchUrl(e.target.value)}
+                placeholder='https://your-searxng-instance.example.com'
+              />
+            </div>
+          )}
+
+          <div className='mt-4'>
+            <Button variant='outline' onClick={handleTestSearch} disabled={testingSearch}>
+              {testingSearch ? 'Testing…' : 'Test search'}
+            </Button>
+          </div>
+
+          <div className='mt-6 p-4 border border-border rounded-lg bg-paper-warm'>
+            <p className='text-[var(--text-sm)] text-ink-muted'>
+              <strong className='text-ink'>Privacy note.</strong> Search queries leave
+              your device. Career Compass never sends your resume or chat content to
+              the search engine — only the derived query (e.g., &ldquo;Data Analyst
+              Perth salary&rdquo;).
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-4">
