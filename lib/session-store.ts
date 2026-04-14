@@ -93,6 +93,29 @@ export type ChatMessage = {
   kind: ChatMessageKind;
 };
 
+export type OdysseyLifeType = 'current' | 'pivot' | 'wildcard';
+
+export type OdysseyDashboard = {
+  resources: number | null;
+  likability: number | null;
+  confidence: number | null;
+  coherence: number | null;
+};
+
+export type OdysseyLife = {
+  type: OdysseyLifeType;
+  label: string;
+  seed: string;
+  headline: string | null;
+  dayInTheLife: string | null;
+  typicalWeek: string[];
+  toolsAndSkills: string[];
+  whoYouWorkWith: string | null;
+  challenges: string[];
+  questionsToExplore: string[];
+  dashboard: OdysseyDashboard;
+};
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -113,6 +136,9 @@ export type SessionState = {
   selectedCareerId: string | null;
   gapAnalysis: GapAnalysis | null;
   learningPath: LearningPath | null;
+
+  // Odyssey
+  odysseyLives: Record<OdysseyLifeType, OdysseyLife>;
 
   // Interview
   interviewMessages: ChatMessage[];
@@ -148,6 +174,10 @@ export type SessionState = {
   setInterviewTarget: (t: string | null) => void;
   setInterviewFeedback: (f: InterviewFeedback | null) => void;
   resetInterview: () => void;
+  setOdysseySeed: (type: OdysseyLifeType, label: string, seed: string) => void;
+  setOdysseyElaboration: (type: OdysseyLifeType, elaboration: Partial<OdysseyLife>) => void;
+  setOdysseyDashboard: (type: OdysseyLifeType, field: keyof OdysseyDashboard, value: number | null) => void;
+  resetOdysseyLife: (type: OdysseyLifeType) => void;
   setUrlInput: (url: string) => void;
   setUrlFetchedTitle: (title: string | null) => void;
   setGapAnalysisSources: (s: SourceRef[] | null) => void;
@@ -156,6 +186,27 @@ export type SessionState = {
   setChatSourcesForMessage: (messageId: string, sources: SourceRef[]) => void;
   reset: () => void;
 };
+
+function makeEmptyLife(type: OdysseyLifeType): OdysseyLife {
+  return {
+    type,
+    label: '',
+    seed: '',
+    headline: null,
+    dayInTheLife: null,
+    typicalWeek: [],
+    toolsAndSkills: [],
+    whoYouWorkWith: null,
+    challenges: [],
+    questionsToExplore: [],
+    dashboard: {
+      resources: null,
+      likability: null,
+      confidence: null,
+      coherence: null,
+    },
+  };
+}
 
 const initialState = {
   resumeText: null,
@@ -170,6 +221,11 @@ const initialState = {
   selectedCareerId: null,
   gapAnalysis: null,
   learningPath: null,
+  odysseyLives: {
+    current: makeEmptyLife('current'),
+    pivot: makeEmptyLife('pivot'),
+    wildcard: makeEmptyLife('wildcard'),
+  },
   interviewMessages: [],
   interviewTarget: null,
   interviewDifficulty: 'standard' as InterviewDifficulty,
@@ -261,6 +317,38 @@ export const useSessionStore = create<SessionState>((set) => ({
       interviewFeedback: null,
       interviewSources: [],
     }),
+
+  setOdysseySeed: (type, label, seed) =>
+    set((s) => ({
+      odysseyLives: {
+        ...s.odysseyLives,
+        [type]: { ...s.odysseyLives[type], label, seed },
+      },
+    })),
+
+  setOdysseyElaboration: (type, elaboration) =>
+    set((s) => ({
+      odysseyLives: {
+        ...s.odysseyLives,
+        [type]: { ...s.odysseyLives[type], ...elaboration },
+      },
+    })),
+
+  setOdysseyDashboard: (type, field, value) =>
+    set((s) => ({
+      odysseyLives: {
+        ...s.odysseyLives,
+        [type]: {
+          ...s.odysseyLives[type],
+          dashboard: { ...s.odysseyLives[type].dashboard, [field]: value },
+        },
+      },
+    })),
+
+  resetOdysseyLife: (type) =>
+    set((s) => ({
+      odysseyLives: { ...s.odysseyLives, [type]: makeEmptyLife(type) },
+    })),
 
   setUrlInput: (url) => set({ urlInput: url }),
   setUrlFetchedTitle: (title) => set({ urlFetchedTitle: title }),

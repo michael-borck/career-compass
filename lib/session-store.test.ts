@@ -297,3 +297,81 @@ describe('session store actions', () => {
     expect(useSessionStore.getState().interviewSources).toEqual([]);
   });
 });
+
+describe('odyssey lives', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('initialises three empty life slots keyed by type', () => {
+    const { odysseyLives } = useSessionStore.getState();
+    expect(Object.keys(odysseyLives).sort()).toEqual(['current', 'pivot', 'wildcard']);
+    for (const type of ['current', 'pivot', 'wildcard'] as const) {
+      const life = odysseyLives[type];
+      expect(life.type).toBe(type);
+      expect(life.label).toBe('');
+      expect(life.seed).toBe('');
+      expect(life.headline).toBeNull();
+      expect(life.dayInTheLife).toBeNull();
+      expect(life.typicalWeek).toEqual([]);
+      expect(life.toolsAndSkills).toEqual([]);
+      expect(life.whoYouWorkWith).toBeNull();
+      expect(life.challenges).toEqual([]);
+      expect(life.questionsToExplore).toEqual([]);
+      expect(life.dashboard).toEqual({
+        resources: null,
+        likability: null,
+        confidence: null,
+        coherence: null,
+      });
+    }
+  });
+
+  it('setOdysseySeed writes label and seed for a specific slot', () => {
+    useSessionStore.getState().setOdysseySeed('pivot', 'Teacher', 'I become a high school teacher.');
+    const life = useSessionStore.getState().odysseyLives.pivot;
+    expect(life.label).toBe('Teacher');
+    expect(life.seed).toBe('I become a high school teacher.');
+    expect(useSessionStore.getState().odysseyLives.current.label).toBe('');
+  });
+
+  it('setOdysseyElaboration merges partial elaboration fields', () => {
+    useSessionStore.getState().setOdysseyElaboration('wildcard', {
+      headline: 'Living off-grid building furniture',
+      dayInTheLife: 'Wake at 6, work in the shed until lunch...',
+      typicalWeek: ['3 days in the workshop', '2 days delivering orders'],
+      toolsAndSkills: ['hand tools', 'CAD basics'],
+      whoYouWorkWith: 'Mostly solo, occasional clients.',
+      challenges: ['Unstable income'],
+      questionsToExplore: ['Where would I live?'],
+    });
+    const life = useSessionStore.getState().odysseyLives.wildcard;
+    expect(life.headline).toBe('Living off-grid building furniture');
+    expect(life.typicalWeek).toHaveLength(2);
+    expect(life.challenges).toEqual(['Unstable income']);
+  });
+
+  it('setOdysseyDashboard sets and clears ratings', () => {
+    useSessionStore.getState().setOdysseyDashboard('current', 'resources', 4);
+    expect(useSessionStore.getState().odysseyLives.current.dashboard.resources).toBe(4);
+    useSessionStore.getState().setOdysseyDashboard('current', 'resources', null);
+    expect(useSessionStore.getState().odysseyLives.current.dashboard.resources).toBeNull();
+  });
+
+  it('resetOdysseyLife clears one slot without touching others', () => {
+    useSessionStore.getState().setOdysseySeed('current', 'A', 'a');
+    useSessionStore.getState().setOdysseySeed('pivot', 'B', 'b');
+    useSessionStore.getState().resetOdysseyLife('current');
+    expect(useSessionStore.getState().odysseyLives.current.label).toBe('');
+    expect(useSessionStore.getState().odysseyLives.pivot.label).toBe('B');
+  });
+
+  it('reset() clears all three odyssey slots', () => {
+    useSessionStore.getState().setOdysseySeed('current', 'A', 'a');
+    useSessionStore.getState().setOdysseyDashboard('current', 'confidence', 5);
+    useSessionStore.getState().reset();
+    const { odysseyLives } = useSessionStore.getState();
+    expect(odysseyLives.current.label).toBe('');
+    expect(odysseyLives.current.dashboard.confidence).toBeNull();
+  });
+});
