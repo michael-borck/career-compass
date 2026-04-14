@@ -20,7 +20,7 @@ export default function UrlInputField() {
   async function handleBlur() {
     const trimmed = url.trim();
     if (!trimmed) return;
-    if (trimmed === store.urlInput && store.urlFetchedTitle) return;
+    if (store.urlFetchedTitle) return; // already fetched the current URL
 
     setFetching(true);
     try {
@@ -77,7 +77,15 @@ export default function UrlInputField() {
         <LinkIcon className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-quiet pointer-events-none' />
         <Input
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            const newUrl = e.target.value;
+            setUrl(newUrl);
+            store.setUrlInput(newUrl);
+            // Any edit invalidates the prior fetch — re-fetch on next blur or action
+            store.setUrlFetchedTitle(null);
+            setFetchedInto(null);
+            setFetchedTitle(null);
+          }}
           onBlur={handleBlur}
           placeholder='Paste a LinkedIn job, portfolio URL, or job posting'
           className='pl-9'
