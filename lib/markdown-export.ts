@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -188,5 +188,109 @@ export function interviewFeedbackToMarkdown(f: InterviewFeedback, sources?: Sour
 
   lines.push('*AI-generated feedback. Treat as one perspective, not a verdict.*');
 
+  return lines.join('\n');
+}
+
+const LIFE_LABELS: Record<OdysseyLifeType, { index: number; fallback: string }> = {
+  current: { index: 1, fallback: 'Current Path' },
+  pivot: { index: 2, fallback: 'The Pivot' },
+  wildcard: { index: 3, fallback: 'The Wildcard' },
+};
+
+const DASHBOARD_ROWS: { field: keyof OdysseyDashboard; label: string; question: string }[] = [
+  { field: 'resources', label: 'Resources', question: 'do I have what I\'d need to make this happen?' },
+  { field: 'likability', label: 'Likability', question: 'do I actually like the sound of this?' },
+  { field: 'confidence', label: 'Confidence', question: 'am I confident I could make it work?' },
+  { field: 'coherence', label: 'Coherence', question: 'does it fit who I\'m becoming?' },
+];
+
+function renderDashboard(d: OdysseyDashboard): string[] {
+  const lines = ['### How does this feel?'];
+  for (const row of DASHBOARD_ROWS) {
+    const value = d[row.field];
+    if (value === null) {
+      lines.push(`- **${row.label}:** — not yet rated`);
+    } else {
+      lines.push(`- **${row.label}:** ${value}/5 — ${row.question}`);
+    }
+  }
+  return lines;
+}
+
+function renderLife(life: OdysseyLife): string[] {
+  const { index, fallback } = LIFE_LABELS[life.type];
+  const label = life.label.trim() || fallback;
+  const lines: string[] = [];
+  lines.push(`## Life ${index} — ${fallback}: ${label}`);
+  lines.push('');
+
+  if (!life.headline && !life.dayInTheLife) {
+    if (life.seed.trim()) {
+      lines.push(`**Seed:** ${life.seed.trim()}`);
+      lines.push('');
+    }
+    lines.push('*(This life has not been elaborated yet.)*');
+    lines.push('');
+    lines.push(...renderDashboard(life.dashboard));
+    lines.push('');
+    return lines;
+  }
+
+  if (life.headline) {
+    lines.push(`**${life.headline}**`);
+    lines.push('');
+  }
+  if (life.dayInTheLife) {
+    lines.push('### A day in 2030');
+    lines.push(life.dayInTheLife);
+    lines.push('');
+  }
+  if (life.typicalWeek.length > 0) {
+    lines.push('### Typical week');
+    for (const w of life.typicalWeek) lines.push(`- ${w}`);
+    lines.push('');
+  }
+  if (life.toolsAndSkills.length > 0) {
+    lines.push('### Tools & skills');
+    for (const t of life.toolsAndSkills) lines.push(`- ${t}`);
+    lines.push('');
+  }
+  if (life.whoYouWorkWith) {
+    lines.push('### Who you work with');
+    lines.push(life.whoYouWorkWith);
+    lines.push('');
+  }
+  if (life.challenges.length > 0) {
+    lines.push('### Challenges');
+    for (const c of life.challenges) lines.push(`- ${c}`);
+    lines.push('');
+  }
+  if (life.questionsToExplore.length > 0) {
+    lines.push('### Questions to explore');
+    for (const q of life.questionsToExplore) lines.push(`- ${q}`);
+    lines.push('');
+  }
+  lines.push(...renderDashboard(life.dashboard));
+  lines.push('');
+  return lines;
+}
+
+export function odysseyPlanToMarkdown(lives: Record<OdysseyLifeType, OdysseyLife>): string {
+  const lines: string[] = [];
+  lines.push('# Odyssey Plan: Three Alternative Lives');
+  lines.push('');
+
+  const order: OdysseyLifeType[] = ['current', 'pivot', 'wildcard'];
+  order.forEach((type, idx) => {
+    lines.push(...renderLife(lives[type]));
+    if (idx < order.length - 1) {
+      lines.push('---');
+      lines.push('');
+    }
+  });
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated elaboration. Dashboard ratings are your own reflection.*');
   return lines.join('\n');
 }

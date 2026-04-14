@@ -185,6 +185,108 @@ describe('interviewFeedbackToMarkdown', () => {
   });
 });
 
+import { odysseyPlanToMarkdown } from './markdown-export';
+import type { OdysseyLife, OdysseyLifeType } from './session-store';
+
+function makeLife(type: OdysseyLifeType, overrides: Partial<OdysseyLife> = {}): OdysseyLife {
+  return {
+    type,
+    label: '',
+    seed: '',
+    headline: null,
+    dayInTheLife: null,
+    typicalWeek: [],
+    toolsAndSkills: [],
+    whoYouWorkWith: null,
+    challenges: [],
+    questionsToExplore: [],
+    dashboard: { resources: null, likability: null, confidence: null, coherence: null },
+    ...overrides,
+  };
+}
+
+function fullyElaborated(type: OdysseyLifeType, label: string): OdysseyLife {
+  return makeLife(type, {
+    label,
+    seed: 'seed text',
+    headline: `${label} headline`,
+    dayInTheLife: `A day for ${label}`,
+    typicalWeek: ['Mon: a', 'Tue: b'],
+    toolsAndSkills: ['tool1', 'tool2'],
+    whoYouWorkWith: `People of ${label}`,
+    challenges: ['ch1', 'ch2'],
+    questionsToExplore: ['q1', 'q2'],
+    dashboard: { resources: 3, likability: 4, confidence: 2, coherence: 5 },
+  });
+}
+
+describe('odysseyPlanToMarkdown', () => {
+  it('renders three elaborated lives with headers, day, week, tools, who, challenges, questions, dashboard', () => {
+    const md = odysseyPlanToMarkdown({
+      current: fullyElaborated('current', 'Current Path'),
+      pivot: fullyElaborated('pivot', 'The Pivot'),
+      wildcard: fullyElaborated('wildcard', 'The Wildcard'),
+    });
+    expect(md).toContain('# Odyssey Plan');
+    expect(md).toContain('## Life 1 — Current Path');
+    expect(md).toContain('## Life 2 — The Pivot');
+    expect(md).toContain('## Life 3 — The Wildcard');
+    expect(md).toContain('### A day in 2030');
+    expect(md).toContain('### Typical week');
+    expect(md).toContain('### Tools & skills');
+    expect(md).toContain('### Who you work with');
+    expect(md).toContain('### Challenges');
+    expect(md).toContain('### Questions to explore');
+    expect(md).toContain('### How does this feel?');
+    expect(md).toContain('**Resources:** 3/5');
+    expect(md).toContain('**Likability:** 4/5');
+    expect(md).toContain('**Confidence:** 2/5');
+    expect(md).toContain('**Coherence:** 5/5');
+  });
+
+  it('shows placeholder note for unelaborated lives with a seed', () => {
+    const md = odysseyPlanToMarkdown({
+      current: fullyElaborated('current', 'Current Path'),
+      pivot: makeLife('pivot', { label: 'Pivot idea', seed: 'something' }),
+      wildcard: makeLife('wildcard'),
+    });
+    expect(md).toContain('This life has not been elaborated yet.');
+    expect(md).toContain('Pivot idea');
+  });
+
+  it('renders null dashboard values as "— not yet rated"', () => {
+    const md = odysseyPlanToMarkdown({
+      current: { ...fullyElaborated('current', 'Current'), dashboard: { resources: null, likability: null, confidence: null, coherence: null } },
+      pivot: fullyElaborated('pivot', 'Pivot'),
+      wildcard: fullyElaborated('wildcard', 'Wildcard'),
+    });
+    expect(md).toContain('**Resources:** — not yet rated');
+    expect(md).toContain('**Coherence:** — not yet rated');
+  });
+
+  it('renders mixed dashboard with only rated dimensions as N/5', () => {
+    const life = fullyElaborated('current', 'Mixed');
+    life.dashboard = { resources: 3, likability: null, confidence: 4, coherence: null };
+    const md = odysseyPlanToMarkdown({
+      current: life,
+      pivot: makeLife('pivot'),
+      wildcard: makeLife('wildcard'),
+    });
+    expect(md).toContain('**Resources:** 3/5');
+    expect(md).toContain('**Likability:** — not yet rated');
+    expect(md).toContain('**Confidence:** 4/5');
+  });
+
+  it('ends with the AI-generated footer', () => {
+    const md = odysseyPlanToMarkdown({
+      current: makeLife('current'),
+      pivot: makeLife('pivot'),
+      wildcard: makeLife('wildcard'),
+    });
+    expect(md.trim().endsWith('*AI-generated elaboration. Dashboard ratings are your own reflection.*')).toBe(true);
+  });
+});
+
 const sources: SourceRef[] = [
   { title: 'Glassdoor — Data Analyst', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
   { title: 'Seek — Data Analyst Perth', url: 'https://seek.com.au/y', domain: 'seek.com.au' },
