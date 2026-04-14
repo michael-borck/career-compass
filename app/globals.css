@@ -200,3 +200,15 @@ body::after {
   letter-spacing: 0.22em;
   color: hsl(var(--ink-quiet));
 }
+
+.editorial-rule.justify-center {
+  justify-content: center;
+}
+
+.editorial-rule.justify-center::after {
+  content: '';
+  width: 36px;
+  height: 1px;
+  background: hsl(var(--accent));
+  flex-shrink: 0;
+}
