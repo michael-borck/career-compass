@@ -9,6 +9,7 @@ import ChatMessageList from '@/components/chat/ChatMessageList';
 import ChatComposer from '@/components/chat/ChatComposer';
 import InterviewPhaseProgress from './InterviewPhaseProgress';
 import { useSessionStore, type InterviewFeedback, type InterviewPhase } from '@/lib/session-store';
+import type { SourceRef } from '@/lib/session-store';
 import { loadLLMConfig } from '@/lib/llm-client';
 
 const DIFFICULTY_LABEL: Record<'friendly' | 'standard' | 'tough', string> = {
@@ -89,15 +90,19 @@ export default function InterviewChat({ onFeedbackReady }: Props) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'The interviewer could not respond');
       }
-      const { reply, nextPhase: nextP, nextTurnInPhase, isComplete } =
-        (await res.json()) as {
-          reply: string;
-          nextPhase: InterviewPhase | null;
-          nextTurnInPhase: number;
-          isComplete: boolean;
-        };
+      const data = (await res.json()) as {
+        reply: string;
+        nextPhase: InterviewPhase | null;
+        nextTurnInPhase: number;
+        isComplete: boolean;
+        sources?: SourceRef[];
+      };
+      const { reply, nextPhase: nextP, nextTurnInPhase, isComplete, sources: turnSources } = data;
       store.addInterviewMessage({ role: 'assistant', content: reply });
       store.advanceInterviewPhase(nextP, nextTurnInPhase);
+      if (turnSources && turnSources.length > 0) {
+        store.addInterviewSources(turnSources);
+      }
       if (isComplete) {
         // Auto-trigger feedback after wrap-up
         await generateFeedback('wrap-up');

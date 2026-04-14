@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SourcesList from '@/components/results/SourcesList';
 import InterviewImprovementItem from './InterviewImprovementItem';
 import {
   useSessionStore,
@@ -51,6 +52,7 @@ const DIFFICULTY_LABEL: Record<'friendly' | 'standard' | 'tough', string> = {
 export default function InterviewFeedbackView({ feedback }: Props) {
   const router = useRouter();
   const store = useSessionStore();
+  const interviewSources = useSessionStore((s) => s.interviewSources);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [practising, setPractising] = useState(false);
 
@@ -226,8 +228,17 @@ export default function InterviewFeedbackView({ feedback }: Props) {
         </div>
       )}
 
+      {interviewSources.length > 0 && (
+        <SourcesList
+          sources={interviewSources}
+          heading='Sources consulted during this interview'
+        />
+      )}
+
       <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-6'>
-        <CopyMarkdownButton getMarkdown={() => interviewFeedbackToMarkdown(feedback)} />
+        <CopyMarkdownButton
+          getMarkdown={() => interviewFeedbackToMarkdown(feedback, interviewSources)}
+        />
         <Button
           variant='outline'
           onClick={handleExportToTalkBuddy}

@@ -4,19 +4,31 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import type { GapAnalysis, LearningPath } from '@/lib/session-store';
+import type { GapAnalysis, LearningPath, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
 import { gapAnalysisToMarkdown } from '@/lib/markdown-export';
 import { loadLLMConfig } from '@/lib/llm-client';
 import CopyMarkdownButton from './CopyMarkdownButton';
 import GapItem from './GapItem';
+import SourcesList from './SourcesList';
+import InlineCitation from './InlineCitation';
+import { segmentCitations, hasAnyCitations } from '@/lib/citation-detect';
 
 type Props = { analysis: GapAnalysis };
+
+function renderWithCitations(text: string, sources: SourceRef[]) {
+  const segments = segmentCitations(text);
+  return segments.map((seg, i) => {
+    if (seg.kind === 'text') return <span key={i}>{seg.value}</span>;
+    return <InlineCitation key={i} index={seg.index} sources={sources} />;
+  });
+}
 
 export default function GapAnalysisView({ analysis }: Props) {
   const router = useRouter();
   const store = useSessionStore();
+  const sources = useSessionStore((s) => s.gapAnalysisSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [chaining, setChaining] = useState(false);
 
@@ -85,7 +97,7 @@ export default function GapAnalysisView({ analysis }: Props) {
           ← Back
         </Link>
         <div className='flex-1' />
-        <CopyMarkdownButton getMarkdown={() => gapAnalysisToMarkdown(analysis)} />
+        <CopyMarkdownButton getMarkdown={() => gapAnalysisToMarkdown(analysis, sources)} />
         <Button variant='outline' onClick={handleStartOver}>Start over</Button>
       </div>
 
@@ -100,7 +112,7 @@ export default function GapAnalysisView({ analysis }: Props) {
 
       <div>
         <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Summary</h2>
-        <p className='text-ink-muted leading-relaxed'>{analysis.summary}</p>
+        <p className='text-ink-muted leading-relaxed'>{renderWithCitations(analysis.summary, sources)}</p>
       </div>
 
       {analysis.matches.length > 0 && (
@@ -130,7 +142,13 @@ export default function GapAnalysisView({ analysis }: Props) {
         </div>
         <div className='space-y-2'>
           {analysis.gaps.map((g, i) => (
-            <GapItem key={i} gap={g} expanded={!!expanded[i]} onToggle={() => toggle(i)} />
+            <GapItem
+              key={i}
+              gap={g}
+              expanded={!!expanded[i]}
+              onToggle={() => toggle(i)}
+              sources={sources}
+            />
           ))}
         </div>
       </div>
@@ -139,11 +157,37 @@ export default function GapAnalysisView({ analysis }: Props) {
         <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
           Rough timeline
         </div>
-        <p className='text-ink'>{analysis.realisticTimeline}</p>
+        <p className='text-ink'>{renderWithCitations(analysis.realisticTimeline, sources)}</p>
         <p className='text-[var(--text-xs)] text-ink-quiet mt-1'>
           AI estimate. Verify against your own situation.
         </p>
       </div>
+
+      {sources.length > 0 && (
+        <div>
+          {(() => {
+            const hasMarkers =
+              hasAnyCitations(analysis.summary) ||
+              analysis.gaps.some(
+                (g) => hasAnyCitations(g.why) || hasAnyCitations(g.targetLevel)
+              ) ||
+              hasAnyCitations(analysis.realisticTimeline);
+            if (!hasMarkers) {
+              return (
+                <div className='mb-4 border border-accent/30 bg-accent-soft rounded-lg px-4 py-3 text-[var(--text-sm)] text-ink'>
+                  The AI didn't tag specific claims with citation markers — the sources used for this analysis are listed below for your reference.
+                </div>
+              );
+            }
+            return null;
+          })()}
+          <SourcesList sources={sources} />
+          <p className='text-[var(--text-xs)] text-ink-quiet italic mt-2'>
+            AI-cited sources. Small or local models may occasionally misattribute a
+            claim — click through to verify anything you plan to act on.
+          </p>
+        </div>
+      )}
 
       <div className='flex flex-wrap justify-end gap-3'>
         <Button variant='outline' onClick={handlePracticeInterview}>

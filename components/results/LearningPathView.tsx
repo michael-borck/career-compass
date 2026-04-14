@@ -12,12 +12,14 @@ import { learningPathToMarkdown } from '@/lib/markdown-export';
 import { loadLLMConfig } from '@/lib/llm-client';
 import CopyMarkdownButton from './CopyMarkdownButton';
 import MilestoneItem from './MilestoneItem';
+import SourcesList from './SourcesList';
 
 type Props = { path: LearningPath };
 
 export default function LearningPathView({ path }: Props) {
   const router = useRouter();
   const store = useSessionStore();
+  const sources = useSessionStore((s) => s.learningPathSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [chaining, setChaining] = useState(false);
 
@@ -87,7 +89,7 @@ export default function LearningPathView({ path }: Props) {
           ← Back
         </Link>
         <div className='flex-1' />
-        <CopyMarkdownButton getMarkdown={() => learningPathToMarkdown(path)} />
+        <CopyMarkdownButton getMarkdown={() => learningPathToMarkdown(path, sources)} />
         <Button variant='outline' onClick={handleStartOver}>Start over</Button>
       </div>
 
@@ -167,6 +169,8 @@ export default function LearningPathView({ path }: Props) {
           <p className='text-ink leading-relaxed'>{path.portfolioProject}</p>
         </div>
       )}
+
+      {sources.length > 0 && <SourcesList sources={sources} />}
 
       <div className='flex flex-wrap justify-end gap-3'>
         {hasProfile && (

@@ -1,13 +1,24 @@
 'use client';
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { Gap } from '@/lib/session-store';
+import type { Gap, SourceRef } from '@/lib/session-store';
+import { segmentCitations } from '@/lib/citation-detect';
+import InlineCitation from './InlineCitation';
 
 type Props = {
   gap: Gap;
   expanded: boolean;
   onToggle: () => void;
+  sources?: SourceRef[];
 };
+
+function renderWithCitations(text: string, sources: SourceRef[]) {
+  const segments = segmentCitations(text);
+  return segments.map((seg, i) => {
+    if (seg.kind === 'text') return <span key={i}>{seg.value}</span>;
+    return <InlineCitation key={i} index={seg.index} sources={sources} />;
+  });
+}
 
 const SEVERITY_LABEL: Record<Gap['severity'], string> = {
   'critical': 'CRITICAL',
@@ -21,7 +32,7 @@ const SEVERITY_COLOR: Record<Gap['severity'], string> = {
   'nice-to-have': 'text-ink-muted',
 };
 
-export default function GapItem({ gap, expanded, onToggle }: Props) {
+export default function GapItem({ gap, expanded, onToggle, sources }: Props) {
   const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <div className='border border-border rounded-lg bg-paper'>
@@ -44,7 +55,9 @@ export default function GapItem({ gap, expanded, onToggle }: Props) {
               <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
                 Why it matters
               </div>
-              <p className='text-ink-muted leading-relaxed'>{gap.why}</p>
+              <p className='text-ink-muted leading-relaxed'>
+                {sources ? renderWithCitations(gap.why, sources) : gap.why}
+              </p>
             </div>
           )}
           {gap.targetLevel && (
@@ -52,7 +65,9 @@ export default function GapItem({ gap, expanded, onToggle }: Props) {
               <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
                 Target level
               </div>
-              <p className='text-ink-muted leading-relaxed'>{gap.targetLevel}</p>
+              <p className='text-ink-muted leading-relaxed'>
+                {sources ? renderWithCitations(gap.targetLevel, sources) : gap.targetLevel}
+              </p>
             </div>
           )}
           {gap.currentLevel && (
