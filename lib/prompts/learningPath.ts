@@ -1,4 +1,5 @@
-import type { GapAnalysis, LearningPath, StudentProfile } from '@/lib/session-store';
+import type { GapAnalysis, LearningPath, StudentProfile, SourceRef } from '@/lib/session-store';
+import { formatSourcesForFootnote } from '@/lib/search-prompt';
 
 export type LearningPathInput = {
   jobAdvert?: string;
@@ -7,6 +8,7 @@ export type LearningPathInput = {
   aboutYou?: string;
   distilledProfile?: StudentProfile;
   gapAnalysis?: GapAnalysis;
+  sources?: SourceRef[];
 };
 
 function formatProfile(p: StudentProfile): string {
@@ -27,7 +29,7 @@ function formatGapsForPrompt(g: GapAnalysis): string {
 }
 
 export function buildLearningPathPrompt(input: LearningPathInput): string {
-  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, gapAnalysis } = input;
+  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, gapAnalysis, sources } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
   if (!hasTarget) {
@@ -86,6 +88,10 @@ Each Milestone has the shape:
     sections.push(
       `<gapAnalysis>\n${formatGapsForPrompt(gapAnalysis)}\n</gapAnalysis>\n\nPrioritise the listed gaps in the earliest milestones.`
     );
+  }
+
+  if (sources && sources.length > 0) {
+    sections.push(formatSourcesForFootnote(sources));
   }
 
   sections.push('ONLY respond with JSON. No prose, no code fences.');

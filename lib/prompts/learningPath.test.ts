@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildLearningPathPrompt, parseLearningPath } from './learningPath';
-import type { GapAnalysis } from '@/lib/session-store';
+import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 
 describe('buildLearningPathPrompt', () => {
   it('throws when no target is provided', () => {
@@ -53,6 +53,21 @@ describe('buildLearningPathPrompt', () => {
     expect(out).toContain('portfolioProject');
     expect(out).toContain('totalDuration');
     expect(out).toContain('caveats');
+  });
+
+  it('includes sources block when sources are provided', () => {
+    const sources: SourceRef[] = [
+      { title: 'Coursera', url: 'https://coursera.org/x', domain: 'coursera.org' },
+    ];
+    const out = buildLearningPathPrompt({ jobTitle: 'Data Analyst', sources });
+    expect(out).toContain('<sources>');
+    expect(out).toContain('Coursera');
+    expect(out).not.toMatch(/inline marker/i);
+  });
+
+  it('does not include sources block when sources are absent', () => {
+    const out = buildLearningPathPrompt({ jobTitle: 'Data Analyst' });
+    expect(out).not.toContain('<sources>');
   });
 });
 
