@@ -13,6 +13,7 @@ export default function OutputsBanner() {
     interviewMessages,
     interviewFeedback,
     odysseyLives,
+    boardReview,
   } = store;
 
   const userMessageCount = chatMessages.filter(
@@ -28,6 +29,7 @@ export default function OutputsBanner() {
   const hasOdyssey = Object.values(odysseyLives).some(
     (life) => life.seed.trim() || life.headline
   );
+  const hasBoard = !!boardReview;
 
   if (
     !hasCareers &&
@@ -36,7 +38,8 @@ export default function OutputsBanner() {
     !hasPath &&
     !hasInterviewInProgress &&
     !hasInterviewFeedback &&
-    !hasOdyssey
+    !hasOdyssey &&
+    !hasBoard
   ) return null;
 
   function handleStartOver() {
@@ -82,6 +85,11 @@ export default function OutputsBanner() {
         {hasOdyssey && (
           <Link href='/odyssey' className='underline hover:text-accent'>
             odyssey plan in progress
+          </Link>
+        )}
+        {hasBoard && (
+          <Link href='/board' className='underline hover:text-accent'>
+            board review ready
           </Link>
         )}
       </div>
