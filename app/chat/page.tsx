@@ -185,6 +185,47 @@ export default function ChatPage() {
     }
   }
 
+  async function handleBoard() {
+    if (!(await isLLMConfigured())) {
+      toast.error('Set up an LLM provider first.');
+      return;
+    }
+    setDistilling(true);
+    try {
+      const llmConfig = await loadLLMConfig();
+      const res = await fetch('/api/distillProfile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: useSessionStore.getState().chatMessages,
+          resume: store.resumeText ?? undefined,
+          freeText: store.freeText || undefined,
+          jobTitle: store.jobTitle || undefined,
+          guidance:
+            'Produce a one-to-two sentence framing summary describing what the student seems to be worried about or wanting feedback on in this conversation. This will be used as the opening question for a Board of Advisors profile review. Write it in first person from the student\'s perspective (for example "I\'m worried that..."). Put this in the "background" field.',
+          llmConfig,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Could not distil the chat');
+      }
+      const { profile } = (await res.json()) as { profile: StudentProfile };
+      const framing = profile.background || '';
+      store.setBoardPrefill({ framing });
+      router.push('/board');
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Could not set up board review from this chat.'
+      );
+    } finally {
+      setDistilling(false);
+    }
+  }
+
   function handleAcceptProfile(profile: StudentProfile) {
     store.setDistilledProfile(profile);
     store.setCareers(null);
@@ -206,6 +247,8 @@ export default function ChatPage() {
         disabled={sending}
         onOdyssey={handleOdyssey}
         odysseyDisabled={distilling || userMessageCount < 3}
+        onBoard={handleBoard}
+        boardDisabled={distilling || userMessageCount < 3}
       />
       <PaperclipMenu open={paperclipOpen} onClose={() => setPaperclipOpen(false)} />
       <ProfileReviewModal
