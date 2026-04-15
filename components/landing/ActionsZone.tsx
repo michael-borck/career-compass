@@ -9,6 +9,7 @@ import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/sess
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { settingsStore } from '@/lib/settings-store';
 import type { MissingHints } from './InputsZone';
+import ActionWillUse from './ActionWillUse';
 
 type Props = {
   setMissingHints: (h: MissingHints) => void;
@@ -239,14 +240,20 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           <span>Discover</span>
         </div>
         <div className='grid grid-cols-2 gap-3'>
-          <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
-            <Compass className='w-4 h-4 mr-2' />
-            Find my careers
-          </Button>
-          <Button onClick={handleStartChatting} disabled={anyRunning} variant='outline' className='py-6'>
-            <MessageCircle className='w-4 h-4 mr-2' />
-            Start chatting
-          </Button>
+          <div className='flex flex-col'>
+            <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
+              <Compass className='w-4 h-4 mr-2' />
+              Find my careers
+            </Button>
+            <ActionWillUse actionId='careers' />
+          </div>
+          <div className='flex flex-col'>
+            <Button onClick={handleStartChatting} disabled={anyRunning} variant='outline' className='py-6'>
+              <MessageCircle className='w-4 h-4 mr-2' />
+              Start chatting
+            </Button>
+            <ActionWillUse actionId='chat' />
+          </div>
         </div>
       </section>
 
@@ -255,18 +262,27 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           <span>Assess</span>
         </div>
         <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-          <Button onClick={handleGapAnalysis} disabled={anyRunning} variant='outline' className='py-6'>
-            <SearchCheck className='w-4 h-4 mr-2' />
-            {running === 'gaps' ? 'Analysing…' : 'Gap analysis'}
-          </Button>
-          <Button onClick={handleLearningPath} disabled={anyRunning} variant='outline' className='py-6'>
-            <RouteIcon className='w-4 h-4 mr-2' />
-            {running === 'learn' ? 'Building…' : 'Learning path'}
-          </Button>
-          <Button onClick={handleInterview} disabled={anyRunning} variant='outline' className='py-6'>
-            <Mic className='w-4 h-4 mr-2' />
-            Practice interview
-          </Button>
+          <div className='flex flex-col'>
+            <Button onClick={handleGapAnalysis} disabled={anyRunning} variant='outline' className='py-6'>
+              <SearchCheck className='w-4 h-4 mr-2' />
+              {running === 'gaps' ? 'Analysing…' : 'Gap analysis'}
+            </Button>
+            <ActionWillUse actionId='gaps' />
+          </div>
+          <div className='flex flex-col'>
+            <Button onClick={handleLearningPath} disabled={anyRunning} variant='outline' className='py-6'>
+              <RouteIcon className='w-4 h-4 mr-2' />
+              {running === 'learn' ? 'Building…' : 'Learning path'}
+            </Button>
+            <ActionWillUse actionId='learn' />
+          </div>
+          <div className='flex flex-col'>
+            <Button onClick={handleInterview} disabled={anyRunning} variant='outline' className='py-6'>
+              <Mic className='w-4 h-4 mr-2' />
+              Practice interview
+            </Button>
+            <ActionWillUse actionId='interview' />
+          </div>
         </div>
       </section>
 
@@ -275,14 +291,20 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           <span>Reflect</span>
         </div>
         <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-          <Button onClick={handleOdyssey} disabled={anyRunning} variant='outline' className='py-6'>
-            <Sparkles className='w-4 h-4 mr-2' />
-            Imagine three lives
-          </Button>
-          <Button onClick={handleBoard} disabled={anyRunning} variant='outline' className='py-6'>
-            <Users className='w-4 h-4 mr-2' />
-            Board of advisors
-          </Button>
+          <div className='flex flex-col'>
+            <Button onClick={handleOdyssey} disabled={anyRunning} variant='outline' className='py-6'>
+              <Sparkles className='w-4 h-4 mr-2' />
+              Imagine three lives
+            </Button>
+            <ActionWillUse actionId='odyssey' />
+          </div>
+          <div className='flex flex-col'>
+            <Button onClick={handleBoard} disabled={anyRunning} variant='outline' className='py-6'>
+              <Users className='w-4 h-4 mr-2' />
+              Board of advisors
+            </Button>
+            <ActionWillUse actionId='board' />
+          </div>
         </div>
       </section>
     </div>
