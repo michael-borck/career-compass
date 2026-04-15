@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic, Sparkles } from 'lucide-react';
+import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
@@ -212,6 +212,12 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     router.push('/odyssey');
   }
 
+  async function handleBoard() {
+    clearMissingHints();
+    if (!(await ensureProvider())) return;
+    router.push('/board');
+  }
+
   const anyRunning = running !== null;
 
   return (
@@ -260,6 +266,10 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
           <Button onClick={handleOdyssey} disabled={anyRunning} variant='outline' className='py-6'>
             <Sparkles className='w-4 h-4 mr-2' />
             Imagine three lives
+          </Button>
+          <Button onClick={handleBoard} disabled={anyRunning} variant='outline' className='py-6'>
+            <Users className='w-4 h-4 mr-2' />
+            Board of advisors
           </Button>
         </div>
       </section>
