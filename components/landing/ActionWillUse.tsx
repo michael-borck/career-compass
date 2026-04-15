@@ -18,21 +18,47 @@ export default function ActionWillUse({ actionId }: Props) {
   const hasProfile = hasResume || hasFreeText || hasDistilled;
 
   function line(): string {
+    const filled: string[] = [];
+    if (hasResume) filled.push('resume');
+    if (hasFreeText) filled.push('about you');
+    if (hasJobTitle) filled.push('job title');
+    if (hasJobAdvert) filled.push('job advert');
+    const hasTarget = hasJobTitle || hasJobAdvert;
+
     switch (actionId) {
-      case 'careers':
-        return 'Uses any material you provide above.';
-      case 'chat':
-        return 'Starts open. You can attach material during the chat.';
-      case 'gaps':
-        return 'Needs a target (job title or job advert) and a profile (resume or about you).';
+      case 'careers': {
+        if (filled.length === 0 && !hasDistilled) return 'Needs any material above.';
+        if (filled.length === 0) return 'Will use your distilled profile.';
+        return `Will use: ${filled.join(', ')}.`;
+      }
+      case 'chat': {
+        if (filled.length === 0) return 'Starts open. Attach material any time during the chat.';
+        return `Will start with: ${filled.join(', ')}. Attach more during the chat.`;
+      }
+      case 'gaps': {
+        if (!hasTarget && !hasProfile) {
+          return 'Needs a target (job title or job advert) and a profile (resume or about you).';
+        }
+        if (!hasTarget) return 'Needs a target (job title or job advert).';
+        if (!hasProfile) return 'Needs a profile (resume or about you).';
+        return `Will use: ${filled.join(', ')}.`;
+      }
       case 'learn':
-        return 'Needs a target (job title or job advert). Uses profile for context.';
-      case 'interview':
-        return 'Needs a target (job title or job advert). Uses profile for context.';
-      case 'odyssey':
-        return 'Optional. You can brainstorm three lives with or without a profile.';
-      case 'board':
-        return 'Needs a profile (resume, about you, or distilled profile).';
+      case 'interview': {
+        if (!hasTarget) return 'Needs a target (job title or job advert).';
+        return `Will use: ${filled.join(', ')}.`;
+      }
+      case 'odyssey': {
+        if (filled.length === 0 && !hasDistilled) {
+          return 'Optional. Brainstorm three lives unaided, or add material above for richer suggestions.';
+        }
+        if (filled.length === 0) return 'Will use your distilled profile for suggestions.';
+        return `Will use: ${filled.join(', ')} for suggestions.`;
+      }
+      case 'board': {
+        if (!hasProfile) return 'Needs a profile (resume or about you).';
+        return `Will use: ${filled.join(', ')}.`;
+      }
     }
   }
 
