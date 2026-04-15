@@ -13,9 +13,11 @@ type Props = {
   disabled?: boolean;
   onOdyssey?: () => void;
   odysseyDisabled?: boolean;
+  onBoard?: () => void;
+  boardDisabled?: boolean;
 };
 
-export default function ChatComposer({ onSend, onPaperclip, onLookUp, disabled, onOdyssey, odysseyDisabled }: Props) {
+export default function ChatComposer({ onSend, onPaperclip, onLookUp, disabled, onOdyssey, odysseyDisabled, onBoard, boardDisabled }: Props) {
   const [text, setText] = useState('');
 
   function handleSend() {
@@ -60,16 +62,28 @@ export default function ChatComposer({ onSend, onPaperclip, onLookUp, disabled, 
           <Send className='w-4 h-4' />
         </Button>
       </div>
-      {onOdyssey && (
+      {(onOdyssey || onBoard) && (
         <div className='px-6 pb-3 flex gap-4'>
-          <button
-            type='button'
-            onClick={onOdyssey}
-            disabled={odysseyDisabled}
-            className='text-[var(--text-sm)] text-ink-muted hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed'
-          >
-            Try as Odyssey plan →
-          </button>
+          {onOdyssey && (
+            <button
+              type='button'
+              onClick={onOdyssey}
+              disabled={odysseyDisabled}
+              className='text-[var(--text-sm)] text-ink-muted hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              Try as Odyssey plan →
+            </button>
+          )}
+          {onBoard && (
+            <button
+              type='button'
+              onClick={onBoard}
+              disabled={boardDisabled}
+              className='text-[var(--text-sm)] text-ink-muted hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              Try as board review →
+            </button>
+          )}
         </div>
       )}
     </>
