@@ -138,8 +138,8 @@ export default function BoardInputCard() {
             </>
           ) : (
             <span className='text-error'>
-              The board needs at least a resume, an About you, or a distilled profile to review. Add
-              one on the landing page.
+              No profile material found. Return to the landing page to add a resume or fill in About
+              you.
             </span>
           )}
         </div>
