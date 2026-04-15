@@ -3,8 +3,9 @@ import {
   gapAnalysisToMarkdown,
   learningPathToMarkdown,
   interviewFeedbackToMarkdown,
+  boardReviewToMarkdown,
 } from './markdown-export';
-import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef, BoardReview } from './session-store';
 
 const gap: GapAnalysis = {
   target: 'Data Analyst',
@@ -313,5 +314,74 @@ describe('source rendering in markdown', () => {
   it('interview feedback markdown includes sources section when provided', () => {
     const md = interviewFeedbackToMarkdown(feedback, sources);
     expect(md).toContain('## Sources consulted');
+  });
+});
+
+function makeReview(overrides: Partial<BoardReview> = {}): BoardReview {
+  return {
+    framing: 'I feel too academic for industry.',
+    focusRole: 'Data analyst',
+    voices: [
+      { role: 'recruiter', name: 'The Recruiter', response: 'Your resume needs keywords.' },
+      { role: 'hr', name: 'The HR Partner', response: 'Culture fit seems strong.' },
+      { role: 'manager', name: 'The Hiring Manager', response: 'I would probe your projects.' },
+      { role: 'mentor', name: 'The Mentor', response: 'You have real curiosity.' },
+    ],
+    synthesis: {
+      agreements: ['Curiosity is a strong signal'],
+      disagreements: ['The Recruiter wants keywords; the Mentor sees depth'],
+      topPriorities: ['Rewrite projects in industry language', 'Add measurable outcomes'],
+    },
+    ...overrides,
+  };
+}
+
+describe('boardReviewToMarkdown', () => {
+  it('renders happy path with framing, focus, voices, and synthesis', () => {
+    const md = boardReviewToMarkdown(makeReview());
+    expect(md).toContain('# Board of Advisors Review');
+    expect(md).toContain('**Your framing:** I feel too academic for industry.');
+    expect(md).toContain('**Focus role:** Data analyst');
+    expect(md).toContain('## The Recruiter');
+    expect(md).toContain('## The HR Partner');
+    expect(md).toContain('## The Hiring Manager');
+    expect(md).toContain('## The Mentor');
+    expect(md).toContain('Your resume needs keywords.');
+    expect(md).toContain('## Where the board landed');
+    expect(md).toContain('### Where they agreed');
+    expect(md).toContain('### Where they pushed back on each other');
+    expect(md).toContain('### What to work on');
+    expect(md).toContain('1. Rewrite projects in industry language');
+    expect(md).toContain('2. Add measurable outcomes');
+  });
+
+  it('renders empty framing as open review placeholder', () => {
+    const md = boardReviewToMarkdown(makeReview({ framing: '' }));
+    expect(md).toContain('**Your framing:** Open review — no specific focus');
+  });
+
+  it('renders null focus role as None', () => {
+    const md = boardReviewToMarkdown(makeReview({ focusRole: null }));
+    expect(md).toContain('**Focus role:** None');
+  });
+
+  it('skips empty synthesis subsections', () => {
+    const md = boardReviewToMarkdown(
+      makeReview({
+        synthesis: {
+          agreements: ['Only this one'],
+          disagreements: [],
+          topPriorities: [],
+        },
+      })
+    );
+    expect(md).toContain('### Where they agreed');
+    expect(md).not.toContain('### Where they pushed back on each other');
+    expect(md).not.toContain('### What to work on');
+  });
+
+  it('ends with the AI-generated footer', () => {
+    const md = boardReviewToMarkdown(makeReview());
+    expect(md.trim().endsWith('*Four AI-generated perspectives. Disagreement is part of the exercise.*')).toBe(true);
   });
 });

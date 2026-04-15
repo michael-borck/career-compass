@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -292,5 +292,47 @@ export function odysseyPlanToMarkdown(lives: Record<OdysseyLifeType, OdysseyLife
   lines.push('---');
   lines.push('');
   lines.push('*AI-generated elaboration. Dashboard ratings are your own reflection.*');
+  return lines.join('\n');
+}
+
+export function boardReviewToMarkdown(r: BoardReview): string {
+  const lines: string[] = [];
+  lines.push('# Board of Advisors Review');
+  lines.push('');
+  const framingLine = r.framing.trim() || 'Open review — no specific focus';
+  lines.push(`**Your framing:** ${framingLine}`);
+  lines.push(`**Focus role:** ${r.focusRole?.trim() || 'None'}`);
+  lines.push('');
+
+  for (const voice of r.voices) {
+    lines.push(`## ${voice.name}`);
+    lines.push(voice.response);
+    lines.push('');
+  }
+
+  lines.push('## Where the board landed');
+  lines.push('');
+
+  if (r.synthesis.agreements.length > 0) {
+    lines.push('### Where they agreed');
+    for (const a of r.synthesis.agreements) lines.push(`- ${a}`);
+    lines.push('');
+  }
+
+  if (r.synthesis.disagreements.length > 0) {
+    lines.push('### Where they pushed back on each other');
+    for (const d of r.synthesis.disagreements) lines.push(`- ${d}`);
+    lines.push('');
+  }
+
+  if (r.synthesis.topPriorities.length > 0) {
+    lines.push('### What to work on');
+    r.synthesis.topPriorities.forEach((p, i) => lines.push(`${i + 1}. ${p}`));
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*Four AI-generated perspectives. Disagreement is part of the exercise.*');
   return lines.join('\n');
 }
