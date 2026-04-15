@@ -375,3 +375,72 @@ describe('odyssey lives', () => {
     expect(odysseyLives.current.dashboard.confidence).toBeNull();
   });
 });
+
+describe('board review', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('boardReview and boardPrefill initialise null', () => {
+    expect(useSessionStore.getState().boardReview).toBeNull();
+    expect(useSessionStore.getState().boardPrefill).toBeNull();
+  });
+
+  it('setBoardReview writes and clears', () => {
+    const review = {
+      framing: 'I want to know if my profile reads industry-ready.',
+      focusRole: 'Data analyst',
+      voices: [
+        { role: 'recruiter' as const, name: 'The Recruiter', response: 'r' },
+        { role: 'hr' as const, name: 'The HR Partner', response: 'h' },
+        { role: 'manager' as const, name: 'The Hiring Manager', response: 'm' },
+        { role: 'mentor' as const, name: 'The Mentor', response: 'me' },
+      ],
+      synthesis: {
+        agreements: ['a1'],
+        disagreements: ['d1'],
+        topPriorities: ['p1', 'p2'],
+      },
+    };
+    useSessionStore.getState().setBoardReview(review);
+    expect(useSessionStore.getState().boardReview).toEqual(review);
+    useSessionStore.getState().setBoardReview(null);
+    expect(useSessionStore.getState().boardReview).toBeNull();
+  });
+
+  it('setBoardPrefill writes', () => {
+    useSessionStore.getState().setBoardPrefill({ framing: 'F', focusRole: 'R' });
+    expect(useSessionStore.getState().boardPrefill).toEqual({ framing: 'F', focusRole: 'R' });
+  });
+
+  it('consumeBoardPrefill reads and clears atomically', () => {
+    useSessionStore.getState().setBoardPrefill({ framing: 'Read me' });
+    const first = useSessionStore.getState().consumeBoardPrefill();
+    expect(first).toEqual({ framing: 'Read me' });
+    const second = useSessionStore.getState().consumeBoardPrefill();
+    expect(second).toBeNull();
+    expect(useSessionStore.getState().boardPrefill).toBeNull();
+  });
+
+  it('consumeBoardPrefill returns null when nothing set', () => {
+    expect(useSessionStore.getState().consumeBoardPrefill()).toBeNull();
+  });
+
+  it('reset() clears boardReview and boardPrefill', () => {
+    useSessionStore.getState().setBoardReview({
+      framing: 'x',
+      focusRole: null,
+      voices: [
+        { role: 'recruiter', name: 'The Recruiter', response: 'r' },
+        { role: 'hr', name: 'The HR Partner', response: 'h' },
+        { role: 'manager', name: 'The Hiring Manager', response: 'm' },
+        { role: 'mentor', name: 'The Mentor', response: 'me' },
+      ],
+      synthesis: { agreements: ['a'], disagreements: [], topPriorities: [] },
+    });
+    useSessionStore.getState().setBoardPrefill({ framing: 'F' });
+    useSessionStore.getState().reset();
+    expect(useSessionStore.getState().boardReview).toBeNull();
+    expect(useSessionStore.getState().boardPrefill).toBeNull();
+  });
+});

@@ -116,6 +116,32 @@ export type OdysseyLife = {
   dashboard: OdysseyDashboard;
 };
 
+export type BoardAdvisorRole = 'recruiter' | 'hr' | 'manager' | 'mentor';
+
+export type BoardAdvisorVoice = {
+  role: BoardAdvisorRole;
+  name: string;
+  response: string;
+};
+
+export type BoardSynthesis = {
+  agreements: string[];
+  disagreements: string[];
+  topPriorities: string[];
+};
+
+export type BoardReview = {
+  framing: string;
+  focusRole: string | null;
+  voices: BoardAdvisorVoice[];
+  synthesis: BoardSynthesis;
+};
+
+export type BoardPrefill = {
+  framing?: string;
+  focusRole?: string;
+};
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -147,6 +173,10 @@ export type SessionState = {
   interviewPhase: InterviewPhase | null;
   interviewTurnInPhase: number;
   interviewFeedback: InterviewFeedback | null;
+
+  // Board
+  boardReview: BoardReview | null;
+  boardPrefill: BoardPrefill | null;
 
   // Grounding sources
   gapAnalysisSources: SourceRef[] | null;
@@ -184,6 +214,9 @@ export type SessionState = {
   setLearningPathSources: (s: SourceRef[] | null) => void;
   addInterviewSources: (sources: SourceRef[]) => void;
   setChatSourcesForMessage: (messageId: string, sources: SourceRef[]) => void;
+  setBoardReview: (r: BoardReview | null) => void;
+  setBoardPrefill: (p: BoardPrefill | null) => void;
+  consumeBoardPrefill: () => BoardPrefill | null;
   reset: () => void;
 };
 
@@ -238,13 +271,15 @@ const initialState = {
   learningPathSources: null,
   interviewSources: [],
   chatSources: {},
+  boardReview: null,
+  boardPrefill: null,
 };
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
   ...initialState,
 
   setResume: (text, filename) =>
@@ -366,6 +401,14 @@ export const useSessionStore = create<SessionState>((set) => ({
     set((state) => ({
       chatSources: { ...state.chatSources, [messageId]: sources },
     })),
+
+  setBoardReview: (r) => set({ boardReview: r }),
+  setBoardPrefill: (p) => set({ boardPrefill: p }),
+  consumeBoardPrefill: () => {
+    const current = get().boardPrefill;
+    if (current) set({ boardPrefill: null });
+    return current;
+  },
 
   reset: () => set({ ...initialState }),
 }));
