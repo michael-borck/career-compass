@@ -214,6 +214,18 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
 
   async function handleBoard() {
     clearMissingHints();
+    const hasProfile = !!store.resumeText || !!store.freeText.trim() || !!store.distilledProfile;
+    if (!hasProfile) {
+      setMissingHints({
+        resume: true,
+        jobTitle: false,
+        aboutYou: true,
+        jobAdvert: false,
+        message: 'Board of advisors needs a profile to review. Upload a resume or write something in About you.',
+      });
+      focusFirstHint();
+      return;
+    }
     if (!(await ensureProvider())) return;
     router.push('/board');
   }
