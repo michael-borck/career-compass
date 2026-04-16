@@ -93,6 +93,13 @@ export default function BoardPage() {
 
             <BoardVoices voices={boardReview.voices} />
             <BoardSynthesisPanel synthesis={boardReview.synthesis} />
+
+            <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
+              Ready to see the bigger picture?{' '}
+              <Link href='/career-story' className='underline hover:text-accent'>
+                Build your career story
+              </Link>
+            </p>
           </div>
         )}
       </div>

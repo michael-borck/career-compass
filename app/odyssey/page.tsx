@@ -83,6 +83,13 @@ export default function OdysseyPage() {
         ) : (
           <OdysseyCompareView lives={odysseyLives} />
         )}
+
+        <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
+          Ready to see the bigger picture?{' '}
+          <Link href='/career-story' className='underline hover:text-accent'>
+            Build your career story
+          </Link>
+        </p>
       </div>
       <Toaster />
     </div>

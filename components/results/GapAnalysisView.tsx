@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
@@ -168,6 +169,13 @@ export default function GapAnalysisView({ analysis }: Props) {
           Turn this into a learning path →
         </Button>
       </div>
+
+      <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
+        Ready to see the bigger picture?{' '}
+        <Link href='/career-story' className='underline hover:text-accent'>
+          Build your career story
+        </Link>
+      </p>
     </div>
   );
 }

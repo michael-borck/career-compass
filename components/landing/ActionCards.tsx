@@ -10,6 +10,7 @@ import {
   Mic,
   Sparkles,
   Users,
+  BookOpen,
   Presentation,
   FileText,
   ClipboardCheck,
@@ -113,6 +114,13 @@ export default function ActionCards() {
       description: 'Four perspectives on your profile.',
       hover: 'Needs a profile. A recruiter, HR partner, manager, and mentor each weigh in.',
       path: '/board',
+    },
+    {
+      icon: <BookOpen className='w-5 h-5' />,
+      title: 'Career story',
+      description: 'Find the thread connecting your experiences.',
+      hover: 'Works best after using other features. Draws on your full session.',
+      path: '/career-story',
     },
   ];
 

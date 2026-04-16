@@ -24,6 +24,7 @@ export default function SessionBanner() {
     coverLetter,
     resumeReview,
     portfolio,
+    careerStory,
   } = store;
 
   const hasResume = !!resumeText;
@@ -51,11 +52,12 @@ export default function SessionBanner() {
   const hasCoverLetter = !!coverLetter;
   const hasResumeReview = !!resumeReview;
   const hasPortfolio = !!portfolio;
+  const hasCareerStory = !!careerStory;
   const hasAnyOutput =
     hasCareers || hasChat || hasGap || hasPath ||
     hasInterviewInProgress || hasInterviewFeedback ||
     hasOdyssey || hasBoard || hasComparison ||
-    hasPitch || hasCoverLetter || hasResumeReview || hasPortfolio;
+    hasPitch || hasCoverLetter || hasResumeReview || hasPortfolio || hasCareerStory;
 
   if (!hasAnyInput && !hasAnyOutput) return null;
 
@@ -203,6 +205,11 @@ export default function SessionBanner() {
           {hasPortfolio && (
             <Link href='/portfolio' className='underline hover:text-accent'>
               portfolio ready{portfolio!.target ? ` (${portfolio!.target})` : ''}
+            </Link>
+          )}
+          {hasCareerStory && (
+            <Link href='/career-story' className='underline hover:text-accent'>
+              career story ready
             </Link>
           )}
         </div>
