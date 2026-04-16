@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -392,5 +392,86 @@ export function comparisonToMarkdown(c: Comparison): string {
     '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
   );
 
+  return lines.join('\n');
+}
+
+export function pitchToMarkdown(p: ElevatorPitch): string {
+  const lines: string[] = [];
+  lines.push('# Elevator Pitch');
+  lines.push('');
+  lines.push(`**Target:** ${p.target ?? 'General'}`);
+  lines.push('');
+  lines.push('## Your hook');
+  lines.push(p.hook);
+  lines.push('');
+  lines.push('## The pitch');
+  lines.push(p.body);
+  lines.push('');
+  lines.push('## Your close');
+  lines.push(p.close);
+  lines.push('');
+  lines.push('## Full script');
+  lines.push(p.fullScript);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated pitch. Edit to match your voice before using.*');
+  return lines.join('\n');
+}
+
+export function coverLetterToMarkdown(l: CoverLetter): string {
+  const lines: string[] = [];
+  lines.push('# Cover Letter');
+  lines.push('');
+  lines.push(`**Target:** ${l.target}`);
+  lines.push('');
+  lines.push(l.greeting);
+  lines.push('');
+  lines.push(l.body);
+  lines.push('');
+  lines.push(l.closing);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated draft. Edit before sending.*');
+  return lines.join('\n');
+}
+
+export function resumeReviewToMarkdown(r: ResumeReview): string {
+  const lines: string[] = [];
+  lines.push('# Resume Review');
+  lines.push('');
+  lines.push(`**Target:** ${r.target ?? 'General review'}`);
+  lines.push('');
+  lines.push('## Overall impression');
+  lines.push(r.overallImpression);
+  lines.push('');
+  if (r.strengths.length > 0) {
+    lines.push("## What's working");
+    for (const s of r.strengths) lines.push(`- ${s}`);
+    lines.push('');
+  }
+  lines.push('## Suggested improvements');
+  lines.push('');
+  r.improvements.forEach((imp, idx) => {
+    lines.push(`### ${idx + 1}. ${imp.section}`);
+    lines.push(`**Suggestion:** ${imp.suggestion}`);
+    if (imp.why) lines.push(`**Why:** ${imp.why}`);
+    if (imp.example) lines.push(`**Example:** "${imp.example}"`);
+    lines.push('');
+  });
+  if (r.keywordsToAdd.length > 0) {
+    lines.push('## Keywords to add');
+    for (const k of r.keywordsToAdd) lines.push(`- ${k}`);
+    lines.push('');
+  }
+  if (r.structuralNotes.length > 0) {
+    lines.push('## Structural notes');
+    for (const n of r.structuralNotes) lines.push(`- ${n}`);
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated feedback. Use as a starting point, not a final verdict.*');
   return lines.join('\n');
 }

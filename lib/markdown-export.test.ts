@@ -386,8 +386,8 @@ describe('boardReviewToMarkdown', () => {
   });
 });
 
-import { comparisonToMarkdown } from './markdown-export';
-import type { Comparison } from './session-store';
+import { comparisonToMarkdown, pitchToMarkdown, coverLetterToMarkdown, resumeReviewToMarkdown } from './markdown-export';
+import type { Comparison, ElevatorPitch, CoverLetter, ResumeReview } from './session-store';
 
 function makeComparison(mode: 'quick' | 'rich', roleCount: 2 | 3): Comparison {
   const roleLabels = ['Data analyst', 'UX researcher', 'Product manager'].slice(0, roleCount);
@@ -450,5 +450,76 @@ describe('comparisonToMarkdown', () => {
     expect(md.trim().endsWith(
       '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
     )).toBe(true);
+  });
+});
+
+describe('pitchToMarkdown', () => {
+  const pitch: ElevatorPitch = {
+    target: 'Data analyst', hook: 'Did you know data drives every decision?',
+    body: 'I bring analytical experience.', close: 'I am looking for an entry-level role.',
+    fullScript: 'Did you know data drives every decision? I bring analytical experience. I am looking for an entry-level role.',
+  };
+  it('renders all sections', () => {
+    const md = pitchToMarkdown(pitch);
+    expect(md).toContain('# Elevator Pitch');
+    expect(md).toContain('**Target:** Data analyst');
+    expect(md).toContain('## Your hook');
+    expect(md).toContain('## The pitch');
+    expect(md).toContain('## Your close');
+    expect(md).toContain('## Full script');
+  });
+  it('renders null target as General', () => {
+    expect(pitchToMarkdown({ ...pitch, target: null })).toContain('**Target:** General');
+  });
+  it('ends with footer', () => {
+    expect(pitchToMarkdown(pitch).trim()).toMatch(/Edit to match your voice/);
+  });
+});
+
+describe('coverLetterToMarkdown', () => {
+  const letter: CoverLetter = {
+    target: 'Data analyst at Acme', greeting: 'Dear Hiring Manager,',
+    body: 'I am writing to express my interest.\n\nWith my background in statistics...',
+    closing: 'Sincerely,\nStudent Name',
+  };
+  it('renders the letter', () => {
+    const md = coverLetterToMarkdown(letter);
+    expect(md).toContain('# Cover Letter');
+    expect(md).toContain('**Target:** Data analyst at Acme');
+    expect(md).toContain('Dear Hiring Manager,');
+    expect(md).toContain('Sincerely,');
+  });
+  it('ends with footer', () => {
+    expect(coverLetterToMarkdown(letter).trim()).toMatch(/Edit before sending/);
+  });
+});
+
+describe('resumeReviewToMarkdown', () => {
+  const review: ResumeReview = {
+    target: 'Data analyst', overallImpression: 'Solid foundation.',
+    strengths: ['Clear structure'],
+    improvements: [{ section: 'Summary', suggestion: 'Add target', why: 'Focus', example: 'Aspiring data analyst...' }],
+    keywordsToAdd: ['SQL'], structuralNotes: ['Move projects above education'],
+  };
+  it('renders all sections', () => {
+    const md = resumeReviewToMarkdown(review);
+    expect(md).toContain('# Resume Review');
+    expect(md).toContain('## Overall impression');
+    expect(md).toContain("## What's working");
+    expect(md).toContain('## Suggested improvements');
+    expect(md).toContain('### 1. Summary');
+    expect(md).toContain('## Keywords to add');
+    expect(md).toContain('## Structural notes');
+  });
+  it('renders null target as General review', () => {
+    expect(resumeReviewToMarkdown({ ...review, target: null })).toContain('**Target:** General review');
+  });
+  it('skips empty sections', () => {
+    const md = resumeReviewToMarkdown({ ...review, keywordsToAdd: [], structuralNotes: [] });
+    expect(md).not.toContain('## Keywords to add');
+    expect(md).not.toContain('## Structural notes');
+  });
+  it('ends with footer', () => {
+    expect(resumeReviewToMarkdown(review).trim()).toMatch(/starting point/);
   });
 });
