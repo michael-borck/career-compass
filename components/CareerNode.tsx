@@ -12,7 +12,7 @@ import {
 import Link from 'next/link';
 import { useSessionStore } from '@/lib/session-store';
 import type { GapAnalysis, LearningPath } from '@/lib/session-store';
-import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users } from 'lucide-react';
+import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import { loadLLMConfig } from '@/lib/llm-client';
@@ -52,6 +52,9 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   const setGapAnalysis = useSessionStore((s) => s.setGapAnalysis);
   const setLearningPath = useSessionStore((s) => s.setLearningPath);
   const setStoreJobTitle = useSessionStore((s) => s.setJobTitle);
+  const comparing = useSessionStore((s) => s.comparing);
+  const inComparison = comparing.includes(data.jobTitle ?? '');
+  const atMaxComparison = comparing.length >= 3 && !inComparison;
   const [running, setRunning] = useState<'gaps' | 'learn' | null>(null);
 
   function handleChatAboutThis() {
@@ -151,7 +154,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className='border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer'>
+        <div className={`border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer ${inComparison ? 'ring-2 ring-accent' : ''}`}>
           <Handle type='target' position={position} />
           <h1 className='text-[var(--text-xl)] font-semibold mb-2 text-ink'>{jobTitle}</h1>
           <p className='mb-4 text-ink-muted'>{jobDescription}</p>
@@ -258,6 +261,19 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
           <Button variant='outline' onClick={handleBoardShortcut} disabled={running !== null}>
             <Users className='w-4 h-4 mr-2' />
             Ask the board about this role
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => useSessionStore.getState().toggleComparing(data.jobTitle ?? '')}
+            disabled={atMaxComparison}
+            title={atMaxComparison ? 'Maximum 3 roles. Remove one to add another.' : undefined}
+          >
+            {inComparison ? (
+              <><X className='w-3 h-3 mr-1' /> Remove from comparison</>
+            ) : (
+              <><Columns3 className='w-3 h-3 mr-1' /> Compare this role</>
+            )}
           </Button>
         </div>
       </DialogContent>
