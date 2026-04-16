@@ -10,6 +10,9 @@ import {
   Mic,
   Sparkles,
   Users,
+  Presentation,
+  FileText,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useSessionStore } from '@/lib/session-store';
 import type { ReactNode } from 'react';
@@ -112,6 +115,30 @@ export default function ActionCards() {
     },
   ];
 
+  const materials: CardDef[] = [
+    {
+      icon: <Presentation className='w-5 h-5' />,
+      title: 'Elevator pitch',
+      description: 'Write a 30-60 second pitch for networking.',
+      hover: 'Works with any combination of profile and target role.',
+      path: '/pitch',
+    },
+    {
+      icon: <FileText className='w-5 h-5' />,
+      title: 'Cover letter',
+      description: 'Draft a professional letter for applications.',
+      hover: 'Works best with a specific job advert.',
+      path: '/cover-letter',
+    },
+    {
+      icon: <ClipboardCheck className='w-5 h-5' />,
+      title: 'Resume review',
+      description: 'Get structured feedback on your resume.',
+      hover: 'Needs a resume. Add a target role for tailored suggestions.',
+      path: '/resume-review',
+    },
+  ];
+
   function handleClick(def: CardDef) {
     def.preNavigate?.();
     router.push(def.path);
@@ -133,10 +160,11 @@ export default function ActionCards() {
   }
 
   return (
-    <div className='w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-8 mt-6'>
+    <div className='w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-6'>
       {renderColumn('Discover', discover)}
       {renderColumn('Assess', assess)}
       {renderColumn('Reflect', reflect)}
+      {renderColumn('Materials', materials)}
     </div>
   );
 }

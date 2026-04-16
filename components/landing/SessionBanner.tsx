@@ -20,6 +20,9 @@ export default function SessionBanner() {
     odysseyLives,
     boardReview,
     comparison,
+    elevatorPitch,
+    coverLetter,
+    resumeReview,
   } = store;
 
   const hasResume = !!resumeText;
@@ -43,10 +46,14 @@ export default function SessionBanner() {
   );
   const hasBoard = !!boardReview;
   const hasComparison = !!comparison;
+  const hasPitch = !!elevatorPitch;
+  const hasCoverLetter = !!coverLetter;
+  const hasResumeReview = !!resumeReview;
   const hasAnyOutput =
     hasCareers || hasChat || hasGap || hasPath ||
     hasInterviewInProgress || hasInterviewFeedback ||
-    hasOdyssey || hasBoard || hasComparison;
+    hasOdyssey || hasBoard || hasComparison ||
+    hasPitch || hasCoverLetter || hasResumeReview;
 
   if (!hasAnyInput && !hasAnyOutput) return null;
 
@@ -174,6 +181,21 @@ export default function SessionBanner() {
           {hasComparison && (
             <Link href='/compare' className='underline hover:text-accent'>
               comparison ready
+            </Link>
+          )}
+          {hasPitch && (
+            <Link href='/pitch' className='underline hover:text-accent'>
+              pitch ready
+            </Link>
+          )}
+          {hasCoverLetter && (
+            <Link href='/cover-letter' className='underline hover:text-accent'>
+              cover letter ready
+            </Link>
+          )}
+          {hasResumeReview && (
+            <Link href='/resume-review' className='underline hover:text-accent'>
+              resume review ready
             </Link>
           )}
         </div>
