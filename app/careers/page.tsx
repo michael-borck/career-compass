@@ -3,6 +3,7 @@
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import CareerNode from '@/components/CareerNode';
+import CareersInputCard from '@/components/careers/CareersInputCard';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
@@ -197,9 +198,9 @@ export default function CareersPage() {
 
   if (!careers || careers.length === 0) {
     return (
-      <div className='h-full flex flex-col items-center justify-center gap-4'>
-        <p className='text-ink-muted'>No careers yet.</p>
-        <Link href='/' className='underline'>Back to start</Link>
+      <div className='h-full overflow-y-auto'>
+        <CareersInputCard />
+        <Toaster />
       </div>
     );
   }
