@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Download } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSessionStore, type InterviewDifficulty } from '@/lib/session-store';
@@ -108,9 +109,23 @@ export default function InterviewSetupCard({ initialTarget }: Props) {
     }
   }
 
+  const hasResume = !!store.resumeText;
+  const hasFreeText = !!store.freeText.trim();
+  const hasJobAdvert = !!store.jobAdvert.trim();
+
+  const sessionFields: string[] = [];
+  if (hasResume) sessionFields.push(store.resumeFilename ?? 'resume');
+  if (hasFreeText) sessionFields.push('About you');
+  if (hasJobAdvert) sessionFields.push('Job advert');
+
   return (
     <div className='max-w-2xl mx-auto px-6 py-12'>
       <div className='border border-border rounded-lg bg-paper p-8 space-y-6'>
+        <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink'>
+          <ArrowLeft className='w-4 h-4' />
+          Back to landing
+        </Link>
+
         <div>
           <div className='editorial-rule'>
             <span>Practice interview</span>
@@ -166,10 +181,13 @@ export default function InterviewSetupCard({ initialTarget }: Props) {
           Around 7 questions across 5 phases (warm-up, behavioural, role-specific, your questions, wrap-up). Roughly 10-15 minutes. Your transcript stays on this device.
         </div>
 
+        {sessionFields.length > 0 && (
+          <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
+            Will also use from your session: {sessionFields.join(', ')}.
+          </p>
+        )}
+
         <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-4'>
-          <Button variant='outline' onClick={() => router.push('/')}>
-            ← Back
-          </Button>
           <Button
             variant='outline'
             onClick={handleExportToTalkBuddy}

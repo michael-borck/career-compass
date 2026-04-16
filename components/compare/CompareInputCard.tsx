@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { Columns3 } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Columns3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import LoadingDots from '@/components/ui/loadingdots';
@@ -27,6 +28,13 @@ export default function CompareInputCard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const hasResume = !!store.resumeText;
+  const hasFreeText = !!store.freeText.trim();
+
+  const sessionFields: string[] = [];
+  if (hasResume) sessionFields.push(store.resumeFilename ?? 'resume');
+  if (hasFreeText) sessionFields.push('About you');
 
   const canRun = target1.trim().length > 0 && target2.trim().length > 0;
 
@@ -90,6 +98,11 @@ export default function CompareInputCard() {
 
   return (
     <div className='border border-border rounded-lg bg-paper p-6'>
+      <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink mb-6'>
+        <ArrowLeft className='w-4 h-4' />
+        Back to landing
+      </Link>
+
       <div className='editorial-rule justify-center mb-2'>
         <span>Compare careers</span>
       </div>
@@ -148,9 +161,11 @@ export default function CompareInputCard() {
           />
         </div>
 
-        <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
-          Comparison uses your profile (resume / about you) for personalised framing if available.
-        </p>
+        {sessionFields.length > 0 && (
+          <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
+            Will also use from your session: {sessionFields.join(', ')}. Adds personalised framing to the comparison.
+          </p>
+        )}
 
         <div className='flex justify-center pt-2'>
           <Button onClick={runCompare} disabled={!canRun || comparing}>

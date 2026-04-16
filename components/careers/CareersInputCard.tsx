@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { Compass } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,12 +27,19 @@ export default function CareersInputCard() {
   const store = useSessionStore();
   const [running, setRunning] = useState(false);
 
-  const hasAny =
-    !!store.resumeText ||
-    !!store.freeText.trim() ||
-    !!store.jobTitle.trim() ||
-    !!store.jobAdvert.trim();
+  const hasResume = !!store.resumeText;
+  const hasFreeText = !!store.freeText.trim();
+  const hasJobTitle = !!store.jobTitle.trim();
+  const hasJobAdvert = !!store.jobAdvert.trim();
+
+  const hasAny = hasResume || hasFreeText || hasJobTitle || hasJobAdvert;
   const canRun = hasAny;
+
+  const sessionFields: string[] = [];
+  if (hasResume) sessionFields.push(store.resumeFilename ?? 'resume');
+  if (hasFreeText) sessionFields.push('About you');
+  if (hasJobTitle) sessionFields.push(`Job title: ${store.jobTitle.trim().slice(0, 30)}`);
+  if (hasJobAdvert) sessionFields.push('Job advert');
 
   async function handleResumeSelect(file: File) {
     try {
@@ -92,6 +100,11 @@ export default function CareersInputCard() {
   return (
     <div className='max-w-2xl mx-auto px-6 py-16'>
       <div className='border border-border rounded-lg bg-paper p-6'>
+        <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink mb-6'>
+          <ArrowLeft className='w-4 h-4' />
+          Back to landing
+        </Link>
+
         <div className='editorial-rule justify-center mb-2'>
           <span>Find my careers</span>
         </div>
@@ -103,55 +116,69 @@ export default function CareersInputCard() {
         </p>
 
         <div className='space-y-4'>
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              Resume
-            </label>
-            <LocalFileUpload
-              onFileSelect={handleResumeSelect}
-              className='w-full flex items-center justify-center'
-            />
-            {store.resumeFilename && (
-              <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
-                Selected: {store.resumeFilename}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              Job title
-            </label>
-            <Input
-              value={store.jobTitle}
-              onChange={(e) => store.setJobTitle(e.target.value)}
-              placeholder='e.g. Data analyst, UX researcher'
-              disabled={running}
-            />
-          </div>
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              About you
-            </label>
-            <Textarea
-              value={store.freeText}
-              rows={3}
-              onChange={(e) => store.setFreeText(e.target.value)}
-              placeholder='A sentence or two about your background, interests, or goals.'
-              disabled={running}
-            />
-          </div>
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              Job advert
-            </label>
-            <Textarea
-              value={store.jobAdvert}
-              rows={3}
-              onChange={(e) => store.setJobAdvert(e.target.value)}
-              placeholder='Paste a job listing or description.'
-              disabled={running}
-            />
-          </div>
+          {!hasResume && (
+            <div>
+              <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+                Resume
+              </label>
+              <LocalFileUpload
+                onFileSelect={handleResumeSelect}
+                className='w-full flex items-center justify-center'
+              />
+              {store.resumeFilename && (
+                <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
+                  Selected: {store.resumeFilename}
+                </p>
+              )}
+            </div>
+          )}
+          {!hasJobTitle && (
+            <div>
+              <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+                Job title
+              </label>
+              <Input
+                value={store.jobTitle}
+                onChange={(e) => store.setJobTitle(e.target.value)}
+                placeholder='e.g. Data analyst, UX researcher'
+                disabled={running}
+              />
+            </div>
+          )}
+          {!hasFreeText && (
+            <div>
+              <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+                About you
+              </label>
+              <Textarea
+                value={store.freeText}
+                rows={3}
+                onChange={(e) => store.setFreeText(e.target.value)}
+                placeholder='A sentence or two about your background, interests, or goals.'
+                disabled={running}
+              />
+            </div>
+          )}
+          {!hasJobAdvert && (
+            <div>
+              <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+                Job advert
+              </label>
+              <Textarea
+                value={store.jobAdvert}
+                rows={3}
+                onChange={(e) => store.setJobAdvert(e.target.value)}
+                placeholder='Paste a job listing or description.'
+                disabled={running}
+              />
+            </div>
+          )}
+
+          {sessionFields.length > 0 && (
+            <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
+              Will also use from your session: {sessionFields.join(', ')}.
+            </p>
+          )}
 
           <div className='flex justify-center pt-2'>
             <Button onClick={handleRun} disabled={!canRun || running}>
