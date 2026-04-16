@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic, Sparkles, Users } from 'lucide-react';
+import { Compass, MessageCircle, SearchCheck, Route as RouteIcon, Mic, Sparkles, Users, Columns3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionStore, type GapAnalysis, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
@@ -213,6 +213,27 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
     router.push('/odyssey');
   }
 
+  async function handleCompare() {
+    clearMissingHints();
+    const hasTarget = !!store.jobTitle.trim() || !!store.jobAdvert.trim();
+    if (!hasTarget) {
+      setMissingHints({
+        resume: false,
+        jobTitle: true,
+        aboutYou: false,
+        jobAdvert: true,
+        message: 'Compare needs at least one job title or job advert to start. You can add more targets on the next page.',
+      });
+      focusFirstHint();
+      return;
+    }
+    if (!(await ensureProvider())) return;
+    store.setComparePrefill({
+      seedTarget: store.jobAdvert.trim() || store.jobTitle.trim(),
+    });
+    router.push('/compare');
+  }
+
   async function handleBoard() {
     clearMissingHints();
     const hasProfile = !!store.resumeText || !!store.freeText.trim() || !!store.distilledProfile;
@@ -239,7 +260,7 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
         <div className='editorial-rule justify-center mb-3'>
           <span>Discover</span>
         </div>
-        <div className='grid grid-cols-2 gap-3'>
+        <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
           <div className='flex flex-col'>
             <Button onClick={handleFindCareers} disabled={anyRunning} className='py-6'>
               <Compass className='w-4 h-4 mr-2' />
@@ -253,6 +274,13 @@ export default function ActionsZone({ setMissingHints, clearMissingHints }: Prop
               Start chatting
             </Button>
             <ActionWillUse actionId='chat' />
+          </div>
+          <div className='flex flex-col'>
+            <Button onClick={handleCompare} disabled={anyRunning} variant='outline' className='py-6'>
+              <Columns3 className='w-4 h-4 mr-2' />
+              Compare careers
+            </Button>
+            <ActionWillUse actionId='compare' />
           </div>
         </div>
       </section>

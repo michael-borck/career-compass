@@ -2,7 +2,7 @@
 
 import { useSessionStore } from '@/lib/session-store';
 
-export type ActionId = 'careers' | 'chat' | 'gaps' | 'learn' | 'interview' | 'odyssey' | 'board';
+export type ActionId = 'careers' | 'chat' | 'gaps' | 'learn' | 'interview' | 'odyssey' | 'board' | 'compare';
 
 type Props = {
   actionId: ActionId;
@@ -58,6 +58,10 @@ export default function ActionWillUse({ actionId }: Props) {
       case 'board': {
         if (!hasProfile) return 'Needs a profile (resume or about you).';
         return `Will use: ${filled.join(', ')}.`;
+      }
+      case 'compare': {
+        if (!hasTarget) return 'Needs a target (job title or job advert).';
+        return `Will use: ${filled.join(', ')}. Add more targets on the next page.`;
       }
     }
   }
