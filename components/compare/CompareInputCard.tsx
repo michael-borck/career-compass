@@ -3,13 +3,22 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Columns3 } from 'lucide-react';
+import { Columns3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import LocalFileUpload from '@/components/LocalFileUpload';
 import LoadingDots from '@/components/ui/loadingdots';
 import { useSessionStore, type Comparison } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
+
+function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
 
 export default function CompareInputCard() {
   const router = useRouter();
@@ -29,14 +38,27 @@ export default function CompareInputCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasResume = !!store.resumeText;
-  const hasFreeText = !!store.freeText.trim();
-
-  const sessionFields: string[] = [];
-  if (hasResume) sessionFields.push(store.resumeFilename ?? 'resume');
-  if (hasFreeText) sessionFields.push('About you');
-
   const canRun = target1.trim().length > 0 && target2.trim().length > 0;
+
+  async function handleResumeSelect(file: File) {
+    try {
+      const ab = await fileToArrayBuffer(file);
+      const res = await fetch('/api/parsePdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileData: Array.from(new Uint8Array(ab)),
+          filename: file.name,
+        }),
+      });
+      if (!res.ok) throw new Error('Parse failed');
+      const text = await res.json();
+      store.setResume(text, file.name);
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not read that file. Try a different format.');
+    }
+  }
 
   async function ensureProvider(): Promise<boolean> {
     if (!(await isLLMConfigured())) {
@@ -98,11 +120,6 @@ export default function CompareInputCard() {
 
   return (
     <div className='border border-border rounded-lg bg-paper p-6'>
-      <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink mb-6'>
-        <ArrowLeft className='w-4 h-4' />
-        Back to landing
-      </Link>
-
       <div className='editorial-rule justify-center mb-2'>
         <span>Compare careers</span>
       </div>
@@ -137,7 +154,7 @@ export default function CompareInputCard() {
 
         <div>
           <label className='block text-[var(--text-sm)] text-ink-muted mb-1'>
-            Target 2 <span className='text-ink-quiet'>(required)</span>
+            Target 2
           </label>
           <Textarea
             value={target2}
@@ -161,11 +178,37 @@ export default function CompareInputCard() {
           />
         </div>
 
-        {sessionFields.length > 0 && (
-          <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
-            Will also use from your session: {sessionFields.join(', ')}. Adds personalised framing to the comparison.
-          </p>
-        )}
+        <div>
+          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+            Resume (optional)
+          </label>
+          <LocalFileUpload
+            onFileSelect={handleResumeSelect}
+            className='w-full flex items-center justify-center'
+          />
+          {store.resumeFilename && (
+            <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
+              Selected: {store.resumeFilename}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+            About you (optional)
+          </label>
+          <Textarea
+            value={store.freeText}
+            rows={3}
+            onChange={(e) => store.setFreeText(e.target.value)}
+            placeholder='A sentence or two about your background, interests, or goals.'
+            disabled={comparing}
+          />
+        </div>
+
+        <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
+          Adding a resume or About you makes the comparison more personalised.
+        </p>
 
         <div className='flex justify-center pt-2'>
           <Button onClick={runCompare} disabled={!canRun || comparing}>

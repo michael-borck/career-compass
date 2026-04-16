@@ -2,12 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
-import { gapAnalysisToMarkdown } from '@/lib/markdown-export';
-import CopyMarkdownButton from './CopyMarkdownButton';
 import GapItem from './GapItem';
 import SourcesList from './SourcesList';
 import InlineCitation from './InlineCitation';
@@ -45,12 +42,6 @@ export default function GapAnalysisView({ analysis }: Props) {
 
   const allExpanded = analysis.gaps.every((_, i) => expanded[i]);
 
-  function handleStartOver() {
-    if (!confirm('Start over? This clears your session.')) return;
-    store.reset();
-    router.push('/');
-  }
-
   function handlePracticeInterview() {
     router.push('/interview');
   }
@@ -61,16 +52,7 @@ export default function GapAnalysisView({ analysis }: Props) {
   }
 
   return (
-    <div className='max-w-4xl mx-auto px-6 py-8 space-y-8'>
-      <div className='flex items-center gap-3'>
-        <Link href='/' className='text-ink-quiet hover:text-ink underline'>
-          ← Back
-        </Link>
-        <div className='flex-1' />
-        <CopyMarkdownButton getMarkdown={() => gapAnalysisToMarkdown(analysis, sources)} />
-        <Button variant='outline' onClick={handleStartOver}>Start over</Button>
-      </div>
-
+    <div className='space-y-8'>
       <div>
         <div className='editorial-rule'>
           <span>Gap Analysis</span>

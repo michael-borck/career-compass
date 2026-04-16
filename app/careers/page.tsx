@@ -2,9 +2,9 @@
 
 import toast, { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import CareerNode from '@/components/CareerNode';
 import CareersInputCard from '@/components/careers/CareersInputCard';
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Controls,
@@ -14,7 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import type { Node, NodeTypes } from 'reactflow';
-import { Columns3, X } from 'lucide-react';
+import { ArrowLeft, Columns3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingDots from '@/components/ui/loadingdots';
 import { useSessionStore } from '@/lib/session-store';
@@ -187,30 +187,51 @@ export default function CareersPage() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className='h-full flex flex-col items-center justify-center gap-4'>
-        <LoadingDots style='big' color='gray' />
-        <p className='text-ink-muted'>Generating career paths…</p>
-      </div>
-    );
-  }
-
+  // Input card view -- show with page shell
   if (!careers || careers.length === 0) {
     return (
       <div className='h-full overflow-y-auto'>
-        <CareersInputCard />
+        <div className='container mx-auto p-6 max-w-4xl'>
+          {/* Top bar */}
+          <div className='flex items-center justify-between mb-6'>
+            <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink'>
+              <ArrowLeft className='w-4 h-4' />
+              Back to landing
+            </Link>
+            <div className='flex items-center gap-3'>
+              <Button variant='outline' onClick={handleStartOver}>
+                Start over
+              </Button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className='border border-border rounded-lg bg-paper p-10 flex flex-col items-center gap-4'>
+              <LoadingDots color='gray' />
+              <p className='text-ink-muted'>Generating career paths…</p>
+            </div>
+          ) : (
+            <CareersInputCard />
+          )}
+        </div>
         <Toaster />
       </div>
     );
   }
 
+  // Result view -- ReactFlow layout
   return (
     <div className='h-full flex flex-col'>
-      <div className='flex justify-end p-3 gap-3 flex-shrink-0'>
-        <Button variant='outline' onClick={handleStartOver}>
-          Start over
-        </Button>
+      <div className='flex items-center justify-between p-3 flex-shrink-0'>
+        <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink'>
+          <ArrowLeft className='w-4 h-4' />
+          Back to landing
+        </Link>
+        <div className='flex items-center gap-3'>
+          <Button variant='outline' onClick={handleStartOver}>
+            Start over
+          </Button>
+        </div>
       </div>
       {comparing.length > 0 && (
         <div className='mx-3 mt-3 border border-accent/30 bg-accent-soft rounded-lg px-5 py-3 flex items-center gap-4 flex-wrap flex-shrink-0'>

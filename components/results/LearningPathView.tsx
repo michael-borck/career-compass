@@ -2,13 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { FolderOpen } from 'lucide-react';
 import type { LearningPath } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
-import { learningPathToMarkdown } from '@/lib/markdown-export';
-import CopyMarkdownButton from './CopyMarkdownButton';
 import MilestoneItem from './MilestoneItem';
 import SourcesList from './SourcesList';
 
@@ -38,12 +35,6 @@ export default function LearningPathView({ path }: Props) {
 
   const allExpanded = path.milestones.every((_, i) => expanded[i]);
 
-  function handleStartOver() {
-    if (!confirm('Start over? This clears your session.')) return;
-    store.reset();
-    router.push('/');
-  }
-
   function handlePracticeInterview() {
     router.push('/interview');
   }
@@ -54,16 +45,7 @@ export default function LearningPathView({ path }: Props) {
   }
 
   return (
-    <div className='max-w-4xl mx-auto px-6 py-8 space-y-8'>
-      <div className='flex items-center gap-3'>
-        <Link href='/' className='text-ink-quiet hover:text-ink underline'>
-          ← Back
-        </Link>
-        <div className='flex-1' />
-        <CopyMarkdownButton getMarkdown={() => learningPathToMarkdown(path, sources)} />
-        <Button variant='outline' onClick={handleStartOver}>Start over</Button>
-      </div>
-
+    <div className='space-y-8'>
       <div>
         <div className='editorial-rule'>
           <span>Learning Path</span>

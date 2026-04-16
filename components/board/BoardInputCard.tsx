@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,13 +41,6 @@ export default function BoardInputCard() {
   const hasFreeText = !!store.freeText.trim();
   const hasProfile =
     hasResume || hasFreeText || !!store.distilledProfile;
-
-  const sessionFields: string[] = [];
-  if (hasResume) sessionFields.push(store.resumeFilename ?? 'resume');
-  if (hasFreeText) sessionFields.push('About you');
-  if (store.distilledProfile) sessionFields.push('Distilled profile');
-  if (store.jobTitle.trim()) sessionFields.push(`Job title: ${store.jobTitle.trim().slice(0, 30)}`);
-  if (store.jobAdvert.trim()) sessionFields.push('Job advert');
 
   async function handleResumeSelect(file: File) {
     try {
@@ -126,11 +118,6 @@ export default function BoardInputCard() {
 
   return (
     <div className='border border-border rounded-lg bg-paper p-6'>
-      <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink mb-6'>
-        <ArrowLeft className='w-4 h-4' />
-        Back to landing
-      </Link>
-
       <div className='editorial-rule justify-center mb-2'>
         <span>Board of advisors</span>
       </div>
@@ -168,49 +155,38 @@ export default function BoardInputCard() {
           />
         </div>
 
-        {!hasResume && (
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              Resume
-            </label>
-            <LocalFileUpload
-              onFileSelect={handleResumeSelect}
-              className='w-full flex items-center justify-center'
-            />
-            {store.resumeFilename && (
-              <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
-                Selected: {store.resumeFilename}
-              </p>
-            )}
-          </div>
-        )}
+        <div>
+          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+            Resume
+          </label>
+          <LocalFileUpload
+            onFileSelect={handleResumeSelect}
+            className='w-full flex items-center justify-center'
+          />
+          {store.resumeFilename && (
+            <p className='text-[var(--text-xs)] text-ink-muted mt-1'>
+              Selected: {store.resumeFilename}
+            </p>
+          )}
+        </div>
 
-        {!hasFreeText && (
-          <div>
-            <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-              About you
-            </label>
-            <Textarea
-              value={store.freeText}
-              rows={3}
-              onChange={(e) => store.setFreeText(e.target.value)}
-              placeholder='A sentence or two about your background, interests, or goals.'
-              disabled={convening}
-            />
-          </div>
-        )}
-
-        {sessionFields.length > 0 && (
-          <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
-            Will also use from your session: {sessionFields.join(', ')}.
-          </p>
-        )}
+        <div>
+          <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
+            About you
+          </label>
+          <Textarea
+            value={store.freeText}
+            rows={3}
+            onChange={(e) => store.setFreeText(e.target.value)}
+            placeholder='A sentence or two about your background, interests, or goals.'
+            disabled={convening}
+          />
+        </div>
 
         {!hasProfile && (
-          <span className='block text-[var(--text-sm)] text-error text-center'>
-            No profile material found. Return to the landing page to add a resume or fill in About
-            you.
-          </span>
+          <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
+            Needs a profile. Upload a resume or write something in About you.
+          </p>
         )}
 
         <div className='flex justify-center pt-2'>
