@@ -166,6 +166,37 @@ export type ComparePrefill = {
   richCareerTitles?: string[];
 };
 
+export type ElevatorPitch = {
+  target: string | null;
+  hook: string;
+  body: string;
+  close: string;
+  fullScript: string;
+};
+
+export type CoverLetter = {
+  target: string;
+  greeting: string;
+  body: string;
+  closing: string;
+};
+
+export type ResumeReviewItem = {
+  section: string;
+  suggestion: string;
+  why: string;
+  example: string;
+};
+
+export type ResumeReview = {
+  target: string | null;
+  overallImpression: string;
+  strengths: string[];
+  improvements: ResumeReviewItem[];
+  keywordsToAdd: string[];
+  structuralNotes: string[];
+};
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -206,6 +237,11 @@ export type SessionState = {
   comparison: Comparison | null;
   comparePrefill: ComparePrefill | null;
   comparing: string[];
+
+  // Career materials
+  elevatorPitch: ElevatorPitch | null;
+  coverLetter: CoverLetter | null;
+  resumeReview: ResumeReview | null;
 
   // Grounding sources
   gapAnalysisSources: SourceRef[] | null;
@@ -251,6 +287,9 @@ export type SessionState = {
   consumeComparePrefill: () => ComparePrefill | null;
   toggleComparing: (careerTitle: string) => void;
   clearComparing: () => void;
+  setElevatorPitch: (p: ElevatorPitch | null) => void;
+  setCoverLetter: (l: CoverLetter | null) => void;
+  setResumeReview: (r: ResumeReview | null) => void;
   resetOutputs: () => void;
   reset: () => void;
 };
@@ -306,6 +345,9 @@ const initialState = {
   learningPathSources: null,
   interviewSources: [],
   chatSources: {},
+  elevatorPitch: null,
+  coverLetter: null,
+  resumeReview: null,
   boardReview: null,
   boardPrefill: null,
   comparison: null,
@@ -466,6 +508,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { comparing: [...state.comparing, title] };
     }),
   clearComparing: () => set({ comparing: [] }),
+
+  setElevatorPitch: (p) => set({ elevatorPitch: p }),
+  setCoverLetter: (l) => set({ coverLetter: l }),
+  setResumeReview: (r) => set({ resumeReview: r }),
 
   resetOutputs: () => {
     const s = get();

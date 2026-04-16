@@ -632,3 +632,75 @@ describe('resetOutputs', () => {
     expect(s.chatSources).toEqual({});
   });
 });
+
+describe('career materials', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('elevatorPitch, coverLetter, resumeReview initialise null', () => {
+    const s = useSessionStore.getState();
+    expect(s.elevatorPitch).toBeNull();
+    expect(s.coverLetter).toBeNull();
+    expect(s.resumeReview).toBeNull();
+  });
+
+  it('setElevatorPitch writes and clears', () => {
+    const pitch = { target: 'Data analyst', hook: 'h', body: 'b', close: 'c', fullScript: 'h b c' };
+    useSessionStore.getState().setElevatorPitch(pitch);
+    expect(useSessionStore.getState().elevatorPitch).toEqual(pitch);
+    useSessionStore.getState().setElevatorPitch(null);
+    expect(useSessionStore.getState().elevatorPitch).toBeNull();
+  });
+
+  it('setCoverLetter writes and clears', () => {
+    const letter = { target: 'Analyst', greeting: 'Dear Hiring Manager,', body: 'I am writing...', closing: 'Sincerely, Student' };
+    useSessionStore.getState().setCoverLetter(letter);
+    expect(useSessionStore.getState().coverLetter).toEqual(letter);
+    useSessionStore.getState().setCoverLetter(null);
+    expect(useSessionStore.getState().coverLetter).toBeNull();
+  });
+
+  it('setResumeReview writes and clears', () => {
+    const review = {
+      target: 'Analyst', overallImpression: 'Solid foundation.',
+      strengths: ['Clear structure'],
+      improvements: [{ section: 'Summary', suggestion: 'Add a target', why: 'Focus', example: 'Aspiring data analyst...' }],
+      keywordsToAdd: ['SQL'], structuralNotes: ['Move projects above education'],
+    };
+    useSessionStore.getState().setResumeReview(review);
+    expect(useSessionStore.getState().resumeReview).toEqual(review);
+    useSessionStore.getState().setResumeReview(null);
+    expect(useSessionStore.getState().resumeReview).toBeNull();
+  });
+
+  it('reset() clears all three materials', () => {
+    useSessionStore.getState().setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
+    useSessionStore.getState().setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
+    useSessionStore.getState().setResumeReview({
+      target: null, overallImpression: 'o', strengths: [], improvements: [],
+      keywordsToAdd: [], structuralNotes: [],
+    });
+    useSessionStore.getState().reset();
+    const s = useSessionStore.getState();
+    expect(s.elevatorPitch).toBeNull();
+    expect(s.coverLetter).toBeNull();
+    expect(s.resumeReview).toBeNull();
+  });
+
+  it('resetOutputs() clears all three materials but preserves inputs', () => {
+    useSessionStore.getState().setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
+    useSessionStore.getState().setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
+    useSessionStore.getState().setResumeReview({
+      target: null, overallImpression: 'o', strengths: [], improvements: [],
+      keywordsToAdd: [], structuralNotes: [],
+    });
+    useSessionStore.getState().setResume('r', 'r.pdf');
+    useSessionStore.getState().resetOutputs();
+    const s = useSessionStore.getState();
+    expect(s.elevatorPitch).toBeNull();
+    expect(s.coverLetter).toBeNull();
+    expect(s.resumeReview).toBeNull();
+    expect(s.resumeText).toBe('r');
+  });
+});
