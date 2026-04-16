@@ -197,6 +197,8 @@ export type ResumeReview = {
   structuralNotes: string[];
 };
 
+export type Portfolio = { html: string; target: string | null; };
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -237,6 +239,9 @@ export type SessionState = {
   comparison: Comparison | null;
   comparePrefill: ComparePrefill | null;
   comparing: string[];
+
+  // Portfolio
+  portfolio: Portfolio | null;
 
   // Career materials
   elevatorPitch: ElevatorPitch | null;
@@ -287,6 +292,7 @@ export type SessionState = {
   consumeComparePrefill: () => ComparePrefill | null;
   toggleComparing: (careerTitle: string) => void;
   clearComparing: () => void;
+  setPortfolio: (p: Portfolio | null) => void;
   setElevatorPitch: (p: ElevatorPitch | null) => void;
   setCoverLetter: (l: CoverLetter | null) => void;
   setResumeReview: (r: ResumeReview | null) => void;
@@ -345,6 +351,7 @@ const initialState = {
   learningPathSources: null,
   interviewSources: [],
   chatSources: {},
+  portfolio: null,
   elevatorPitch: null,
   coverLetter: null,
   resumeReview: null,
@@ -509,6 +516,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }),
   clearComparing: () => set({ comparing: [] }),
 
+  setPortfolio: (p) => set({ portfolio: p }),
   setElevatorPitch: (p) => set({ elevatorPitch: p }),
   setCoverLetter: (l) => set({ coverLetter: l }),
   setResumeReview: (r) => set({ resumeReview: r }),

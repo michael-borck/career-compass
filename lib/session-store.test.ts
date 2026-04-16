@@ -704,3 +704,40 @@ describe('career materials', () => {
     expect(s.resumeText).toBe('r');
   });
 });
+
+describe('portfolio', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('portfolio initialises null', () => {
+    expect(useSessionStore.getState().portfolio).toBeNull();
+  });
+
+  it('setPortfolio writes and clears', () => {
+    const p = { html: '<html>test</html>', target: 'Data analyst' };
+    useSessionStore.getState().setPortfolio(p);
+    expect(useSessionStore.getState().portfolio).toEqual(p);
+    useSessionStore.getState().setPortfolio(null);
+    expect(useSessionStore.getState().portfolio).toBeNull();
+  });
+
+  it('setPortfolio stores null target for personal portfolio', () => {
+    useSessionStore.getState().setPortfolio({ html: '<html></html>', target: null });
+    expect(useSessionStore.getState().portfolio?.target).toBeNull();
+  });
+
+  it('reset() clears portfolio', () => {
+    useSessionStore.getState().setPortfolio({ html: '<html></html>', target: null });
+    useSessionStore.getState().reset();
+    expect(useSessionStore.getState().portfolio).toBeNull();
+  });
+
+  it('resetOutputs() clears portfolio but preserves inputs', () => {
+    useSessionStore.getState().setPortfolio({ html: '<html></html>', target: 'Analyst' });
+    useSessionStore.getState().setResume('r', 'r.pdf');
+    useSessionStore.getState().resetOutputs();
+    expect(useSessionStore.getState().portfolio).toBeNull();
+    expect(useSessionStore.getState().resumeText).toBe('r');
+  });
+});
