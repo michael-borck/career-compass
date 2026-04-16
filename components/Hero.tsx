@@ -12,7 +12,7 @@ export default function Hero() {
           <span className='italic text-accent font-normal'>Your Direction.</span>
         </h1>
         <p className='mt-5 max-w-xl mx-auto text-ink-muted text-[var(--text-base)] leading-relaxed'>
-          AI-powered career exploration that never leaves your device.
+          Explore what's possible. Understand what it takes. Reflect on what fits.
         </p>
       </div>
     </section>
