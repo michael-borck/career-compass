@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Presentation, FileText } from 'lucide-react';
 import type { LearningPath } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,16 @@ export default function LearningPathView({ path }: Props) {
   function handleChainToGapAnalysis() {
     store.setGapAnalysis(null);
     router.push('/gap-analysis');
+  }
+
+  function handleWritePitch() {
+    store.setElevatorPitch(null);
+    router.push('/pitch');
+  }
+
+  function handleDraftCoverLetter() {
+    store.setCoverLetter(null);
+    router.push('/cover-letter');
   }
 
   return (
@@ -126,6 +136,14 @@ export default function LearningPathView({ path }: Props) {
       {sources.length > 0 && <SourcesList sources={sources} />}
 
       <div className='flex flex-wrap justify-end gap-3'>
+        <Button variant='outline' onClick={handleWritePitch}>
+          <Presentation className='w-4 h-4 mr-2' />
+          Write a pitch for this target
+        </Button>
+        <Button variant='outline' onClick={handleDraftCoverLetter}>
+          <FileText className='w-4 h-4 mr-2' />
+          Draft a cover letter for this target
+        </Button>
         {hasProfile && (
           <Button variant='outline' onClick={handleChainToGapAnalysis}>
             Run gap analysis for this target →

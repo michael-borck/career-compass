@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
+import { Presentation, FileText } from 'lucide-react';
 import GapItem from './GapItem';
 import SourcesList from './SourcesList';
 import InlineCitation from './InlineCitation';
@@ -49,6 +50,16 @@ export default function GapAnalysisView({ analysis }: Props) {
   function handleChainToLearningPath() {
     store.setLearningPath(null);
     router.push('/learning-path');
+  }
+
+  function handleWritePitch() {
+    store.setElevatorPitch(null);
+    router.push('/pitch');
+  }
+
+  function handleDraftCoverLetter() {
+    store.setCoverLetter(null);
+    router.push('/cover-letter');
   }
 
   return (
@@ -142,6 +153,14 @@ export default function GapAnalysisView({ analysis }: Props) {
       )}
 
       <div className='flex flex-wrap justify-end gap-3'>
+        <Button variant='outline' onClick={handleWritePitch}>
+          <Presentation className='w-4 h-4 mr-2' />
+          Write a pitch for this target
+        </Button>
+        <Button variant='outline' onClick={handleDraftCoverLetter}>
+          <FileText className='w-4 h-4 mr-2' />
+          Draft a cover letter for this target
+        </Button>
         <Button variant='outline' onClick={handlePracticeInterview}>
           Practice interview for this target →
         </Button>
