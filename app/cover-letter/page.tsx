@@ -23,11 +23,14 @@ export default function CoverLetterPage() {
   const autoRanRef = useRef(false);
 
   const hasTarget = !!store.jobTitle.trim() || !!store.jobAdvert.trim();
-  const canAutoRun = hasTarget && !letter && !loading;
 
   useEffect(() => {
-    if (!canAutoRun || autoRanRef.current) return;
+    if (autoRanRef.current) return;
     autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
+    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
+    if (!hasT || state.coverLetter) return;
 
     (async () => {
       if (!(await isLLMConfigured())) {
@@ -42,11 +45,11 @@ export default function CoverLetterPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            resume: store.resumeText ?? undefined,
-            freeText: store.freeText || undefined,
-            jobTitle: store.jobTitle || undefined,
-            jobAdvert: store.jobAdvert || undefined,
-            distilledProfile: store.distilledProfile ?? undefined,
+            resume: state.resumeText ?? undefined,
+            freeText: state.freeText || undefined,
+            jobTitle: state.jobTitle || undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             llmConfig,
           }),
         });
@@ -58,7 +61,7 @@ export default function CoverLetterPage() {
           letter: CoverLetter;
           trimmed?: boolean;
         };
-        store.setCoverLetter(result);
+        useSessionStore.getState().setCoverLetter(result);
         if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
       } catch (err) {
         console.error(err);
@@ -68,7 +71,7 @@ export default function CoverLetterPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAutoRun]);
+  }, []);
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;

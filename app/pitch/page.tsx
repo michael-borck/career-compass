@@ -27,11 +27,19 @@ export default function PitchPage() {
     !!store.jobTitle.trim() ||
     !!store.jobAdvert.trim() ||
     !!store.distilledProfile;
-  const canAutoRun = hasAny && !pitch && !loading;
 
   useEffect(() => {
-    if (!canAutoRun || autoRanRef.current) return;
+    if (autoRanRef.current) return;
     autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
+    const hasInput =
+      !!state.resumeText ||
+      !!state.freeText?.trim() ||
+      !!state.jobTitle?.trim() ||
+      !!state.jobAdvert?.trim() ||
+      !!state.distilledProfile;
+    if (!hasInput || state.elevatorPitch) return;
 
     (async () => {
       if (!(await isLLMConfigured())) {
@@ -46,11 +54,11 @@ export default function PitchPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            resume: store.resumeText ?? undefined,
-            freeText: store.freeText || undefined,
-            jobTitle: store.jobTitle || undefined,
-            jobAdvert: store.jobAdvert || undefined,
-            distilledProfile: store.distilledProfile ?? undefined,
+            resume: state.resumeText ?? undefined,
+            freeText: state.freeText || undefined,
+            jobTitle: state.jobTitle || undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             llmConfig,
           }),
         });
@@ -62,7 +70,7 @@ export default function PitchPage() {
           pitch: ElevatorPitch;
           trimmed?: boolean;
         };
-        store.setElevatorPitch(result);
+        useSessionStore.getState().setElevatorPitch(result);
         if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
       } catch (err) {
         console.error(err);
@@ -72,7 +80,7 @@ export default function PitchPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAutoRun]);
+  }, []);
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;

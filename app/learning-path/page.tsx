@@ -24,11 +24,14 @@ export default function LearningPathPage() {
   const autoRanRef = useRef(false);
 
   const hasTarget = !!store.jobTitle.trim() || !!store.jobAdvert.trim();
-  const canAutoRun = hasTarget && !path && !loading;
 
   useEffect(() => {
-    if (!canAutoRun || autoRanRef.current) return;
+    if (autoRanRef.current) return;
     autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
+    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
+    if (!hasT || state.learningPath) return;
 
     (async () => {
       if (!(await isLLMConfigured())) {
@@ -45,11 +48,11 @@ export default function LearningPathPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            jobAdvert: store.jobAdvert || undefined,
-            jobTitle: store.jobTitle || undefined,
-            resume: store.resumeText ?? undefined,
-            aboutYou: store.freeText || undefined,
-            distilledProfile: store.distilledProfile ?? undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            jobTitle: state.jobTitle || undefined,
+            resume: state.resumeText ?? undefined,
+            aboutYou: state.freeText || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             grounded,
             llmConfig,
           }),
@@ -62,8 +65,8 @@ export default function LearningPathPage() {
           path: LearningPath;
           sources?: any[];
         };
-        store.setLearningPath(result);
-        if (srcList) store.setLearningPathSources(srcList);
+        useSessionStore.getState().setLearningPath(result);
+        if (srcList) useSessionStore.getState().setLearningPathSources(srcList);
       } catch (err) {
         console.error(err);
         toast.error(err instanceof Error ? err.message : 'Learning path failed');
@@ -72,7 +75,7 @@ export default function LearningPathPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAutoRun]);
+  }, []);
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;

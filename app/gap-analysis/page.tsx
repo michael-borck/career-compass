@@ -25,11 +25,15 @@ export default function GapAnalysisPage() {
 
   const hasTarget = !!store.jobTitle.trim() || !!store.jobAdvert.trim();
   const hasProfile = !!store.resumeText || !!store.freeText.trim() || !!store.distilledProfile;
-  const canAutoRun = hasTarget && hasProfile && !analysis && !loading;
 
   useEffect(() => {
-    if (!canAutoRun || autoRanRef.current) return;
+    if (autoRanRef.current) return;
     autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
+    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
+    const hasP = !!(state.resumeText || state.freeText?.trim() || state.distilledProfile);
+    if (!hasT || !hasP || state.gapAnalysis) return;
 
     (async () => {
       if (!(await isLLMConfigured())) {
@@ -46,11 +50,11 @@ export default function GapAnalysisPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            jobAdvert: store.jobAdvert || undefined,
-            jobTitle: store.jobTitle || undefined,
-            resume: store.resumeText ?? undefined,
-            aboutYou: store.freeText || undefined,
-            distilledProfile: store.distilledProfile ?? undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            jobTitle: state.jobTitle || undefined,
+            resume: state.resumeText ?? undefined,
+            aboutYou: state.freeText || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             grounded,
             llmConfig,
           }),
@@ -63,8 +67,8 @@ export default function GapAnalysisPage() {
           analysis: GapAnalysis;
           sources?: any[];
         };
-        store.setGapAnalysis(result);
-        if (srcList) store.setGapAnalysisSources(srcList);
+        useSessionStore.getState().setGapAnalysis(result);
+        if (srcList) useSessionStore.getState().setGapAnalysisSources(srcList);
       } catch (err) {
         console.error(err);
         toast.error(err instanceof Error ? err.message : 'Gap analysis failed');
@@ -73,7 +77,7 @@ export default function GapAnalysisPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAutoRun]);
+  }, []);
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;

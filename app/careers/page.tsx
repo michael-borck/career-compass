@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CareerNode from '@/components/CareerNode';
 import CareersInputCard from '@/components/careers/CareersInputCard';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
   Controls,
   addEdge,
@@ -112,14 +112,19 @@ export default function CareersPage() {
   }, [careers]);
 
   // Generate careers on mount if we have inputs but no careers yet.
+  const autoRanRef = useRef(false);
   useEffect(() => {
+    if (autoRanRef.current) return;
+    autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
     const hasInput =
-      !!resumeText ||
-      !!freeText.trim() ||
-      !!jobTitle.trim() ||
-      !!jobAdvert.trim() ||
-      !!distilledProfile;
-    if (!hasInput || careers || loading || needsSetup) return;
+      !!state.resumeText ||
+      !!state.freeText?.trim() ||
+      !!state.jobTitle?.trim() ||
+      !!state.jobAdvert?.trim() ||
+      !!state.distilledProfile;
+    if (!hasInput || state.careers || needsSetup) return;
 
     (async () => {
       setLoading(true);
@@ -129,11 +134,11 @@ export default function CareersPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            resume: resumeText ?? undefined,
-            freeText: freeText || undefined,
-            jobTitle: jobTitle || undefined,
-            jobAdvert: jobAdvert || undefined,
-            distilledProfile: distilledProfile ?? undefined,
+            resume: state.resumeText ?? undefined,
+            freeText: state.freeText || undefined,
+            jobTitle: state.jobTitle || undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             llmConfig,
           }),
         });
@@ -142,7 +147,7 @@ export default function CareersPage() {
           throw new Error(err.error || 'Failed to generate careers');
         }
         const data = await res.json();
-        store.setCareers(data);
+        useSessionStore.getState().setCareers(data);
       } catch (err) {
         console.error(err);
         toast.error(err instanceof Error ? err.message : 'Failed to generate');
@@ -150,7 +155,8 @@ export default function CareersPage() {
         setLoading(false);
       }
     })();
-  }, [resumeText, freeText, jobTitle, jobAdvert, distilledProfile, careers, loading, needsSetup, store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),

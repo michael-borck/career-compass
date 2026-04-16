@@ -22,11 +22,13 @@ export default function ResumeReviewPage() {
   const autoRanRef = useRef(false);
 
   const hasResume = !!store.resumeText;
-  const canAutoRun = hasResume && !review && !loading;
 
   useEffect(() => {
-    if (!canAutoRun || autoRanRef.current) return;
+    if (autoRanRef.current) return;
     autoRanRef.current = true;
+
+    const state = useSessionStore.getState();
+    if (!state.resumeText || state.resumeReview) return;
 
     (async () => {
       if (!(await isLLMConfigured())) {
@@ -41,10 +43,10 @@ export default function ResumeReviewPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            resume: store.resumeText ?? undefined,
-            jobTitle: store.jobTitle || undefined,
-            jobAdvert: store.jobAdvert || undefined,
-            distilledProfile: store.distilledProfile ?? undefined,
+            resume: state.resumeText ?? undefined,
+            jobTitle: state.jobTitle || undefined,
+            jobAdvert: state.jobAdvert || undefined,
+            distilledProfile: state.distilledProfile ?? undefined,
             llmConfig,
           }),
         });
@@ -56,7 +58,7 @@ export default function ResumeReviewPage() {
           review: ResumeReview;
           trimmed?: boolean;
         };
-        store.setResumeReview(result);
+        useSessionStore.getState().setResumeReview(result);
         if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
       } catch (err) {
         console.error(err);
@@ -66,7 +68,7 @@ export default function ResumeReviewPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAutoRun]);
+  }, []);
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;
