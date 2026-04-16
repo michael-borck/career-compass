@@ -14,6 +14,8 @@ import GapItem from './GapItem';
 import SourcesList from './SourcesList';
 import InlineCitation from './InlineCitation';
 import { segmentCitations, hasAnyCitations } from '@/lib/citation-detect';
+import MissingInputsModal from '@/components/MissingInputsModal';
+import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type Props = { analysis: GapAnalysis };
 
@@ -31,6 +33,7 @@ export default function GapAnalysisView({ analysis }: Props) {
   const sources = useSessionStore((s) => s.gapAnalysisSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [chaining, setChaining] = useState(false);
+  const { gatedPush, modalProps } = useGatedNavigate();
 
   function toggle(i: number) {
     setExpanded((e) => ({ ...e, [i]: !e[i] }));
@@ -55,7 +58,7 @@ export default function GapAnalysisView({ analysis }: Props) {
   }
 
   function handlePracticeInterview() {
-    router.push('/interview');
+    gatedPush('interview', '/interview');
   }
 
   async function handleChainToLearningPath() {
@@ -197,6 +200,7 @@ export default function GapAnalysisView({ analysis }: Props) {
           {chaining ? 'Building…' : 'Turn this into a learning path →'}
         </Button>
       </div>
+      <MissingInputsModal {...modalProps} />
     </div>
   );
 }
