@@ -23,12 +23,12 @@ type Props = {
 };
 
 const ACTION_LABELS: Record<GatedAction, string> = {
-  careers: 'Find my careers needs some material to work with.',
-  gaps: 'Gap analysis needs a target role and a profile to compare against.',
-  learn: 'Learning path needs a target role to build toward.',
-  interview: 'Practice interview needs a target role to prepare for.',
-  board: 'Board of advisors needs a profile to review.',
-  compare: 'Compare needs a target role to start with.',
+  careers: 'Find my careers needs some material to work with. Fill in any one field below.',
+  gaps: 'Gap analysis needs a target (job title or job advert) and a profile (resume or about you). One of each is enough.',
+  learn: 'Learning path needs a target role. Add a job title or paste a job advert.',
+  interview: 'Practice interview needs a target role. Add a job title or paste a job advert.',
+  board: 'Board of advisors needs a profile. Upload a resume or write something in About you.',
+  compare: 'Compare needs a target role. Add a job title or paste a job advert.',
 };
 
 function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
