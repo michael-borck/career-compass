@@ -16,6 +16,8 @@ import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import { loadLLMConfig } from '@/lib/llm-client';
+import MissingInputsModal from '@/components/MissingInputsModal';
+import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type CareerNodeProps = {
   jobTitle?: string;
@@ -56,6 +58,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   const inComparison = comparing.includes(data.jobTitle ?? '');
   const atMaxComparison = comparing.length >= 3 && !inComparison;
   const [running, setRunning] = useState<'gaps' | 'learn' | null>(null);
+  const { gatedPush, modalProps } = useGatedNavigate();
 
   function handleChatAboutThis() {
     if (!jobTitle) return;
@@ -136,12 +139,13 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   function handlePracticeInterview() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
-    router.push('/interview');
+    gatedPush('interview', '/interview');
   }
 
   function handleBoardShortcut() {
-    useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
-    router.push('/board');
+    gatedPush('board', '/board', () => {
+      useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
+    });
   }
 
   const difficultyColor =
@@ -152,6 +156,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
       : 'text-ink-muted';
 
   return (
+    <>
     <Dialog>
       <DialogTrigger asChild>
         <div className={`border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer ${inComparison ? 'ring-2 ring-accent' : ''}`}>
@@ -278,6 +283,8 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
         </div>
       </DialogContent>
     </Dialog>
+    <MissingInputsModal {...modalProps} />
+    </>
   );
 }
 
