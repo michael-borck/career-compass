@@ -9,9 +9,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useSessionStore } from '@/lib/session-store';
-import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X } from 'lucide-react';
+import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X, ChevronDown, Presentation, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type CareerNodeProps = {
@@ -86,6 +93,20 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   function handleBoardShortcut() {
     useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
     router.push('/board');
+  }
+
+  function handleWritePitch() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    useSessionStore.getState().setElevatorPitch(null);
+    router.push('/pitch');
+  }
+
+  function handleDraftCoverLetter() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    useSessionStore.getState().setCoverLetter(null);
+    router.push('/cover-letter');
   }
 
   const difficultyColor =
@@ -184,28 +205,45 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
           </div>
         </div>
         <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-4 mt-4'>
-          <Button asChild variant='outline' onClick={handleChatAboutThis}>
-            <Link href='/chat'>
-              <MessageCircle className='w-4 h-4 mr-2' />
-              Chat about this
-            </Link>
-          </Button>
-          <Button variant='outline' onClick={handleAnalyseGaps}>
-            <SearchCheck className='w-4 h-4 mr-2' />
-            Analyse gaps for this role
-          </Button>
-          <Button variant='outline' onClick={handleLearningPath}>
-            <RouteIcon className='w-4 h-4 mr-2' />
-            Learning path for this role
-          </Button>
-          <Button variant='outline' onClick={handlePracticeInterview}>
-            <Mic className='w-4 h-4 mr-2' />
-            Practice interview for this role
-          </Button>
-          <Button variant='outline' onClick={handleBoardShortcut}>
-            <Users className='w-4 h-4 mr-2' />
-            Ask the board about this role
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='outline'>
+                Actions
+                <ChevronDown className='w-4 h-4 ml-2' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='w-64'>
+              <DropdownMenuLabel>Discover</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => { handleChatAboutThis(); router.push('/chat'); }}>
+                <MessageCircle className='w-4 h-4 mr-2' /> Chat about this role
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Assess</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleAnalyseGaps}>
+                <SearchCheck className='w-4 h-4 mr-2' /> Analyse gaps for this role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLearningPath}>
+                <RouteIcon className='w-4 h-4 mr-2' /> Learning path for this role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePracticeInterview}>
+                <Mic className='w-4 h-4 mr-2' /> Practice interview for this role
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Reflect</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleBoardShortcut}>
+                <Users className='w-4 h-4 mr-2' /> Ask the board about this role
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Materials</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleWritePitch}>
+                <Presentation className='w-4 h-4 mr-2' /> Write a pitch for this role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDraftCoverLetter}>
+                <FileText className='w-4 h-4 mr-2' /> Draft a cover letter for this role
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant='outline'
             size='sm'
