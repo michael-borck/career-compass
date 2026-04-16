@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -473,5 +473,32 @@ export function resumeReviewToMarkdown(r: ResumeReview): string {
   lines.push('---');
   lines.push('');
   lines.push('*AI-generated feedback. Use as a starting point, not a final verdict.*');
+  return lines.join('\n');
+}
+
+export function careerStoryToMarkdown(s: CareerStory): string {
+  const lines: string[] = [];
+  lines.push('# My Career Story');
+  lines.push('');
+  lines.push('## The narrative');
+  lines.push(s.narrative);
+  lines.push('');
+  lines.push('## Themes');
+  lines.push('');
+  s.themes.forEach((t, i) => {
+    lines.push(`### ${i + 1}. ${t.name}`);
+    if (t.evidence.length > 0) {
+      lines.push('**Evidence:**');
+      for (const e of t.evidence) lines.push(`- ${e}`);
+    }
+    if (t.reflectionQuestion) {
+      lines.push('');
+      lines.push(`*${t.reflectionQuestion}*`);
+    }
+    lines.push('');
+  });
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated career story. The themes are real patterns from your data. The narrative is a starting point — edit it to match your voice.*');
   return lines.join('\n');
 }

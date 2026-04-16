@@ -523,3 +523,32 @@ describe('resumeReviewToMarkdown', () => {
     expect(resumeReviewToMarkdown(review).trim()).toMatch(/starting point/);
   });
 });
+
+import { careerStoryToMarkdown } from './markdown-export';
+import type { CareerStory } from './session-store';
+
+describe('careerStoryToMarkdown', () => {
+  const story: CareerStory = {
+    themes: [
+      { name: 'Data-driven decisions', evidence: ['Resume: SQL', 'Gap: analytics'], reflectionQuestion: 'Is data your core?' },
+      { name: 'Helping others', evidence: ['About me: mentoring'], reflectionQuestion: 'What does service mean to you?' },
+    ],
+    narrative: 'I have always been drawn to making sense of data.\n\nWhat started as curiosity became a career direction.',
+  };
+
+  it('renders narrative and themes', () => {
+    const md = careerStoryToMarkdown(story);
+    expect(md).toContain('# My Career Story');
+    expect(md).toContain('## The narrative');
+    expect(md).toContain('making sense of data');
+    expect(md).toContain('## Themes');
+    expect(md).toContain('### 1. Data-driven decisions');
+    expect(md).toContain('- Resume: SQL');
+    expect(md).toContain('*Is data your core?*');
+    expect(md).toContain('### 2. Helping others');
+  });
+
+  it('ends with footer', () => {
+    expect(careerStoryToMarkdown(story).trim()).toMatch(/starting point/);
+  });
+});
