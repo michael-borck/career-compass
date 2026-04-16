@@ -13,6 +13,8 @@ import { loadLLMConfig } from '@/lib/llm-client';
 import CopyMarkdownButton from './CopyMarkdownButton';
 import MilestoneItem from './MilestoneItem';
 import SourcesList from './SourcesList';
+import MissingInputsModal from '@/components/MissingInputsModal';
+import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type Props = { path: LearningPath };
 
@@ -22,6 +24,7 @@ export default function LearningPathView({ path }: Props) {
   const sources = useSessionStore((s) => s.learningPathSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [chaining, setChaining] = useState(false);
+  const { gatedPush, modalProps } = useGatedNavigate();
 
   const hasProfile = !!(store.resumeText || store.freeText.trim() || store.distilledProfile);
 
@@ -48,7 +51,7 @@ export default function LearningPathView({ path }: Props) {
   }
 
   function handlePracticeInterview() {
-    router.push('/interview');
+    gatedPush('interview', '/interview');
   }
 
   async function handleChainToGapAnalysis() {
@@ -182,6 +185,7 @@ export default function LearningPathView({ path }: Props) {
           Practice interview for this target →
         </Button>
       </div>
+      <MissingInputsModal {...modalProps} />
     </div>
   );
 }
