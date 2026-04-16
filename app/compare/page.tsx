@@ -13,12 +13,15 @@ import CompareTable from '@/components/compare/CompareTable';
 import { useSessionStore, type Comparison } from '@/lib/session-store';
 import { comparisonToMarkdown } from '@/lib/markdown-export';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
+import MissingInputsModal from '@/components/MissingInputsModal';
+import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 export default function ComparePage() {
   const router = useRouter();
   const store = useSessionStore();
   const { comparison } = store;
   const [loading, setLoading] = useState(false);
+  const { gatedPush, modalProps } = useGatedNavigate();
   const consumedRef = useRef(false);
 
   useEffect(() => {
@@ -102,7 +105,7 @@ export default function ComparePage() {
 
   function handleGapForRole(label: string) {
     store.setJobTitle(label);
-    router.push('/gap-analysis');
+    gatedPush('gaps', '/gap-analysis');
   }
 
   return (
@@ -181,6 +184,7 @@ export default function ComparePage() {
           </div>
         )}
       </div>
+      <MissingInputsModal {...modalProps} />
       <Toaster />
     </div>
   );
