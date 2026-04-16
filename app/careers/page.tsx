@@ -13,6 +13,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import type { Node, NodeTypes } from 'reactflow';
+import { Columns3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingDots from '@/components/ui/loadingdots';
 import { useSessionStore } from '@/lib/session-store';
@@ -70,6 +71,7 @@ export default function CareersPage() {
     jobAdvert,
     distilledProfile,
     careers,
+    comparing,
   } = store;
 
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
@@ -160,6 +162,17 @@ export default function CareersPage() {
     router.push('/');
   }
 
+  function handleCompareLaunch() {
+    if (comparing.length < 2) return;
+    store.setComparePrefill({ richCareerTitles: [...comparing] });
+    store.clearComparing();
+    router.push('/compare');
+  }
+
+  function handleCompareCancel() {
+    store.clearComparing();
+  }
+
   if (needsSetup) {
     return (
       <div className='h-full flex flex-col items-center justify-center p-10'>
@@ -198,6 +211,30 @@ export default function CareersPage() {
           Start over
         </Button>
       </div>
+      {comparing.length > 0 && (
+        <div className='mx-3 mt-3 border border-accent/30 bg-accent-soft rounded-lg px-5 py-3 flex items-center gap-4 flex-wrap flex-shrink-0'>
+          <span className='block w-2 h-2 rounded-full bg-accent flex-shrink-0' />
+          <div className='flex-1 text-[var(--text-sm)] text-ink flex flex-wrap gap-x-2 gap-y-1 items-center'>
+            <span className='text-ink-quiet'>Comparing:</span>
+            <span className='font-medium'>{comparing.join(', ')}</span>
+            <span className='text-ink-quiet italic'>
+              {comparing.length < 3 ? 'click one more (optional)' : 'maximum reached'}
+            </span>
+          </div>
+          <Button
+            size='sm'
+            onClick={handleCompareLaunch}
+            disabled={comparing.length < 2}
+          >
+            <Columns3 className='w-3 h-3 mr-1' />
+            Compare {comparing.length}
+          </Button>
+          <Button size='sm' variant='outline' onClick={handleCompareCancel}>
+            <X className='w-3 h-3 mr-1' />
+            Cancel
+          </Button>
+        </div>
+      )}
       <div className='flex-1 min-h-0'>
         <ReactFlow
           nodes={nodes}
