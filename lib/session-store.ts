@@ -199,6 +199,9 @@ export type ResumeReview = {
 
 export type Portfolio = { html: string; target: string | null; };
 
+export type CareerTheme = { name: string; evidence: string[]; reflectionQuestion: string };
+export type CareerStory = { themes: CareerTheme[]; narrative: string };
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -242,6 +245,9 @@ export type SessionState = {
 
   // Portfolio
   portfolio: Portfolio | null;
+
+  // Career story
+  careerStory: CareerStory | null;
 
   // Career materials
   elevatorPitch: ElevatorPitch | null;
@@ -293,6 +299,7 @@ export type SessionState = {
   toggleComparing: (careerTitle: string) => void;
   clearComparing: () => void;
   setPortfolio: (p: Portfolio | null) => void;
+  setCareerStory: (s: CareerStory | null) => void;
   setElevatorPitch: (p: ElevatorPitch | null) => void;
   setCoverLetter: (l: CoverLetter | null) => void;
   setResumeReview: (r: ResumeReview | null) => void;
@@ -352,6 +359,7 @@ const initialState = {
   interviewSources: [],
   chatSources: {},
   portfolio: null,
+  careerStory: null,
   elevatorPitch: null,
   coverLetter: null,
   resumeReview: null,
@@ -517,6 +525,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   clearComparing: () => set({ comparing: [] }),
 
   setPortfolio: (p) => set({ portfolio: p }),
+  setCareerStory: (s) => set({ careerStory: s }),
   setElevatorPitch: (p) => set({ elevatorPitch: p }),
   setCoverLetter: (l) => set({ coverLetter: l }),
   setResumeReview: (r) => set({ resumeReview: r }),

@@ -741,3 +741,44 @@ describe('portfolio', () => {
     expect(useSessionStore.getState().resumeText).toBe('r');
   });
 });
+
+describe('career story', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('careerStory initialises null', () => {
+    expect(useSessionStore.getState().careerStory).toBeNull();
+  });
+
+  it('setCareerStory writes and clears', () => {
+    const story = {
+      themes: [{ name: 'Data-driven', evidence: ['Resume shows SQL'], reflectionQuestion: 'Is this your core?' }],
+      narrative: 'I have always been drawn to data.',
+    };
+    useSessionStore.getState().setCareerStory(story);
+    expect(useSessionStore.getState().careerStory).toEqual(story);
+    useSessionStore.getState().setCareerStory(null);
+    expect(useSessionStore.getState().careerStory).toBeNull();
+  });
+
+  it('reset() clears careerStory', () => {
+    useSessionStore.getState().setCareerStory({
+      themes: [{ name: 't', evidence: [], reflectionQuestion: 'q' }],
+      narrative: 'n',
+    });
+    useSessionStore.getState().reset();
+    expect(useSessionStore.getState().careerStory).toBeNull();
+  });
+
+  it('resetOutputs() clears careerStory but preserves inputs', () => {
+    useSessionStore.getState().setCareerStory({
+      themes: [{ name: 't', evidence: [], reflectionQuestion: 'q' }],
+      narrative: 'n',
+    });
+    useSessionStore.getState().setResume('r', 'r.pdf');
+    useSessionStore.getState().resetOutputs();
+    expect(useSessionStore.getState().careerStory).toBeNull();
+    expect(useSessionStore.getState().resumeText).toBe('r');
+  });
+});
