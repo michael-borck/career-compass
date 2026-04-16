@@ -2,20 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
 import Link from 'next/link';
-import type { GapAnalysis, LearningPath, SourceRef } from '@/lib/session-store';
+import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
 import { gapAnalysisToMarkdown } from '@/lib/markdown-export';
-import { loadLLMConfig } from '@/lib/llm-client';
 import CopyMarkdownButton from './CopyMarkdownButton';
 import GapItem from './GapItem';
 import SourcesList from './SourcesList';
 import InlineCitation from './InlineCitation';
 import { segmentCitations, hasAnyCitations } from '@/lib/citation-detect';
-import MissingInputsModal from '@/components/MissingInputsModal';
-import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type Props = { analysis: GapAnalysis };
 
@@ -32,8 +28,6 @@ export default function GapAnalysisView({ analysis }: Props) {
   const store = useSessionStore();
   const sources = useSessionStore((s) => s.gapAnalysisSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-  const [chaining, setChaining] = useState(false);
-  const { gatedPush, modalProps } = useGatedNavigate();
 
   function toggle(i: number) {
     setExpanded((e) => ({ ...e, [i]: !e[i] }));
@@ -58,39 +52,12 @@ export default function GapAnalysisView({ analysis }: Props) {
   }
 
   function handlePracticeInterview() {
-    gatedPush('interview', '/interview');
+    router.push('/interview');
   }
 
-  async function handleChainToLearningPath() {
-    setChaining(true);
-    try {
-      const llmConfig = await loadLLMConfig();
-      const res = await fetch('/api/learningPath', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobAdvert: store.jobAdvert || undefined,
-          jobTitle: store.jobTitle || undefined,
-          resume: store.resumeText ?? undefined,
-          aboutYou: store.freeText || undefined,
-          distilledProfile: store.distilledProfile ?? undefined,
-          gapAnalysis: analysis,
-          llmConfig,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Learning path failed');
-      }
-      const { path } = (await res.json()) as { path: LearningPath };
-      store.setLearningPath(path);
-      router.push('/learning-path');
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Failed to generate learning path');
-    } finally {
-      setChaining(false);
-    }
+  function handleChainToLearningPath() {
+    store.setLearningPath(null);
+    router.push('/learning-path');
   }
 
   return (
@@ -196,11 +163,10 @@ export default function GapAnalysisView({ analysis }: Props) {
         <Button variant='outline' onClick={handlePracticeInterview}>
           Practice interview for this target →
         </Button>
-        <Button onClick={handleChainToLearningPath} disabled={chaining}>
-          {chaining ? 'Building…' : 'Turn this into a learning path →'}
+        <Button onClick={handleChainToLearningPath}>
+          Turn this into a learning path →
         </Button>
       </div>
-      <MissingInputsModal {...modalProps} />
     </div>
   );
 }

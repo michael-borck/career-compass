@@ -2,19 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { FolderOpen } from 'lucide-react';
-import type { LearningPath, GapAnalysis } from '@/lib/session-store';
+import type { LearningPath } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
 import { learningPathToMarkdown } from '@/lib/markdown-export';
-import { loadLLMConfig } from '@/lib/llm-client';
 import CopyMarkdownButton from './CopyMarkdownButton';
 import MilestoneItem from './MilestoneItem';
 import SourcesList from './SourcesList';
-import MissingInputsModal from '@/components/MissingInputsModal';
-import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type Props = { path: LearningPath };
 
@@ -23,8 +19,6 @@ export default function LearningPathView({ path }: Props) {
   const store = useSessionStore();
   const sources = useSessionStore((s) => s.learningPathSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-  const [chaining, setChaining] = useState(false);
-  const { gatedPush, modalProps } = useGatedNavigate();
 
   const hasProfile = !!(store.resumeText || store.freeText.trim() || store.distilledProfile);
 
@@ -51,38 +45,12 @@ export default function LearningPathView({ path }: Props) {
   }
 
   function handlePracticeInterview() {
-    gatedPush('interview', '/interview');
+    router.push('/interview');
   }
 
-  async function handleChainToGapAnalysis() {
-    setChaining(true);
-    try {
-      const llmConfig = await loadLLMConfig();
-      const res = await fetch('/api/gapAnalysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobAdvert: store.jobAdvert || undefined,
-          jobTitle: store.jobTitle || undefined,
-          resume: store.resumeText ?? undefined,
-          aboutYou: store.freeText || undefined,
-          distilledProfile: store.distilledProfile ?? undefined,
-          llmConfig,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Gap analysis failed');
-      }
-      const { analysis } = (await res.json()) as { analysis: GapAnalysis };
-      store.setGapAnalysis(analysis);
-      router.push('/gap-analysis');
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Failed to run gap analysis');
-    } finally {
-      setChaining(false);
-    }
+  function handleChainToGapAnalysis() {
+    store.setGapAnalysis(null);
+    router.push('/gap-analysis');
   }
 
   return (
@@ -177,15 +145,14 @@ export default function LearningPathView({ path }: Props) {
 
       <div className='flex flex-wrap justify-end gap-3'>
         {hasProfile && (
-          <Button variant='outline' onClick={handleChainToGapAnalysis} disabled={chaining}>
-            {chaining ? 'Analysing…' : 'Run gap analysis for this target →'}
+          <Button variant='outline' onClick={handleChainToGapAnalysis}>
+            Run gap analysis for this target →
           </Button>
         )}
         <Button variant='outline' onClick={handlePracticeInterview}>
           Practice interview for this target →
         </Button>
       </div>
-      <MissingInputsModal {...modalProps} />
     </div>
   );
 }
