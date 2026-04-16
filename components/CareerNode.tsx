@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
@@ -11,13 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { useSessionStore } from '@/lib/session-store';
-import type { GapAnalysis, LearningPath } from '@/lib/session-store';
 import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import toast from 'react-hot-toast';
-import { loadLLMConfig } from '@/lib/llm-client';
-import MissingInputsModal from '@/components/MissingInputsModal';
-import { useGatedNavigate } from '@/lib/use-gated-navigate';
 
 type CareerNodeProps = {
   jobTitle?: string;
@@ -57,8 +52,6 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   const comparing = useSessionStore((s) => s.comparing);
   const inComparison = comparing.includes(data.jobTitle ?? '');
   const atMaxComparison = comparing.length >= 3 && !inComparison;
-  const [running, setRunning] = useState<'gaps' | 'learn' | null>(null);
-  const { gatedPush, modalProps } = useGatedNavigate();
 
   function handleChatAboutThis() {
     if (!jobTitle) return;
@@ -70,82 +63,29 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     });
   }
 
-  async function handleAnalyseGaps() {
+  function handleAnalyseGaps() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
-    setRunning('gaps');
-    try {
-      const state = useSessionStore.getState();
-      const llmConfig = await loadLLMConfig();
-      const res = await fetch('/api/gapAnalysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobTitle,
-          resume: state.resumeText ?? undefined,
-          aboutYou: state.freeText || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-          llmConfig,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || 'Gap analysis failed');
-      }
-      const { analysis } = (await res.json()) as { analysis: GapAnalysis };
-      setGapAnalysis(analysis);
-      router.push('/gap-analysis');
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Gap analysis failed');
-    } finally {
-      setRunning(null);
-    }
+    setGapAnalysis(null);
+    router.push('/gap-analysis');
   }
 
-  async function handleLearningPath() {
+  function handleLearningPath() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
-    setRunning('learn');
-    try {
-      const state = useSessionStore.getState();
-      const llmConfig = await loadLLMConfig();
-      const res = await fetch('/api/learningPath', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobTitle,
-          resume: state.resumeText ?? undefined,
-          aboutYou: state.freeText || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-          llmConfig,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || 'Learning path failed');
-      }
-      const { path } = (await res.json()) as { path: LearningPath };
-      setLearningPath(path);
-      router.push('/learning-path');
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Learning path failed');
-    } finally {
-      setRunning(null);
-    }
+    setLearningPath(null);
+    router.push('/learning-path');
   }
 
   function handlePracticeInterview() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
-    gatedPush('interview', '/interview');
+    router.push('/interview');
   }
 
   function handleBoardShortcut() {
-    gatedPush('board', '/board', () => {
-      useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
-    });
+    useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
+    router.push('/board');
   }
 
   const difficultyColor =
@@ -156,7 +96,6 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
       : 'text-ink-muted';
 
   return (
-    <>
     <Dialog>
       <DialogTrigger asChild>
         <div className={`border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer ${inComparison ? 'ring-2 ring-accent' : ''}`}>
@@ -251,19 +190,19 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
               Chat about this
             </Link>
           </Button>
-          <Button variant='outline' onClick={handleAnalyseGaps} disabled={running !== null}>
+          <Button variant='outline' onClick={handleAnalyseGaps}>
             <SearchCheck className='w-4 h-4 mr-2' />
-            {running === 'gaps' ? 'Analysing…' : 'Analyse gaps for this role'}
+            Analyse gaps for this role
           </Button>
-          <Button variant='outline' onClick={handleLearningPath} disabled={running !== null}>
+          <Button variant='outline' onClick={handleLearningPath}>
             <RouteIcon className='w-4 h-4 mr-2' />
-            {running === 'learn' ? 'Building…' : 'Learning path for this role'}
+            Learning path for this role
           </Button>
-          <Button variant='outline' onClick={handlePracticeInterview} disabled={running !== null}>
+          <Button variant='outline' onClick={handlePracticeInterview}>
             <Mic className='w-4 h-4 mr-2' />
             Practice interview for this role
           </Button>
-          <Button variant='outline' onClick={handleBoardShortcut} disabled={running !== null}>
+          <Button variant='outline' onClick={handleBoardShortcut}>
             <Users className='w-4 h-4 mr-2' />
             Ask the board about this role
           </Button>
@@ -283,8 +222,6 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
         </div>
       </DialogContent>
     </Dialog>
-    <MissingInputsModal {...modalProps} />
-    </>
   );
 }
 
