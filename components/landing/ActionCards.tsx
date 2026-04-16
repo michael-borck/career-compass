@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import {
   Compass,
   Columns3,
@@ -11,11 +12,9 @@ import {
   Users,
 } from 'lucide-react';
 import { useSessionStore } from '@/lib/session-store';
-import type { GatedAction } from '@/lib/action-gate';
 import type { ReactNode } from 'react';
 
 type CardDef = {
-  action: GatedAction | 'chat' | 'odyssey';
   icon: ReactNode;
   title: string;
   description: string;
@@ -24,18 +23,7 @@ type CardDef = {
   preNavigate?: () => void;
 };
 
-type Props = {
-  gatedPush: (action: GatedAction, path: string, preNavigate?: () => void) => void;
-  onDirectPush: (path: string) => void;
-};
-
-function ActionCard({
-  def,
-  onClick,
-}: {
-  def: CardDef;
-  onClick: () => void;
-}) {
+function ActionCard({ def, onClick }: { def: CardDef; onClick: () => void }) {
   return (
     <button
       type='button'
@@ -50,12 +38,12 @@ function ActionCard({
   );
 }
 
-export default function ActionCards({ gatedPush, onDirectPush }: Props) {
+export default function ActionCards() {
+  const router = useRouter();
   const store = useSessionStore();
 
   const discover: CardDef[] = [
     {
-      action: 'careers',
       icon: <Compass className='w-5 h-5' />,
       title: 'Find my careers',
       description: 'Generate 6 personalised career paths.',
@@ -64,7 +52,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
       preNavigate: () => store.setCareers(null),
     },
     {
-      action: 'compare',
       icon: <Columns3 className='w-5 h-5' />,
       title: 'Compare careers',
       description: 'Side-by-side across seven dimensions.',
@@ -76,7 +63,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
         }),
     },
     {
-      action: 'chat',
       icon: <MessageCircle className='w-5 h-5' />,
       title: 'Start chatting',
       description: 'Talk with the career advisor.',
@@ -87,7 +73,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
 
   const assess: CardDef[] = [
     {
-      action: 'gaps',
       icon: <SearchCheck className='w-5 h-5' />,
       title: 'Gap analysis',
       description: 'What you have vs what you need.',
@@ -95,7 +80,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
       path: '/gap-analysis',
     },
     {
-      action: 'learn',
       icon: <RouteIcon className='w-5 h-5' />,
       title: 'Learning path',
       description: 'Step-by-step plan to get job-ready.',
@@ -103,7 +87,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
       path: '/learning-path',
     },
     {
-      action: 'interview',
       icon: <Mic className='w-5 h-5' />,
       title: 'Practice interview',
       description: 'Simulate a job interview with feedback.',
@@ -114,7 +97,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
 
   const reflect: CardDef[] = [
     {
-      action: 'odyssey',
       icon: <Sparkles className='w-5 h-5' />,
       title: 'Imagine three lives',
       description: 'Three alternative five-year futures.',
@@ -122,7 +104,6 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
       path: '/odyssey',
     },
     {
-      action: 'board',
       icon: <Users className='w-5 h-5' />,
       title: 'Board of advisors',
       description: 'Four perspectives on your profile.',
@@ -132,11 +113,8 @@ export default function ActionCards({ gatedPush, onDirectPush }: Props) {
   ];
 
   function handleClick(def: CardDef) {
-    if (def.action === 'chat' || def.action === 'odyssey') {
-      onDirectPush(def.path);
-      return;
-    }
-    gatedPush(def.action as GatedAction, def.path, def.preNavigate);
+    def.preNavigate?.();
+    router.push(def.path);
   }
 
   function renderColumn(label: string, cards: CardDef[]) {
