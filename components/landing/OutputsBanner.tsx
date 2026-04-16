@@ -14,6 +14,7 @@ export default function OutputsBanner() {
     interviewFeedback,
     odysseyLives,
     boardReview,
+    comparison,
   } = store;
 
   const userMessageCount = chatMessages.filter(
@@ -30,6 +31,7 @@ export default function OutputsBanner() {
     (life) => life.seed.trim() || life.headline
   );
   const hasBoard = !!boardReview;
+  const hasComparison = !!comparison;
 
   if (
     !hasCareers &&
@@ -39,7 +41,8 @@ export default function OutputsBanner() {
     !hasInterviewInProgress &&
     !hasInterviewFeedback &&
     !hasOdyssey &&
-    !hasBoard
+    !hasBoard &&
+    !hasComparison
   ) return null;
 
   function handleStartOver() {
@@ -90,6 +93,11 @@ export default function OutputsBanner() {
         {hasBoard && (
           <Link href='/board' className='underline hover:text-accent'>
             board review ready
+          </Link>
+        )}
+        {hasComparison && (
+          <Link href='/compare' className='underline hover:text-accent'>
+            comparison ready
           </Link>
         )}
       </div>
