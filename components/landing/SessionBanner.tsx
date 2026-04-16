@@ -23,6 +23,7 @@ export default function SessionBanner() {
     elevatorPitch,
     coverLetter,
     resumeReview,
+    portfolio,
   } = store;
 
   const hasResume = !!resumeText;
@@ -49,11 +50,12 @@ export default function SessionBanner() {
   const hasPitch = !!elevatorPitch;
   const hasCoverLetter = !!coverLetter;
   const hasResumeReview = !!resumeReview;
+  const hasPortfolio = !!portfolio;
   const hasAnyOutput =
     hasCareers || hasChat || hasGap || hasPath ||
     hasInterviewInProgress || hasInterviewFeedback ||
     hasOdyssey || hasBoard || hasComparison ||
-    hasPitch || hasCoverLetter || hasResumeReview;
+    hasPitch || hasCoverLetter || hasResumeReview || hasPortfolio;
 
   if (!hasAnyInput && !hasAnyOutput) return null;
 
@@ -196,6 +198,11 @@ export default function SessionBanner() {
           {hasResumeReview && (
             <Link href='/resume-review' className='underline hover:text-accent'>
               resume review ready
+            </Link>
+          )}
+          {hasPortfolio && (
+            <Link href='/portfolio' className='underline hover:text-accent'>
+              portfolio ready{portfolio!.target ? ` (${portfolio!.target})` : ''}
             </Link>
           )}
         </div>

@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSessionStore } from '@/lib/session-store';
-import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X, ChevronDown, Presentation, FileText } from 'lucide-react';
+import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X, ChevronDown, Presentation, FileText, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type CareerNodeProps = {
@@ -107,6 +107,13 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     setStoreJobTitle(jobTitle);
     useSessionStore.getState().setCoverLetter(null);
     router.push('/cover-letter');
+  }
+
+  function handleBuildPortfolio() {
+    if (!jobTitle) return;
+    setStoreJobTitle(jobTitle);
+    useSessionStore.getState().setPortfolio(null);
+    router.push('/portfolio');
   }
 
   const difficultyColor =
@@ -240,6 +247,9 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDraftCoverLetter}>
                 <FileText className='w-4 h-4 mr-2' /> Draft a cover letter for this role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleBuildPortfolio}>
+                <Globe className='w-4 h-4 mr-2' /> Build a portfolio for this role
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
