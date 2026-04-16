@@ -535,3 +535,100 @@ describe('comparison', () => {
     expect(s.comparing).toEqual([]);
   });
 });
+
+describe('resetOutputs', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('preserves input fields', () => {
+    useSessionStore.getState().setResume('resume text', 'resume.pdf');
+    useSessionStore.getState().setFreeText('I am a student');
+    useSessionStore.getState().setJobTitle('Data analyst');
+    useSessionStore.getState().setJobAdvert('We are hiring...');
+    useSessionStore.getState().setUrlInput('https://example.com');
+    useSessionStore.getState().setUrlFetchedTitle('Example');
+
+    useSessionStore.getState().resetOutputs();
+
+    const s = useSessionStore.getState();
+    expect(s.resumeText).toBe('resume text');
+    expect(s.resumeFilename).toBe('resume.pdf');
+    expect(s.freeText).toBe('I am a student');
+    expect(s.jobTitle).toBe('Data analyst');
+    expect(s.jobAdvert).toBe('We are hiring...');
+    expect(s.urlInput).toBe('https://example.com');
+    expect(s.urlFetchedTitle).toBe('Example');
+  });
+
+  it('clears all output fields', () => {
+    useSessionStore.getState().setJobTitle('Analyst');
+    useSessionStore.getState().setCareers([{
+      jobTitle: 'Test', jobDescription: 'd', timeline: 't', salary: 's',
+      difficulty: 'd', workRequired: 'w', aboutTheRole: 'a',
+      whyItsagoodfit: [], roadmap: [],
+    }]);
+    useSessionStore.getState().addChatMessage({ role: 'user', content: 'hi' });
+    useSessionStore.getState().setGapAnalysis({
+      target: 't', summary: 's', matches: [], gaps: [], realisticTimeline: 'r',
+    });
+    useSessionStore.getState().setLearningPath({
+      target: 't', summary: 's', prerequisites: [], milestones: [],
+      portfolioProject: '', totalDuration: '', caveats: [],
+    });
+    useSessionStore.getState().setInterviewFeedback({
+      target: 't', difficulty: 'standard', summary: 's', strengths: [],
+      improvements: [], perPhase: [], overallRating: 'on-track', nextSteps: [],
+    });
+    useSessionStore.getState().setBoardReview({
+      framing: 'f', focusRole: null,
+      voices: [
+        { role: 'recruiter', name: 'R', response: 'r' },
+        { role: 'hr', name: 'H', response: 'h' },
+        { role: 'manager', name: 'M', response: 'm' },
+        { role: 'mentor', name: 'Me', response: 'me' },
+      ],
+      synthesis: { agreements: ['a'], disagreements: [], topPriorities: [] },
+    });
+    useSessionStore.getState().setComparison({
+      mode: 'quick',
+      roles: [
+        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        { label: 'B', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+      ],
+    });
+    useSessionStore.getState().setOdysseySeed('current', 'L', 'seed');
+    useSessionStore.getState().setDistilledProfile({
+      background: 'b', interests: [], skills: [], constraints: [], goals: [],
+    });
+    useSessionStore.getState().toggleComparing('A');
+    useSessionStore.getState().setBoardPrefill({ framing: 'f' });
+    useSessionStore.getState().setComparePrefill({ seedTarget: 's' });
+
+    useSessionStore.getState().resetOutputs();
+
+    const s = useSessionStore.getState();
+    expect(s.careers).toBeNull();
+    expect(s.chatMessages).toEqual([]);
+    expect(s.currentFocus).toBeNull();
+    expect(s.distilledProfile).toBeNull();
+    expect(s.selectedCareerId).toBeNull();
+    expect(s.gapAnalysis).toBeNull();
+    expect(s.learningPath).toBeNull();
+    expect(s.interviewMessages).toEqual([]);
+    expect(s.interviewTarget).toBeNull();
+    expect(s.interviewPhase).toBeNull();
+    expect(s.interviewFeedback).toBeNull();
+    expect(s.boardReview).toBeNull();
+    expect(s.boardPrefill).toBeNull();
+    expect(s.comparison).toBeNull();
+    expect(s.comparePrefill).toBeNull();
+    expect(s.comparing).toEqual([]);
+    expect(s.odysseyLives.current.label).toBe('');
+    expect(s.odysseyLives.current.seed).toBe('');
+    expect(s.gapAnalysisSources).toBeNull();
+    expect(s.learningPathSources).toBeNull();
+    expect(s.interviewSources).toEqual([]);
+    expect(s.chatSources).toEqual({});
+  });
+});

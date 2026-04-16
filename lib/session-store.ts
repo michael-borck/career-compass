@@ -251,6 +251,7 @@ export type SessionState = {
   consumeComparePrefill: () => ComparePrefill | null;
   toggleComparing: (careerTitle: string) => void;
   clearComparing: () => void;
+  resetOutputs: () => void;
   reset: () => void;
 };
 
@@ -465,6 +466,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { comparing: [...state.comparing, title] };
     }),
   clearComparing: () => set({ comparing: [] }),
+
+  resetOutputs: () => {
+    const s = get();
+    set({
+      ...initialState,
+      resumeText: s.resumeText,
+      resumeFilename: s.resumeFilename,
+      freeText: s.freeText,
+      jobTitle: s.jobTitle,
+      jobAdvert: s.jobAdvert,
+      urlInput: s.urlInput,
+      urlFetchedTitle: s.urlFetchedTitle,
+    });
+  },
 
   reset: () => set({ ...initialState }),
 }));
