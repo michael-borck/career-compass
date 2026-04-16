@@ -444,3 +444,94 @@ describe('board review', () => {
     expect(useSessionStore.getState().boardPrefill).toBeNull();
   });
 });
+
+describe('comparison', () => {
+  beforeEach(() => {
+    useSessionStore.getState().reset();
+  });
+
+  it('comparison, comparePrefill, and comparing initialise', () => {
+    const s = useSessionStore.getState();
+    expect(s.comparison).toBeNull();
+    expect(s.comparePrefill).toBeNull();
+    expect(s.comparing).toEqual([]);
+  });
+
+  it('setComparison writes and clears', () => {
+    const comparison = {
+      mode: 'quick' as const,
+      roles: [
+        {
+          label: 'Data analyst',
+          cells: {
+            typicalDay: 'a', coreSkills: 'b', trainingNeeded: 'c',
+            salaryRange: 'd', workSetting: 'e', whoItSuits: 'f', mainChallenge: 'g',
+          },
+        },
+        {
+          label: 'UX researcher',
+          cells: {
+            typicalDay: 'h', coreSkills: 'i', trainingNeeded: 'j',
+            salaryRange: 'k', workSetting: 'l', whoItSuits: 'm', mainChallenge: 'n',
+          },
+        },
+      ],
+    };
+    useSessionStore.getState().setComparison(comparison);
+    expect(useSessionStore.getState().comparison).toEqual(comparison);
+    useSessionStore.getState().setComparison(null);
+    expect(useSessionStore.getState().comparison).toBeNull();
+  });
+
+  it('setComparePrefill and consumeComparePrefill are atomic', () => {
+    useSessionStore.getState().setComparePrefill({ seedTarget: 'Data analyst' });
+    const first = useSessionStore.getState().consumeComparePrefill();
+    expect(first).toEqual({ seedTarget: 'Data analyst' });
+    expect(useSessionStore.getState().consumeComparePrefill()).toBeNull();
+    expect(useSessionStore.getState().comparePrefill).toBeNull();
+  });
+
+  it('toggleComparing adds a title when absent', () => {
+    useSessionStore.getState().toggleComparing('Data analyst');
+    expect(useSessionStore.getState().comparing).toEqual(['Data analyst']);
+  });
+
+  it('toggleComparing removes a title when present', () => {
+    useSessionStore.getState().toggleComparing('Data analyst');
+    useSessionStore.getState().toggleComparing('UX researcher');
+    useSessionStore.getState().toggleComparing('Data analyst');
+    expect(useSessionStore.getState().comparing).toEqual(['UX researcher']);
+  });
+
+  it('toggleComparing silently no-ops when already at 3', () => {
+    useSessionStore.getState().toggleComparing('A');
+    useSessionStore.getState().toggleComparing('B');
+    useSessionStore.getState().toggleComparing('C');
+    useSessionStore.getState().toggleComparing('D');
+    expect(useSessionStore.getState().comparing).toEqual(['A', 'B', 'C']);
+  });
+
+  it('clearComparing empties the list', () => {
+    useSessionStore.getState().toggleComparing('A');
+    useSessionStore.getState().toggleComparing('B');
+    useSessionStore.getState().clearComparing();
+    expect(useSessionStore.getState().comparing).toEqual([]);
+  });
+
+  it('reset() clears comparison, comparePrefill, and comparing', () => {
+    useSessionStore.getState().setComparison({
+      mode: 'quick',
+      roles: [
+        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        { label: 'B', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+      ],
+    });
+    useSessionStore.getState().setComparePrefill({ seedTarget: 'X' });
+    useSessionStore.getState().toggleComparing('A');
+    useSessionStore.getState().reset();
+    const s = useSessionStore.getState();
+    expect(s.comparison).toBeNull();
+    expect(s.comparePrefill).toBeNull();
+    expect(s.comparing).toEqual([]);
+  });
+});

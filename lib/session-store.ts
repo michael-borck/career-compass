@@ -142,6 +142,30 @@ export type BoardPrefill = {
   focusRole?: string;
 };
 
+export type ComparisonDimension =
+  | 'typicalDay'
+  | 'coreSkills'
+  | 'trainingNeeded'
+  | 'salaryRange'
+  | 'workSetting'
+  | 'whoItSuits'
+  | 'mainChallenge';
+
+export type ComparisonRole = {
+  label: string;
+  cells: Record<ComparisonDimension, string>;
+};
+
+export type Comparison = {
+  mode: 'quick' | 'rich';
+  roles: ComparisonRole[];
+};
+
+export type ComparePrefill = {
+  seedTarget?: string;
+  richCareerTitles?: string[];
+};
+
 export type SessionState = {
   // Inputs
   resumeText: string | null;
@@ -177,6 +201,11 @@ export type SessionState = {
   // Board
   boardReview: BoardReview | null;
   boardPrefill: BoardPrefill | null;
+
+  // Comparison
+  comparison: Comparison | null;
+  comparePrefill: ComparePrefill | null;
+  comparing: string[];
 
   // Grounding sources
   gapAnalysisSources: SourceRef[] | null;
@@ -217,6 +246,11 @@ export type SessionState = {
   setBoardReview: (r: BoardReview | null) => void;
   setBoardPrefill: (p: BoardPrefill | null) => void;
   consumeBoardPrefill: () => BoardPrefill | null;
+  setComparison: (c: Comparison | null) => void;
+  setComparePrefill: (p: ComparePrefill | null) => void;
+  consumeComparePrefill: () => ComparePrefill | null;
+  toggleComparing: (careerTitle: string) => void;
+  clearComparing: () => void;
   reset: () => void;
 };
 
@@ -273,6 +307,9 @@ const initialState = {
   chatSources: {},
   boardReview: null,
   boardPrefill: null,
+  comparison: null,
+  comparePrefill: null,
+  comparing: [],
 };
 
 function makeId() {
@@ -409,6 +446,25 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (current) set({ boardPrefill: null });
     return current;
   },
+
+  setComparison: (c) => set({ comparison: c }),
+  setComparePrefill: (p) => set({ comparePrefill: p }),
+  consumeComparePrefill: () => {
+    const current = get().comparePrefill;
+    if (current) set({ comparePrefill: null });
+    return current;
+  },
+  toggleComparing: (title) =>
+    set((state) => {
+      if (state.comparing.includes(title)) {
+        return { comparing: state.comparing.filter((t) => t !== title) };
+      }
+      if (state.comparing.length >= 3) {
+        return state;
+      }
+      return { comparing: [...state.comparing, title] };
+    }),
+  clearComparing: () => set({ comparing: [] }),
 
   reset: () => set({ ...initialState }),
 }));
