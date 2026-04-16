@@ -385,3 +385,70 @@ describe('boardReviewToMarkdown', () => {
     expect(md.trim().endsWith('*Four AI-generated perspectives. Disagreement is part of the exercise.*')).toBe(true);
   });
 });
+
+import { comparisonToMarkdown } from './markdown-export';
+import type { Comparison } from './session-store';
+
+function makeComparison(mode: 'quick' | 'rich', roleCount: 2 | 3): Comparison {
+  const roleLabels = ['Data analyst', 'UX researcher', 'Product manager'].slice(0, roleCount);
+  return {
+    mode,
+    roles: roleLabels.map((label) => ({
+      label,
+      cells: {
+        typicalDay: `${label} typical day`,
+        coreSkills: `${label} core skills`,
+        trainingNeeded: `${label} training`,
+        salaryRange: `${label} salary`,
+        workSetting: `${label} setting`,
+        whoItSuits: `${label} suits`,
+        mainChallenge: `${label} main challenge`,
+      },
+    })),
+  };
+}
+
+describe('comparisonToMarkdown', () => {
+  it('renders quick mode header for 2 roles', () => {
+    const md = comparisonToMarkdown(makeComparison('quick', 2));
+    expect(md).toContain('# Career Comparison');
+    expect(md).toContain('Quick compare');
+    expect(md).toContain('vague, makes assumptions');
+    expect(md).toContain('1. Data analyst');
+    expect(md).toContain('2. UX researcher');
+    expect(md).not.toContain('3. Product manager');
+  });
+
+  it('renders rich mode header for 3 roles', () => {
+    const md = comparisonToMarkdown(makeComparison('rich', 3));
+    expect(md).toContain('Rich compare');
+    expect(md).toContain('spider graph');
+    expect(md).toContain('1. Data analyst');
+    expect(md).toContain('3. Product manager');
+  });
+
+  it('renders all seven dimension sections', () => {
+    const md = comparisonToMarkdown(makeComparison('quick', 2));
+    expect(md).toContain('### Typical day');
+    expect(md).toContain('### Core skills');
+    expect(md).toContain('### Training needed');
+    expect(md).toContain('### Salary range');
+    expect(md).toContain('### Work setting');
+    expect(md).toContain('### Who it suits');
+    expect(md).toContain('### Main challenge');
+  });
+
+  it('renders each role as a bullet under each dimension section', () => {
+    const md = comparisonToMarkdown(makeComparison('quick', 3));
+    expect(md).toContain('- **Data analyst:** Data analyst typical day');
+    expect(md).toContain('- **UX researcher:** UX researcher core skills');
+    expect(md).toContain('- **Product manager:** Product manager main challenge');
+  });
+
+  it('ends with AI-generated footer', () => {
+    const md = comparisonToMarkdown(makeComparison('quick', 2));
+    expect(md.trim().endsWith(
+      '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
+    )).toBe(true);
+  });
+});
