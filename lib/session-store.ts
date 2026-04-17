@@ -217,6 +217,37 @@ export type SkillsMapping = {
   frameworkNotes: string;
 };
 
+export type IndustryRole = {
+  title: string;
+  description: string;
+  entryLevel: boolean;
+};
+
+export type IndustryExploration = {
+  industry: string;
+  overview: string;
+  keyRoles: IndustryRole[];
+  entryPoints: string[];
+  growthAreas: string[];
+  dayInTheLife: string;
+  challenges: string[];
+  skillsInDemand: string[];
+};
+
+export type WorkValue = {
+  name: string;
+  rank: number;
+  description: string;
+  evidence: string;
+  reflectionQuestion: string;
+};
+
+export type ValuesCompass = {
+  values: WorkValue[];
+  summary: string;
+  tensions: string[];
+};
+
 export type CareerTheme = { name: string; evidence: string[]; reflectionQuestion: string };
 export type CareerStory = { themes: CareerTheme[]; narrative: string };
 
@@ -269,6 +300,12 @@ export type SessionState = {
 
   // Skills mapping
   skillsMapping: SkillsMapping | null;
+
+  // Industry exploration
+  industryExploration: IndustryExploration | null;
+
+  // Values compass
+  valuesCompass: ValuesCompass | null;
 
   // Career materials
   elevatorPitch: ElevatorPitch | null;
@@ -325,6 +362,8 @@ export type SessionState = {
   setCoverLetter: (l: CoverLetter | null) => void;
   setResumeReview: (r: ResumeReview | null) => void;
   setSkillsMapping: (m: SkillsMapping | null) => void;
+  setIndustryExploration: (e: IndustryExploration | null) => void;
+  setValuesCompass: (v: ValuesCompass | null) => void;
   resetOutputs: () => void;
   reset: () => void;
 };
@@ -383,6 +422,8 @@ const initialState = {
   portfolio: null,
   careerStory: null,
   skillsMapping: null,
+  industryExploration: null,
+  valuesCompass: null,
   elevatorPitch: null,
   coverLetter: null,
   resumeReview: null,
@@ -553,6 +594,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setCoverLetter: (l) => set({ coverLetter: l }),
   setResumeReview: (r) => set({ resumeReview: r }),
   setSkillsMapping: (m) => set({ skillsMapping: m }),
+  setIndustryExploration: (e) => set({ industryExploration: e }),
+  setValuesCompass: (v) => set({ valuesCompass: v }),
 
   resetOutputs: () => {
     const s = get();

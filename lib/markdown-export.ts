@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel, IndustryExploration, ValuesCompass } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -550,5 +550,90 @@ export function skillsMappingToMarkdown(m: SkillsMapping): string {
   lines.push('---');
   lines.push('');
   lines.push('*AI-generated mapping. These are approximate — based on AI interpretation, not certified assessment.*');
+  return lines.join('\n');
+}
+
+export function industryExplorationToMarkdown(e: IndustryExploration): string {
+  const lines: string[] = [];
+  lines.push(`# Industry Exploration: ${e.industry}`);
+  lines.push('');
+  lines.push('## Overview');
+  lines.push(e.overview);
+  lines.push('');
+
+  lines.push('## Key roles');
+  lines.push('');
+  for (const role of e.keyRoles) {
+    const entry = role.entryLevel ? ' *(entry-level friendly)*' : '';
+    lines.push(`### ${role.title}${entry}`);
+    lines.push(role.description);
+    lines.push('');
+  }
+
+  if (e.entryPoints.length > 0) {
+    lines.push('## How to break in');
+    for (const ep of e.entryPoints) lines.push(`- ${ep}`);
+    lines.push('');
+  }
+
+  if (e.growthAreas.length > 0) {
+    lines.push("## What's growing");
+    for (const g of e.growthAreas) lines.push(`- ${g}`);
+    lines.push('');
+  }
+
+  if (e.dayInTheLife) {
+    lines.push('## A day in the life');
+    lines.push(e.dayInTheLife);
+    lines.push('');
+  }
+
+  if (e.skillsInDemand.length > 0) {
+    lines.push('## Skills in demand');
+    for (const s of e.skillsInDemand) lines.push(`- ${s}`);
+    lines.push('');
+  }
+
+  if (e.challenges.length > 0) {
+    lines.push('## Challenges to know about');
+    for (const c of e.challenges) lines.push(`- ${c}`);
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated overview. Verify specific claims before making decisions.*');
+  return lines.join('\n');
+}
+
+export function valuesCompassToMarkdown(compass: ValuesCompass): string {
+  const lines: string[] = [];
+  lines.push('# Values Compass');
+  lines.push('');
+  lines.push(compass.summary);
+  lines.push('');
+
+  lines.push('## Your values, ranked');
+  lines.push('');
+  for (const v of compass.values) {
+    lines.push(`### ${v.rank}. ${v.name}`);
+    lines.push(v.description);
+    if (v.evidence) lines.push(`**Why we think this:** ${v.evidence}`);
+    if (v.reflectionQuestion) {
+      lines.push('');
+      lines.push(`*${v.reflectionQuestion}*`);
+    }
+    lines.push('');
+  }
+
+  if (compass.tensions.length > 0) {
+    lines.push('## Tensions to explore');
+    for (const t of compass.tensions) lines.push(`- ${t}`);
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-inferred values. Treat as a starting point for reflection, not a personality test.*');
   return lines.join('\n');
 }

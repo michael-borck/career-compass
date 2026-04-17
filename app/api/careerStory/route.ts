@@ -22,6 +22,7 @@ function trimSessionOutputs(input: CareerStoryInput): CareerStoryInput {
     coverLetter: undefined,
     resumeReview: undefined,
     interviewFeedback: undefined,
+    valuesCompass: undefined,
   };
 }
 

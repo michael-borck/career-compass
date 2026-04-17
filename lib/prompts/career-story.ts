@@ -13,6 +13,7 @@ import type {
   StudentProfile,
   CareerStory,
   CareerTheme,
+  ValuesCompass,
 } from '@/lib/session-store';
 
 export type CareerStoryInput = {
@@ -31,6 +32,7 @@ export type CareerStoryInput = {
   coverLetter?: CoverLetter | null;
   resumeReview?: ResumeReview | null;
   interviewFeedback?: InterviewFeedback | null;
+  valuesCompass?: ValuesCompass | null;
 };
 
 function buildSessionContext(input: CareerStoryInput): string {
@@ -118,6 +120,14 @@ function buildSessionContext(input: CareerStoryInput): string {
     const f = input.interviewFeedback;
     const parts = [`Target: ${f.target}`, `Summary: ${f.summary}`, `Rating: ${f.overallRating}`];
     sections.push(`<interviewFeedback>\n${parts.join('\n')}\n</interviewFeedback>`);
+  }
+
+  if (input.valuesCompass) {
+    const v = input.valuesCompass;
+    const ranked = v.values.map((val) => `${val.rank}. ${val.name}: ${val.description}`);
+    const parts = [`Summary: ${v.summary}`, `Values:\n${ranked.join('\n')}`];
+    if (v.tensions.length > 0) parts.push(`Tensions: ${v.tensions.join('; ')}`);
+    sections.push(`<valuesCompass>\n${parts.join('\n')}\n</valuesCompass>`);
   }
 
   if (sections.length === 0) return '';

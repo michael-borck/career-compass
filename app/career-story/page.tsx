@@ -67,6 +67,7 @@ export default function CareerStoryPage() {
             coverLetter: state.coverLetter ?? undefined,
             resumeReview: state.resumeReview ?? undefined,
             interviewFeedback: state.interviewFeedback ?? undefined,
+            valuesCompass: state.valuesCompass ?? undefined,
             llmConfig,
           }),
         });

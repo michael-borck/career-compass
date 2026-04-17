@@ -16,6 +16,8 @@ import {
   ClipboardCheck,
   Globe,
   Grid3X3,
+  Factory,
+  Heart,
 } from 'lucide-react';
 import { useSessionStore } from '@/lib/session-store';
 import type { ReactNode } from 'react';
@@ -69,6 +71,14 @@ export default function ActionCards() {
         }),
     },
     {
+      icon: <Factory className='w-5 h-5' />,
+      title: 'Explore an industry',
+      description: 'What it\u2019s like to work in a field.',
+      hover: 'Pick an industry and get key roles, entry points, growth areas, and honest challenges.',
+      path: '/industry',
+      preNavigate: () => store.setIndustryExploration(null),
+    },
+    {
       icon: <MessageCircle className='w-5 h-5' />,
       title: 'Start chatting',
       description: 'Talk with the career advisor.',
@@ -93,19 +103,19 @@ export default function ActionCards() {
       path: '/learning-path',
     },
     {
-      icon: <Mic className='w-5 h-5' />,
-      title: 'Practice interview',
-      description: 'Simulate a job interview with feedback.',
-      hover: 'Needs a target role. Uses your profile for richer questions.',
-      path: '/interview',
-    },
-    {
       icon: <Grid3X3 className='w-5 h-5' />,
       title: 'Map my skills',
       description: 'Translate skills into professional frameworks.',
       hover: 'Maps to SFIA, O*NET, ESCO, and AQF. Enriches gap analysis and learning paths if run first.',
       path: '/skills-mapping',
       preNavigate: () => store.setSkillsMapping(null),
+    },
+    {
+      icon: <Mic className='w-5 h-5' />,
+      title: 'Practice interview',
+      description: 'Simulate a job interview with feedback.',
+      hover: 'Needs a target role. Uses your profile for richer questions.',
+      path: '/interview',
     },
   ];
 
@@ -123,6 +133,14 @@ export default function ActionCards() {
       description: 'Four perspectives on your profile.',
       hover: 'Needs a profile. A recruiter, HR partner, manager, and mentor each weigh in.',
       path: '/board',
+    },
+    {
+      icon: <Heart className='w-5 h-5' />,
+      title: 'Values compass',
+      description: 'Discover what matters most to you.',
+      hover: 'Identify your core work values. Works with just a few words or a full profile.',
+      path: '/values',
+      preNavigate: () => store.setValuesCompass(null),
     },
     {
       icon: <BookOpen className='w-5 h-5' />,
