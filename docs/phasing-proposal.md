@@ -117,7 +117,7 @@ Students can produce tangible career materials: an elevator pitch, a cover lette
 |---------|---------|
 | F6: Skills Framework Mapping (SFIA, O*NET, ESCO) | Map skills to recognised professional frameworks. Most valuable once the core career tools are solid. |
 | F14: Interview Role-Play | Simulate job interviews for a target role. Needs the chat infrastructure (Phase 1) and ideally search grounding (Phase 3) for realistic questions. |
-| F5: Multi-Input Distillation | Combine resume + chat + URL + job advert into a unified profile. Most valuable when all input types exist. |
+| ~~F5: Multi-Input Distillation~~ | *Archived — session state pattern (banner + shared materials) covers this.* |
 
 **What the app looks like after Phase 6:**
 The complete vision. Skills mapped to SFIA/O*NET. Interview practice with AI feedback. All inputs automatically distilled into a coherent student profile. Career Compass is now a comprehensive career exploration platform, not just a resume analyser.
@@ -137,7 +137,7 @@ The complete vision. Skills mapped to SFIA/O*NET. Interview practice with AI fee
 | 3 | Search + URL input | F13, F3 | Phase 1 |
 | 4 | Workshop activities | F11, F12, F10 | Phase 1 |
 | 5 | Materials + export | F8, F15, F16 | Phase 1-2 |
-| 6 | Frameworks + polish | F6, F14, F5 | All |
+| 6 | Frameworks + polish | F6, F14 | All |
 
 **Phases 2, 3, and 4 are mostly independent of each other** — after Phase 1 ships, they could be built in any order or in parallel based on what feels most valuable.
 

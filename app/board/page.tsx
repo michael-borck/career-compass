@@ -6,11 +6,13 @@ import { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import BoardInputCard from '@/components/board/BoardInputCard';
 import BoardVoices from '@/components/board/BoardVoices';
 import BoardSynthesisPanel from '@/components/board/BoardSynthesisPanel';
 import { useSessionStore } from '@/lib/session-store';
 import { boardReviewToMarkdown } from '@/lib/markdown-export';
+import { boardReviewToDocx } from '@/components/board/board-review-docx';
 
 export default function BoardPage() {
   const router = useRouter();
@@ -50,9 +52,13 @@ export default function BoardPage() {
           <div className='flex items-center gap-3'>
             {boardReview && (
               <>
+                <SaveDocxButton
+                  getBlob={() => boardReviewToDocx(boardReview)}
+                  filename='board-of-advisors.docx'
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => boardReviewToMarkdown(boardReview)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
                 <Button variant='outline' onClick={handleRunAgain}>
                   Run again

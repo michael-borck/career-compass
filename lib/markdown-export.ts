@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel } from './session-store';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -500,5 +500,55 @@ export function careerStoryToMarkdown(s: CareerStory): string {
   lines.push('---');
   lines.push('');
   lines.push('*AI-generated career story. The themes are real patterns from your data. The narrative is a starting point — edit it to match your voice.*');
+  return lines.join('\n');
+}
+
+function formatFramework(label: string, fw: FrameworkLevel): string | null {
+  if (!fw) return null;
+  return `**${label}:** ${fw.name} — Level ${fw.level}${fw.description ? ` (${fw.description})` : ''}`;
+}
+
+export function skillsMappingToMarkdown(m: SkillsMapping): string {
+  const lines: string[] = [];
+  lines.push('# Skills Mapping');
+  lines.push('');
+  lines.push(m.summary);
+  lines.push('');
+
+  if (m.frameworkNotes) {
+    lines.push('## About these frameworks');
+    lines.push(m.frameworkNotes);
+    lines.push('');
+  }
+
+  lines.push('## Skills');
+  lines.push('');
+
+  for (const s of m.mappings) {
+    lines.push(`### ${s.skill}`);
+    lines.push(`**Professional phrasing:** "${s.professionalPhrase}"`);
+    lines.push('');
+
+    const frameworks = [
+      formatFramework('SFIA (AU/UK Digital)', s.sfia),
+      formatFramework('O*NET (US Broad)', s.onet),
+      formatFramework('ESCO (European)', s.esco),
+      formatFramework('AQF (AU Qualifications)', s.aqf),
+    ].filter(Boolean);
+
+    if (frameworks.length > 0) {
+      for (const f of frameworks) lines.push(`- ${f}`);
+      lines.push('');
+    }
+
+    if (s.nextLevel) {
+      lines.push(`**To level up:** ${s.nextLevel}`);
+      lines.push('');
+    }
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('*AI-generated mapping. These are approximate — based on AI interpretation, not certified assessment.*');
   return lines.join('\n');
 }

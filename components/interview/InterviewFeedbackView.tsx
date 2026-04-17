@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import SourcesList from '@/components/results/SourcesList';
 import InterviewImprovementItem from './InterviewImprovementItem';
 import {
@@ -15,6 +16,7 @@ import {
   type InterviewPhase,
 } from '@/lib/session-store';
 import { interviewFeedbackToMarkdown } from '@/lib/markdown-export';
+import { interviewFeedbackToDocx } from './interview-feedback-docx';
 import { loadLLMConfig } from '@/lib/llm-client';
 import { buildTalkBuddyScenario } from '@/lib/talk-buddy-export';
 import { downloadJsonFile } from '@/lib/download';
@@ -236,8 +238,13 @@ export default function InterviewFeedbackView({ feedback }: Props) {
       )}
 
       <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-6'>
+        <SaveDocxButton
+          getBlob={() => interviewFeedbackToDocx(feedback, interviewSources)}
+          filename={`interview-feedback-${feedback.target.replace(/\s+/g, '-').toLowerCase()}.docx`}
+        />
         <CopyMarkdownButton
           getMarkdown={() => interviewFeedbackToMarkdown(feedback, interviewSources)}
+          label='Copy as text'
         />
         <Button
           variant='outline'

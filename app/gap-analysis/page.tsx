@@ -7,10 +7,12 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import { useSessionStore, type GapAnalysis } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { settingsStore } from '@/lib/settings-store';
 import { gapAnalysisToMarkdown } from '@/lib/markdown-export';
+import { gapAnalysisToDocx } from '@/components/gap-analysis/gap-analysis-docx';
 import LoadingDots from '@/components/ui/loadingdots';
 import GapAnalysisView from '@/components/results/GapAnalysisView';
 import GapAnalysisInputCard from '@/components/gap-analysis/GapAnalysisInputCard';
@@ -104,9 +106,13 @@ export default function GapAnalysisPage() {
           <div className='flex items-center gap-3'>
             {analysis && (
               <>
+                <SaveDocxButton
+                  getBlob={() => gapAnalysisToDocx(analysis, sources)}
+                  filename={`gap-analysis-${analysis.target.replace(/\s+/g, '-').toLowerCase()}.docx`}
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => gapAnalysisToMarkdown(analysis, sources)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
                 <Button variant='outline' onClick={handleRunAgain}>
                   Run again

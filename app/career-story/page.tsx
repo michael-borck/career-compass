@@ -7,13 +7,14 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import { useSessionStore, type CareerStory } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { careerStoryToMarkdown } from '@/lib/markdown-export';
+import { careerStoryToDocx } from '@/components/career-story/career-story-docx';
 import LoadingDots from '@/components/ui/loadingdots';
 import CareerStoryResultView from '@/components/career-story/CareerStoryResultView';
 import CareerStoryInputCard from '@/components/career-story/CareerStoryInputCard';
-import { careerStoryToDocx } from '@/components/career-story/career-story-docx';
 
 export default function CareerStoryPage() {
   const router = useRouter();
@@ -102,25 +103,6 @@ export default function CareerStoryPage() {
     autoRanRef.current = false;
   }
 
-  async function handleSaveDocx() {
-    if (!careerStory) return;
-    try {
-      const blob = await careerStoryToDocx(careerStory);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'my-career-story.docx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success('Career story saved as DOCX');
-    } catch (err) {
-      console.error(err);
-      toast.error('Could not create the document. Copy as Markdown instead.');
-    }
-  }
-
   return (
     <div className='h-full overflow-y-auto'>
       <div className='container mx-auto p-6 max-w-4xl'>
@@ -133,13 +115,14 @@ export default function CareerStoryPage() {
           <div className='flex items-center gap-3'>
             {careerStory && (
               <>
+                <SaveDocxButton
+                  getBlob={() => careerStoryToDocx(careerStory)}
+                  filename='my-career-story.docx'
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => careerStoryToMarkdown(careerStory)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
-                <Button variant='outline' onClick={handleSaveDocx}>
-                  Save as DOCX
-                </Button>
                 <Button variant='outline' onClick={handleBuildAnother}>
                   Build another
                 </Button>

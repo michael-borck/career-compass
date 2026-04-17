@@ -1,4 +1,4 @@
-import type { GapAnalysis, StudentProfile, SourceRef } from '@/lib/session-store';
+import type { GapAnalysis, StudentProfile, SourceRef, SkillsMapping } from '@/lib/session-store';
 import { formatSourcesForInlineCite } from '@/lib/search-prompt';
 
 export type GapAnalysisInput = {
@@ -7,6 +7,7 @@ export type GapAnalysisInput = {
   resume?: string;
   aboutYou?: string;
   distilledProfile?: StudentProfile;
+  skillsMapping?: SkillsMapping;
   sources?: SourceRef[];
 };
 
@@ -20,8 +21,18 @@ function formatProfile(p: StudentProfile): string {
   ].join('\n');
 }
 
+function formatSkillsMapping(m: SkillsMapping): string {
+  const lines = m.mappings.map((s) => {
+    const parts = [`${s.skill} → "${s.professionalPhrase}"`];
+    if (s.sfia) parts.push(`SFIA: ${s.sfia.name} Level ${s.sfia.level}`);
+    if (s.onet) parts.push(`O*NET: ${s.onet.name} Level ${s.onet.level}`);
+    return parts.join(' | ');
+  });
+  return `Skills framework mapping (student completed this earlier):\n${lines.join('\n')}`;
+}
+
 export function buildGapAnalysisPrompt(input: GapAnalysisInput): string {
-  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, sources } = input;
+  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, skillsMapping, sources } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
   const hasProfile =
@@ -77,6 +88,10 @@ Each Gap has the shape:
     targetSection,
     profileSection,
   ];
+
+  if (skillsMapping) {
+    sections.push(`<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's existing framework levels when describing currentLevel and targetLevel in gaps. Reference SFIA or O*NET levels where relevant.`);
+  }
 
   if (sources && sources.length > 0) {
     sections.push(formatSourcesForInlineCite(sources));

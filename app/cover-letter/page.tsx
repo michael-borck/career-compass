@@ -7,13 +7,14 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import { useSessionStore, type CoverLetter } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { coverLetterToMarkdown } from '@/lib/markdown-export';
+import { coverLetterToDocx } from '@/components/cover-letter/cover-letter-docx';
 import LoadingDots from '@/components/ui/loadingdots';
 import CoverLetterResultView from '@/components/cover-letter/CoverLetterResultView';
 import CoverLetterInputCard from '@/components/cover-letter/CoverLetterInputCard';
-import { coverLetterToDocx } from '@/components/cover-letter/cover-letter-docx';
 
 export default function CoverLetterPage() {
   const router = useRouter();
@@ -86,25 +87,6 @@ export default function CoverLetterPage() {
     autoRanRef.current = false;
   }
 
-  async function handleSaveDocx() {
-    if (!letter) return;
-    try {
-      const blob = await coverLetterToDocx(letter);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cover-letter-${(letter.target || 'general').replace(/\s+/g, '-').toLowerCase()}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success('Cover letter saved as DOCX');
-    } catch (err) {
-      console.error(err);
-      toast.error('Could not create the document. Copy as Markdown instead.');
-    }
-  }
-
   return (
     <div className='h-full overflow-y-auto'>
       <div className='container mx-auto p-6 max-w-4xl'>
@@ -117,13 +99,14 @@ export default function CoverLetterPage() {
           <div className='flex items-center gap-3'>
             {letter && (
               <>
+                <SaveDocxButton
+                  getBlob={() => coverLetterToDocx(letter)}
+                  filename={`cover-letter-${(letter.target || 'general').replace(/\s+/g, '-').toLowerCase()}.docx`}
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => coverLetterToMarkdown(letter)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
-                <Button variant='outline' onClick={handleSaveDocx}>
-                  Save as DOCX
-                </Button>
                 <Button variant='outline' onClick={handleDraftAnother}>
                   Draft another
                 </Button>

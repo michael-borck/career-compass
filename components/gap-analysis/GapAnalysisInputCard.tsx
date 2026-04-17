@@ -77,6 +77,7 @@ export default function GapAnalysisInputCard() {
           resume: store.resumeText ?? undefined,
           aboutYou: store.freeText || undefined,
           distilledProfile: store.distilledProfile ?? undefined,
+          skillsMapping: store.skillsMapping ?? undefined,
           grounded,
           llmConfig,
         }),

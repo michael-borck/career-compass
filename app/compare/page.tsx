@@ -8,10 +8,12 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingDots from '@/components/ui/loadingdots';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import CompareInputCard from '@/components/compare/CompareInputCard';
 import CompareTable from '@/components/compare/CompareTable';
 import { useSessionStore, type Comparison } from '@/lib/session-store';
 import { comparisonToMarkdown } from '@/lib/markdown-export';
+import { comparisonToDocx } from '@/components/compare/compare-docx';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 
 export default function ComparePage() {
@@ -117,9 +119,13 @@ export default function ComparePage() {
           <div className='flex items-center gap-3'>
             {comparison && (
               <>
+                <SaveDocxButton
+                  getBlob={() => comparisonToDocx(comparison)}
+                  filename='career-comparison.docx'
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => comparisonToMarkdown(comparison)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
                 <Button variant='outline' onClick={handleRunAnother}>
                   Run another

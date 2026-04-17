@@ -199,6 +199,24 @@ export type ResumeReview = {
 
 export type Portfolio = { html: string; target: string | null; };
 
+export type FrameworkLevel = { name: string; level: string; description: string } | null;
+
+export type SkillFrameworkMapping = {
+  skill: string;
+  sfia: FrameworkLevel;
+  onet: FrameworkLevel;
+  esco: FrameworkLevel;
+  aqf: FrameworkLevel;
+  professionalPhrase: string;
+  nextLevel: string;
+};
+
+export type SkillsMapping = {
+  mappings: SkillFrameworkMapping[];
+  summary: string;
+  frameworkNotes: string;
+};
+
 export type CareerTheme = { name: string; evidence: string[]; reflectionQuestion: string };
 export type CareerStory = { themes: CareerTheme[]; narrative: string };
 
@@ -248,6 +266,9 @@ export type SessionState = {
 
   // Career story
   careerStory: CareerStory | null;
+
+  // Skills mapping
+  skillsMapping: SkillsMapping | null;
 
   // Career materials
   elevatorPitch: ElevatorPitch | null;
@@ -303,6 +324,7 @@ export type SessionState = {
   setElevatorPitch: (p: ElevatorPitch | null) => void;
   setCoverLetter: (l: CoverLetter | null) => void;
   setResumeReview: (r: ResumeReview | null) => void;
+  setSkillsMapping: (m: SkillsMapping | null) => void;
   resetOutputs: () => void;
   reset: () => void;
 };
@@ -360,6 +382,7 @@ const initialState = {
   chatSources: {},
   portfolio: null,
   careerStory: null,
+  skillsMapping: null,
   elevatorPitch: null,
   coverLetter: null,
   resumeReview: null,
@@ -529,6 +552,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setElevatorPitch: (p) => set({ elevatorPitch: p }),
   setCoverLetter: (l) => set({ coverLetter: l }),
   setResumeReview: (r) => set({ resumeReview: r }),
+  setSkillsMapping: (m) => set({ skillsMapping: m }),
 
   resetOutputs: () => {
     const s = get();

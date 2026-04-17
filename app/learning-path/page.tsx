@@ -7,10 +7,12 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import { useSessionStore, type LearningPath } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { settingsStore } from '@/lib/settings-store';
 import { learningPathToMarkdown } from '@/lib/markdown-export';
+import { learningPathToDocx } from '@/components/learning-path/learning-path-docx';
 import LoadingDots from '@/components/ui/loadingdots';
 import LearningPathView from '@/components/results/LearningPathView';
 import LearningPathInputCard from '@/components/learning-path/LearningPathInputCard';
@@ -53,6 +55,7 @@ export default function LearningPathPage() {
             resume: state.resumeText ?? undefined,
             aboutYou: state.freeText || undefined,
             distilledProfile: state.distilledProfile ?? undefined,
+            skillsMapping: state.skillsMapping ?? undefined,
             grounded,
             llmConfig,
           }),
@@ -102,9 +105,13 @@ export default function LearningPathPage() {
           <div className='flex items-center gap-3'>
             {path && (
               <>
+                <SaveDocxButton
+                  getBlob={() => learningPathToDocx(path, sources)}
+                  filename={`learning-path-${path.target.replace(/\s+/g, '-').toLowerCase()}.docx`}
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => learningPathToMarkdown(path, sources)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
                 <Button variant='outline' onClick={handleRunAgain}>
                   Run again

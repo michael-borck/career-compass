@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, StudentProfile, SourceRef } from '@/lib/session-store';
+import type { GapAnalysis, LearningPath, StudentProfile, SourceRef, SkillsMapping } from '@/lib/session-store';
 import { formatSourcesForFootnote } from '@/lib/search-prompt';
 
 export type LearningPathInput = {
@@ -8,6 +8,7 @@ export type LearningPathInput = {
   aboutYou?: string;
   distilledProfile?: StudentProfile;
   gapAnalysis?: GapAnalysis;
+  skillsMapping?: SkillsMapping;
   sources?: SourceRef[];
 };
 
@@ -28,8 +29,19 @@ function formatGapsForPrompt(g: GapAnalysis): string {
   return `Existing gap analysis for this target:\n${g.summary}\n\nGaps to close:\n${lines.join('\n')}`;
 }
 
+function formatSkillsMapping(m: SkillsMapping): string {
+  const lines = m.mappings.map((s) => {
+    const parts = [`${s.skill} → "${s.professionalPhrase}"`];
+    if (s.sfia) parts.push(`SFIA: ${s.sfia.name} Level ${s.sfia.level}`);
+    if (s.onet) parts.push(`O*NET: ${s.onet.name} Level ${s.onet.level}`);
+    if (s.nextLevel) parts.push(`Next: ${s.nextLevel}`);
+    return parts.join(' | ');
+  });
+  return `Skills framework mapping (student completed this earlier):\n${lines.join('\n')}`;
+}
+
 export function buildLearningPathPrompt(input: LearningPathInput): string {
-  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, gapAnalysis, sources } = input;
+  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, gapAnalysis, skillsMapping, sources } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
   if (!hasTarget) {
@@ -88,6 +100,10 @@ Each Milestone has the shape:
     sections.push(
       `<gapAnalysis>\n${formatGapsForPrompt(gapAnalysis)}\n</gapAnalysis>\n\nPrioritise the listed gaps in the earliest milestones.`
     );
+  }
+
+  if (skillsMapping) {
+    sections.push(`<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's framework levels to set milestone targets. Reference the "next level" tips where relevant. Frame outcomes in terms of framework progression (e.g., "reach SFIA Level 3 in Software Development").`);
   }
 
   if (sources && sources.length > 0) {

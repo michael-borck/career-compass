@@ -7,9 +7,11 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import { useSessionStore, type ElevatorPitch } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
 import { pitchToMarkdown } from '@/lib/markdown-export';
+import { pitchToDocx } from '@/components/pitch/pitch-docx';
 import LoadingDots from '@/components/ui/loadingdots';
 import PitchResultView from '@/components/pitch/PitchResultView';
 import PitchInputCard from '@/components/pitch/PitchInputCard';
@@ -107,9 +109,13 @@ export default function PitchPage() {
           <div className='flex items-center gap-3'>
             {pitch && (
               <>
+                <SaveDocxButton
+                  getBlob={() => pitchToDocx(pitch)}
+                  filename={`elevator-pitch-${(pitch.target ?? 'general').replace(/\s+/g, '-').toLowerCase()}.docx`}
+                />
                 <CopyMarkdownButton
                   getMarkdown={() => pitchToMarkdown(pitch)}
-                  label='Copy as Markdown'
+                  label='Copy as text'
                 />
                 <Button variant='outline' onClick={handleWriteAnother}>
                   Write another

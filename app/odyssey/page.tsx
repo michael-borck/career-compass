@@ -7,10 +7,12 @@ import { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Columns3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
+import SaveDocxButton from '@/components/results/SaveDocxButton';
 import OdysseyLifeCard from '@/components/odyssey/OdysseyLifeCard';
 import OdysseyCompareView from '@/components/odyssey/OdysseyCompareView';
 import { useSessionStore, type OdysseyLifeType } from '@/lib/session-store';
 import { odysseyPlanToMarkdown } from '@/lib/markdown-export';
+import { odysseyPlanToDocx } from '@/components/odyssey/odyssey-docx';
 
 const TYPES: OdysseyLifeType[] = ['current', 'pivot', 'wildcard'];
 
@@ -40,7 +42,8 @@ export default function OdysseyPage() {
             Back to landing
           </Link>
           <div className='flex items-center gap-3'>
-            <CopyMarkdownButton getMarkdown={() => markdown} label='Copy as Markdown' />
+            <SaveDocxButton getBlob={() => odysseyPlanToDocx(odysseyLives)} filename='odyssey-plan.docx' />
+            <CopyMarkdownButton getMarkdown={() => markdown} label='Copy as text' />
             {view === 'cards' ? (
               <Button
                 variant='outline'

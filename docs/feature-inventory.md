@@ -61,10 +61,10 @@ Paste a job advert. The app analyses required skills, compares against the stude
 
 **Why:** Students often find a dream job posting and want to know how to get there.
 
-### F5: Multi-Input Distillation
-Combine multiple inputs — resume, chat session, LinkedIn URL, previous career results — into a unified student profile. The LLM distills all sources into a coherent picture, identifies gaps and inconsistencies, and uses the combined profile for better recommendations.
+### F5: Multi-Input Distillation *(Archived)*
+~~Combine multiple inputs — resume, chat session, LinkedIn URL, previous career results — into a unified student profile.~~
 
-**Why:** No single input tells the whole story. A resume might miss soft skills the chat reveals. A LinkedIn profile might be outdated but the resume is current.
+**Status:** Archived (2026-04-17). The session state pattern (session banner + shared materials) already provides per-action context sharing, making a separate distillation step unnecessary.
 
 ### F6: Skills Framework Mapping (SFIA and others)
 Map identified skills and career paths to recognised professional frameworks:

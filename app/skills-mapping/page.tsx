@@ -8,63 +8,57 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CopyMarkdownButton from '@/components/results/CopyMarkdownButton';
 import SaveDocxButton from '@/components/results/SaveDocxButton';
-import { useSessionStore, type ResumeReview } from '@/lib/session-store';
+import { useSessionStore, type SkillsMapping } from '@/lib/session-store';
 import { loadLLMConfig, isLLMConfigured } from '@/lib/llm-client';
-import { resumeReviewToMarkdown } from '@/lib/markdown-export';
-import { resumeReviewToDocx } from '@/components/resume-review/resume-review-docx';
+import { skillsMappingToMarkdown } from '@/lib/markdown-export';
+import { skillsMappingToDocx } from '@/components/skills-mapping/skills-mapping-docx';
 import LoadingDots from '@/components/ui/loadingdots';
-import ResumeReviewResultView from '@/components/resume-review/ResumeReviewResultView';
-import ResumeReviewInputCard from '@/components/resume-review/ResumeReviewInputCard';
+import SkillsMappingResultView from '@/components/skills-mapping/SkillsMappingResultView';
+import SkillsMappingInputCard from '@/components/skills-mapping/SkillsMappingInputCard';
 
-export default function ResumeReviewPage() {
+export default function SkillsMappingPage() {
   const router = useRouter();
   const store = useSessionStore();
-  const review = store.resumeReview;
-  const [loading, setLoading] = useState(false);
+  const mapping = useSessionStore((s) => s.skillsMapping);
   const autoRanRef = useRef(false);
+  const [loading, setLoading] = useState(false);
 
   const hasResume = !!store.resumeText;
+  const hasFreeText = !!store.freeText.trim();
+  const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
 
   useEffect(() => {
-    if (autoRanRef.current) return;
+    if (mapping || autoRanRef.current || !hasProfile) return;
     autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    if (!state.resumeText || state.resumeReview) return;
-
     (async () => {
-      if (!(await isLLMConfigured())) {
-        toast.error('Set up an LLM provider first.');
-        router.push('/settings');
-        return;
-      }
+      if (!(await isLLMConfigured())) return;
       setLoading(true);
       try {
         const llmConfig = await loadLLMConfig();
-        const res = await fetch('/api/resumeReview', {
+        const res = await fetch('/api/skillsMapping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            resume: state.resumeText ?? undefined,
-            jobTitle: state.jobTitle || undefined,
-            jobAdvert: state.jobAdvert || undefined,
-            distilledProfile: state.distilledProfile ?? undefined,
+            resume: store.resumeText ?? undefined,
+            aboutYou: store.freeText || undefined,
+            distilledProfile: store.distilledProfile ?? undefined,
+            jobTitle: store.jobTitle || undefined,
             llmConfig,
           }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Resume review failed');
+          throw new Error(err.error || 'Skills mapping failed');
         }
-        const { review: result, trimmed } = (await res.json()) as {
-          review: ResumeReview;
+        const { mapping: result, trimmed } = (await res.json()) as {
+          mapping: SkillsMapping;
           trimmed?: boolean;
         };
-        useSessionStore.getState().setResumeReview(result);
-        if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
+        store.setSkillsMapping(result);
+        if (trimmed) toast('Input was trimmed to fit the model.', { icon: '\u2139\uFE0F' });
       } catch (err) {
         console.error(err);
-        toast.error(err instanceof Error ? err.message : 'Resume review failed');
+        toast.error(err instanceof Error ? err.message : 'Skills mapping failed');
       } finally {
         setLoading(false);
       }
@@ -78,16 +72,16 @@ export default function ResumeReviewPage() {
     router.push('/');
   }
 
-  function handleReviewAgain() {
-    if (!review) return;
-    if (!confirm('Review again? The current feedback will be cleared.')) return;
-    store.setResumeReview(null);
+  function handleRunAgain() {
+    store.setSkillsMapping(null);
     autoRanRef.current = false;
   }
 
   return (
     <div className='h-full overflow-y-auto'>
       <div className='container mx-auto p-6 max-w-4xl'>
+        <Toaster position='bottom-center' />
+
         {/* Top bar */}
         <div className='flex items-center justify-between mb-6'>
           <Link href='/' className='flex items-center gap-2 text-ink-muted hover:text-ink'>
@@ -95,18 +89,18 @@ export default function ResumeReviewPage() {
             Back to landing
           </Link>
           <div className='flex items-center gap-3'>
-            {review && (
+            {mapping && (
               <>
                 <SaveDocxButton
-                  getBlob={() => resumeReviewToDocx(review)}
-                  filename={`resume-review-${(review.target ?? 'general').replace(/\s+/g, '-').toLowerCase()}.docx`}
+                  getBlob={() => skillsMappingToDocx(mapping)}
+                  filename='skills-mapping.docx'
                 />
                 <CopyMarkdownButton
-                  getMarkdown={() => resumeReviewToMarkdown(review)}
+                  getMarkdown={() => skillsMappingToMarkdown(mapping)}
                   label='Copy as text'
                 />
-                <Button variant='outline' onClick={handleReviewAgain}>
-                  Review again
+                <Button variant='outline' onClick={handleRunAgain}>
+                  Run again
                 </Button>
               </>
             )}
@@ -118,15 +112,14 @@ export default function ResumeReviewPage() {
 
         {/* Content */}
         {loading && (
-          <div className='border border-border rounded-lg bg-paper p-10 flex flex-col items-center gap-4'>
-            <LoadingDots color='gray' />
-            <p className='text-ink-muted'>Reviewing your resume…</p>
+          <div className='flex flex-col items-center gap-4 py-20'>
+            <LoadingDots />
+            <p className='text-ink-muted'>Mapping your skills to professional frameworks…</p>
           </div>
         )}
-        {!loading && !review && <ResumeReviewInputCard />}
-        {!loading && review && <ResumeReviewResultView review={review} />}
+        {!loading && !mapping && <SkillsMappingInputCard />}
+        {!loading && mapping && <SkillsMappingResultView mapping={mapping} />}
       </div>
-      <Toaster />
     </div>
   );
 }

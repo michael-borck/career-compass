@@ -15,6 +15,7 @@ import {
   FileText,
   ClipboardCheck,
   Globe,
+  Grid3X3,
 } from 'lucide-react';
 import { useSessionStore } from '@/lib/session-store';
 import type { ReactNode } from 'react';
@@ -97,6 +98,14 @@ export default function ActionCards() {
       description: 'Simulate a job interview with feedback.',
       hover: 'Needs a target role. Uses your profile for richer questions.',
       path: '/interview',
+    },
+    {
+      icon: <Grid3X3 className='w-5 h-5' />,
+      title: 'Map my skills',
+      description: 'Translate skills into professional frameworks.',
+      hover: 'Maps to SFIA, O*NET, ESCO, and AQF. Enriches gap analysis and learning paths if run first.',
+      path: '/skills-mapping',
+      preNavigate: () => store.setSkillsMapping(null),
     },
   ];
 
