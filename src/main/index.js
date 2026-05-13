@@ -324,7 +324,7 @@ ipcMain.handle('store-clear', (event) => {
 });
 
 // Generic HTTP fetch proxy (bypasses CORS via main process)
-ipcMain.handle('api:fetch', async (_event, args) => apiFetch(args));
+ipcMain.handle('api:fetch', async (event, args) => apiFetch(args));
 
 // IPC handlers for secure storage (API keys)
 ipcMain.handle('secure-set-password', async (event, service, password) => {
