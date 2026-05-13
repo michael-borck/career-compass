@@ -5,12 +5,20 @@
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
+// Port of lib/utils.ts normalizeText. Applied inside the parsers so callers
+// get the same whitespace-cleaned text the legacy /api/parsePdf route did.
+// Without this, renderer pages that currently rely on normalized PDF/DOCX
+// text would silently regress after Phase 3 cutover.
+function normalize(input) {
+  return input.replace(/\s+/g, ' ').replace(/\n+/g, '\n').trim();
+}
+
 async function parsePdf(buffer) {
   if (!Buffer.isBuffer(buffer)) {
     throw new TypeError('parsePdf requires a Node Buffer');
   }
   const data = await pdfParse(buffer);
-  return data.text;
+  return normalize(data.text);
 }
 
 async function parseDocx(buffer) {
@@ -18,7 +26,7 @@ async function parseDocx(buffer) {
     throw new TypeError('parseDocx requires a Node Buffer');
   }
   const result = await mammoth.extractRawText({ buffer });
-  return result.value;
+  return normalize(result.value);
 }
 
 module.exports = { parsePdf, parseDocx };

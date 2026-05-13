@@ -29,6 +29,16 @@ describe('parsePdf', () => {
 describe('parseDocx', () => {
   it('rejects non-Buffer input', async () => {
     await expect(parseDocx('not a buffer')).rejects.toThrow(TypeError);
+    await expect(parseDocx(new Uint8Array([1, 2, 3]))).rejects.toThrow(TypeError);
+  });
+
+  it('normalizes whitespace in extracted text', async () => {
+    const docxFixture = resolve(FIXTURES, 'sample.docx');
+    if (!existsSync(docxFixture)) return;
+    const text = await parseDocx(readFileSync(docxFixture));
+    // normalize() collapses runs of whitespace to single spaces and trims
+    expect(text).not.toMatch(/  /);
+    expect(text).toBe(text.trim());
   });
 
   const docxFixture = resolve(FIXTURES, 'sample.docx');
