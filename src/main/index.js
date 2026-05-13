@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = require('electron');
 const path = require('path');
+const { apiFetch } = require('./services/api-fetch');
 const isDev = process.env.NODE_ENV === 'development';
 
 // Import electron-store - only available in Electron context
@@ -321,6 +322,9 @@ ipcMain.handle('store-clear', (event) => {
   console.log('Store CLEAR: all data');
   store.clear();
 });
+
+// Generic HTTP fetch proxy (bypasses CORS via main process)
+ipcMain.handle('api:fetch', async (_event, args) => apiFetch(args));
 
 // IPC handlers for secure storage (API keys)
 ipcMain.handle('secure-set-password', async (event, service, password) => {

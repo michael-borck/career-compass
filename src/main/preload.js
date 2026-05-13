@@ -28,5 +28,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // App info
   getVersion: () => ipcRenderer.invoke('get-version'),
   getPlatform: () => process.platform,
-  getEnvVar: (varName) => ipcRenderer.invoke('get-env-var', varName)
+  getEnvVar: (varName) => ipcRenderer.invoke('get-env-var', varName),
+
+  // Generic HTTP fetch proxy (bypasses CORS)
+  apiFetch: (args) => ipcRenderer.invoke('api:fetch', args)
 });
