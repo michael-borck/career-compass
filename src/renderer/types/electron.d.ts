@@ -44,7 +44,7 @@ declare global {
         testConnection: (
           provider: string,
           config: { apiKey?: string; baseURL?: string; model?: string }
-        ) => Promise<{ success: boolean; error?: string }>;
+        ) => Promise<{ success: boolean; error: string | null }>;
       };
 
       // App info
