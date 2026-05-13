@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = require('electron');
 const path = require('path');
 const { apiFetch } = require('./services/api-fetch');
+const { parsePdf, parseDocx } = require('./services/file-processors');
 const isDev = process.env.NODE_ENV === 'development';
 
 // Import electron-store - only available in Electron context
@@ -325,6 +326,18 @@ ipcMain.handle('store-clear', (event) => {
 
 // Generic HTTP fetch proxy (bypasses CORS via main process)
 ipcMain.handle('api:fetch', async (event, args) => apiFetch(args));
+
+// File parsing — renderer ships file bytes as a Uint8Array (structured-cloned
+// across IPC); we convert to a Node Buffer here for pdf-parse / mammoth.
+ipcMain.handle('files:parsePdf', async (event, fileBytes) => {
+  const buf = Buffer.from(fileBytes);
+  return parsePdf(buf);
+});
+
+ipcMain.handle('files:parseDocx', async (event, fileBytes) => {
+  const buf = Buffer.from(fileBytes);
+  return parseDocx(buf);
+});
 
 // IPC handlers for secure storage (API keys)
 ipcMain.handle('secure-set-password', async (event, service, password) => {

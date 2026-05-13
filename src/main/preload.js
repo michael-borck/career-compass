@@ -31,5 +31,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getEnvVar: (varName) => ipcRenderer.invoke('get-env-var', varName),
 
   // Generic HTTP fetch proxy (bypasses CORS)
-  apiFetch: (args) => ipcRenderer.invoke('api:fetch', args)
+  apiFetch: (args) => ipcRenderer.invoke('api:fetch', args),
+
+  // File parsing
+  parsePdf: (fileBytes) => ipcRenderer.invoke('files:parsePdf', fileBytes),
+  parseDocx: (fileBytes) => ipcRenderer.invoke('files:parseDocx', fileBytes)
 });

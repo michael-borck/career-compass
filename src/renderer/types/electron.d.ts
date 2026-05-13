@@ -54,6 +54,8 @@ declare global {
 
       // Phase 2 additions
       apiFetch: (args: ApiFetchArgs) => Promise<ApiFetchResponse>;
+      parsePdf: (fileBytes: Uint8Array) => Promise<string>;
+      parseDocx: (fileBytes: Uint8Array) => Promise<string>;
     };
   }
 }
