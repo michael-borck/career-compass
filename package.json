@@ -66,11 +66,11 @@
     "appId": "com.michaelborck.career-compass",
     "productName": "Career Compass",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
-      "out/**/*",
-      "electron/**/*",
+      "dist/**/*",
+      "src/main/**/*",
       "node_modules/**/*",
       "!node_modules/.cache/**/*"
     ],
