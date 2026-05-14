@@ -71,6 +71,7 @@
     "files": [
       "dist/**/*",
       "src/main/**/*",
+      "assets/**/*",
       "node_modules/**/*",
       "!node_modules/.cache/**/*"
     ],
@@ -94,7 +95,7 @@
           ]
         }
       ],
-      "icon": "public/icon.png",
+      "icon": "assets/icon.png",
       "artifactName": "Career-Compass-${version}-${arch}.${ext}"
     },
     "win": {
@@ -106,7 +107,7 @@
           ]
         }
       ],
-      "icon": "public/icon.png",
+      "icon": "assets/icon.png",
       "artifactName": "Career-Compass-Setup-${version}.${ext}"
     },
     "linux": {
@@ -119,7 +120,7 @@
         }
       ],
       "category": "Office",
-      "icon": "public/icon.png",
+      "icon": "assets/icon.png",
       "artifactName": "Career-Compass-${version}-${arch}.${ext}"
     },
     "nsis": {
