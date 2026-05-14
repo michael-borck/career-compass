@@ -41,7 +41,7 @@ const SECTIONS: { label: string; cards: CardDef[] }[] = [
       { title: 'Elevator pitch', description: 'Write a 30–60 second pitch for networking.', path: '/pitch', ported: true },
       { title: 'Cover letter', description: 'Draft a professional letter for applications.', path: '/cover-letter', ported: true },
       { title: 'Resume review', description: 'Get structured feedback on your resume.', path: '/resume-review', ported: true },
-      { title: 'Portfolio page', description: 'Generate a personal portfolio website.', path: '/portfolio' },
+      { title: 'Portfolio page', description: 'Generate a personal portfolio website.', path: '/portfolio', ported: true },
     ],
   },
 ];
