@@ -22,7 +22,7 @@ const SECTIONS: { label: string; cards: CardDef[] }[] = [
     cards: [
       { title: 'Gap analysis', description: 'What you have vs what you need.', path: '/gap-analysis', ported: true },
       { title: 'Learning path', description: 'Step-by-step plan to get job-ready.', path: '/learning-path', ported: true },
-      { title: 'Map my skills', description: 'Translate skills into professional frameworks.', path: '/skills-mapping' },
+      { title: 'Map my skills', description: 'Translate skills into professional frameworks.', path: '/skills-mapping', ported: true },
       { title: 'Practice interview', description: 'Simulate a job interview with feedback.', path: '/interview' },
     ],
   },
