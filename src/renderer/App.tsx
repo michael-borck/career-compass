@@ -14,6 +14,7 @@ import Compare from './pages/Compare';
 import CareerStory from './pages/CareerStory';
 import ResumeReview from './pages/ResumeReview';
 import Portfolio from './pages/Portfolio';
+import Odyssey from './pages/Odyssey';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="/career-story" element={<CareerStory />} />
       <Route path="/resume-review" element={<ResumeReview />} />
       <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/odyssey" element={<Odyssey />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );
