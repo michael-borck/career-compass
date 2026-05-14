@@ -9,6 +9,7 @@ import {
   type SettingsConfig,
   type SearchEngine,
 } from '@/lib/settings-store';
+import { search, type SearchSettings } from '../services/search';
 import toast, { Toaster } from 'react-hot-toast';
 
 type LLMProvider =
@@ -276,31 +277,37 @@ export default function Settings() {
   const handleTestSearch = async () => {
     setTestingSearch(true);
     try {
-      // Persist current search settings first so the search service sees them.
-      const current = await settingsStore.get();
-      await settingsStore.set({
-        ...current,
-        searchEngine,
-        searchUrl,
-      });
-      if (
-        searchEngine === 'brave' ||
-        searchEngine === 'bing' ||
-        searchEngine === 'serper'
-      ) {
-        await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
+      if (searchEngine === 'disabled') {
+        toast(
+          'Search is disabled. Pick an engine to test it.',
+          { icon: 'ℹ️' }
+        );
+        return;
       }
 
-      // Previously this called fetch('/api/getSources') which ran the search
-      // service in a Next.js route. The search service has not been ported to
-      // the renderer/main yet (its own follow-up port), so the test action is
-      // a stub for now. Settings still save correctly — the engine selection
-      // takes effect once the rest of the app is wired to the new search
-      // service. Drop in this branch when search service lands in Phase 3.
-      toast(
-        'Search settings saved. Live test will return once the search service is ported.',
-        { icon: 'ℹ️' }
+      // Use the in-flight UI state directly so the user can test edits
+      // without having to press Save first.
+      const overrideSettings: SearchSettings = {
+        engine: searchEngine,
+        apiKey: searchApiKey,
+        url: searchUrl,
+      };
+
+      const results = await search(
+        { query: 'data analyst Perth salary', intent: 'salary' },
+        { settings: overrideSettings }
       );
+
+      if (results.length === 0) {
+        toast(
+          'Search ran but returned no results. Try a different engine or check your API key.',
+          { icon: '⚠️' }
+        );
+      } else {
+        toast.success(
+          `Search OK — got ${results.length} result${results.length === 1 ? '' : 's'} (e.g., ${results[0].domain})`
+        );
+      }
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : 'Search test failed');
