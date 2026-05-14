@@ -14,6 +14,20 @@ export default defineConfig({
     // '@/components/...' and '@/lib/...'. Phase 4 moves these into the renderer
     // tree and these legacy aliases can be removed.
     alias: [
+      // next/* shims — legacy components imported from `components/` still
+      // call `useRouter`/`usePathname` from next/navigation and `<Link href>`
+      // from next/link. These would crash at render time without a Next
+      // runtime. Aliasing to tiny react-router-based shims keeps the
+      // components transferable unchanged through Phase 3. Phase 4 rewrites
+      // components and removes these aliases.
+      {
+        find: 'next/navigation',
+        replacement: path.resolve(__dirname, './src/renderer/shims/next-navigation.ts'),
+      },
+      {
+        find: 'next/link',
+        replacement: path.resolve(__dirname, './src/renderer/shims/next-link.tsx'),
+      },
       {
         find: /^@\/components\/(.*)$/,
         replacement: path.resolve(__dirname, './components') + '/$1',
