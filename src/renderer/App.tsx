@@ -7,6 +7,7 @@ import CoverLetter from './pages/CoverLetter';
 import GapAnalysis from './pages/GapAnalysis';
 import LearningPath from './pages/LearningPath';
 import Values from './pages/Values';
+import Board from './pages/Board';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/gap-analysis" element={<GapAnalysis />} />
       <Route path="/learning-path" element={<LearningPath />} />
       <Route path="/values" element={<Values />} />
+      <Route path="/board" element={<Board />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );
