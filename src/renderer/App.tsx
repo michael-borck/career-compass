@@ -16,6 +16,7 @@ import ResumeReview from './pages/ResumeReview';
 import Portfolio from './pages/Portfolio';
 import Odyssey from './pages/Odyssey';
 import Interview from './pages/Interview';
+import Chat from './pages/Chat';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/odyssey" element={<Odyssey />} />
       <Route path="/interview" element={<Interview />} />
+      <Route path="/chat" element={<Chat />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );

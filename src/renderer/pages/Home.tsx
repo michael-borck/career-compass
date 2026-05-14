@@ -14,7 +14,7 @@ const SECTIONS: { label: string; cards: CardDef[] }[] = [
       { title: 'Find my careers', description: 'Generate 6 personalised career paths.', path: '/careers' },
       { title: 'Compare careers', description: 'Side-by-side across seven dimensions.', path: '/compare', ported: true },
       { title: 'Explore an industry', description: 'What it’s like to work in a field.', path: '/industry', ported: true },
-      { title: 'Start chatting', description: 'Talk with the career advisor.', path: '/chat' },
+      { title: 'Start chatting', description: 'Talk with the career advisor.', path: '/chat', ported: true },
     ],
   },
   {
