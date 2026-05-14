@@ -5,6 +5,7 @@ import About from './pages/About';
 import Pitch from './pages/Pitch';
 import CoverLetter from './pages/CoverLetter';
 import GapAnalysis from './pages/GapAnalysis';
+import LearningPath from './pages/LearningPath';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/pitch" element={<Pitch />} />
       <Route path="/cover-letter" element={<CoverLetter />} />
       <Route path="/gap-analysis" element={<GapAnalysis />} />
+      <Route path="/learning-path" element={<LearningPath />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );
