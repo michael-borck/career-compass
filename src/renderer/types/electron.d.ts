@@ -16,6 +16,8 @@ export type ApiFetchResponse = {
   body: string;
 };
 
+export type AvailableModel = { id: string; name: string; size?: number };
+
 declare global {
   interface Window {
     electronAPI: {
@@ -36,11 +38,11 @@ declare global {
 
       // Provider model listing and connection tests
       models: {
-        getOllamaModels: (baseURL: string) => Promise<string[]>;
+        getOllamaModels: (baseURL: string) => Promise<Array<{ name: string; size?: number }>>;
         getProviderModels: (
           provider: string,
           config: { apiKey?: string; baseURL?: string }
-        ) => Promise<string[]>;
+        ) => Promise<AvailableModel[]>;
         testConnection: (
           provider: string,
           config: { apiKey?: string; baseURL?: string; model?: string }

@@ -214,13 +214,10 @@ export default function Settings() {
       // fallback to /api/getModels. Removed in P3-T2: we always route through
       // the IPC bridge to the main process, which fetches provider model
       // listings using Electron's net module (no CORS preflight).
-      // The IPC handler returns AvailableModel[] (id, name, size?) — the
-      // electron.d.ts declares string[] but the runtime shape is wider; cast
-      // through unknown until the type declaration is corrected.
-      const models = (await window.electronAPI.models.getProviderModels(
+      const models = await window.electronAPI.models.getProviderModels(
         settings.provider,
         settings
-      )) as unknown as AvailableModel[];
+      );
 
       setAvailableModels(models);
       if (models.length > 0) {
