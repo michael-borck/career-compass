@@ -62,9 +62,46 @@ type Settings = {
 
 const DEFAULT_SETTINGS: Settings = {
   provider: 'ollama',
-  baseURL: 'http://localhost:11434/v1',
+  baseURL: '',
   model: '',
 };
+
+// Per-provider default base URLs for the OpenAI-compatible dispatch.
+// Only consulted when settings.baseURL is empty — explicit user values win.
+// claude/gemini use hardcoded URLs in their own dispatch branches and don't
+// go through resolveBaseURL; their entries here are unused placeholders.
+const PROVIDER_DEFAULT_BASE_URL: Record<Provider, string | null> = {
+  ollama: 'http://localhost:11434/v1',
+  openai: 'https://api.openai.com/v1',
+  groq: 'https://api.groq.com/openai/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
+  claude: null,
+  gemini: null,
+  custom: null,
+};
+
+function resolveBaseURL(provider: Provider, settingsBaseURL: string): string {
+  const fromSettings = settingsBaseURL.trim();
+  const fromDefault = PROVIDER_DEFAULT_BASE_URL[provider];
+
+  if (provider === 'custom') {
+    if (!fromSettings) {
+      throw new LLMError(
+        'Custom provider requires a server address in Settings',
+        0,
+        ''
+      );
+    }
+    return fromSettings;
+  }
+  if (fromSettings) return fromSettings;
+  if (fromDefault) return fromDefault;
+  throw new LLMError(
+    `${PROVIDER_LABEL[provider]} has no baseURL configured`,
+    0,
+    ''
+  );
+}
 
 const ENV_VAR_MAP: Record<Provider, string> = {
   openai: 'OPENAI_API_KEY',
@@ -149,8 +186,27 @@ function buildOpenAIBody(
   return body;
 }
 
-function parseOpenAIResponse(bodyText: string): ChatResult {
-  const data = JSON.parse(bodyText);
+function parseJsonOrThrow(
+  provider: Provider,
+  resp: { status: number; body: string }
+): unknown {
+  try {
+    return JSON.parse(resp.body);
+  } catch {
+    throw new LLMError(
+      `${PROVIDER_LABEL[provider]} returned malformed JSON`,
+      resp.status,
+      resp.body
+    );
+  }
+}
+
+function parseOpenAIResponse(
+  provider: Provider,
+  resp: { status: number; body: string }
+): ChatResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = parseJsonOrThrow(provider, resp) as any;
   const content: string = data?.choices?.[0]?.message?.content ?? '';
   const usage = data?.usage
     ? {
@@ -179,12 +235,21 @@ async function callOpenAICompatible(args: {
     headers.Authorization = `Bearer ${apiKey}`;
   }
   const body = JSON.stringify(buildOpenAIBody(model, options));
-  const resp = await window.electronAPI.apiFetch({
-    url,
-    method: 'POST',
-    headers,
-    body,
-  });
+  let resp;
+  try {
+    resp = await window.electronAPI.apiFetch({
+      url,
+      method: 'POST',
+      headers,
+      body,
+    });
+  } catch (err) {
+    throw new LLMError(
+      `Network error contacting ${PROVIDER_LABEL[provider]}: ${err instanceof Error ? err.message : String(err)}`,
+      0,
+      ''
+    );
+  }
   if (!resp.ok) {
     throw new LLMError(
       `${PROVIDER_LABEL[provider]} request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
@@ -192,7 +257,7 @@ async function callOpenAICompatible(args: {
       resp.body
     );
   }
-  return parseOpenAIResponse(resp.body);
+  return parseOpenAIResponse(provider, resp);
 }
 
 async function callAnthropic(args: {
@@ -216,16 +281,25 @@ async function callAnthropic(args: {
   if (options.temperature !== undefined) body.temperature = options.temperature;
   // Anthropic has no equivalent of response_format; omit silently.
 
-  const resp = await window.electronAPI.apiFetch({
-    url: 'https://api.anthropic.com/v1/messages',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-  });
+  let resp;
+  try {
+    resp = await window.electronAPI.apiFetch({
+      url: 'https://api.anthropic.com/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new LLMError(
+      `Network error contacting ${PROVIDER_LABEL.claude}: ${err instanceof Error ? err.message : String(err)}`,
+      0,
+      ''
+    );
+  }
   if (!resp.ok) {
     throw new LLMError(
       `Anthropic request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
@@ -233,7 +307,8 @@ async function callAnthropic(args: {
       resp.body
     );
   }
-  const data = JSON.parse(resp.body);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = parseJsonOrThrow('claude', resp) as any;
   const textBlock = Array.isArray(data?.content)
     ? data.content.find((b: { type?: string }) => b?.type === 'text')
     : null;
@@ -284,12 +359,21 @@ async function callGemini(args: {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model
   )}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const resp = await window.electronAPI.apiFetch({
-    url,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  let resp;
+  try {
+    resp = await window.electronAPI.apiFetch({
+      url,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new LLMError(
+      `Network error contacting ${PROVIDER_LABEL.gemini}: ${err instanceof Error ? err.message : String(err)}`,
+      0,
+      ''
+    );
+  }
   if (!resp.ok) {
     throw new LLMError(
       `Gemini request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
@@ -297,7 +381,8 @@ async function callGemini(args: {
       resp.body
     );
   }
-  const data = JSON.parse(resp.body);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = parseJsonOrThrow('gemini', resp) as any;
   const parts: Array<{ text?: string }> =
     data?.candidates?.[0]?.content?.parts ?? [];
   const content = parts.map((p) => p?.text ?? '').join('');
@@ -318,10 +403,9 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
 
   switch (provider) {
     case 'ollama': {
-      const baseURL = settings.baseURL || 'http://localhost:11434/v1';
       return callOpenAICompatible({
         provider,
-        baseURL,
+        baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey: null,
         model,
         options,
@@ -329,10 +413,9 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
     }
     case 'openai': {
       const key = requireApiKey(provider, apiKey);
-      const baseURL = settings.baseURL || 'https://api.openai.com/v1';
       return callOpenAICompatible({
         provider,
-        baseURL,
+        baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey: key,
         model,
         options,
@@ -342,7 +425,7 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       const key = requireApiKey(provider, apiKey);
       return callOpenAICompatible({
         provider,
-        baseURL: 'https://api.groq.com/openai/v1',
+        baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey: key,
         model,
         options,
@@ -352,7 +435,7 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       const key = requireApiKey(provider, apiKey);
       return callOpenAICompatible({
         provider,
-        baseURL: 'https://openrouter.ai/api/v1',
+        baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey: key,
         model,
         options,
@@ -367,16 +450,9 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       return callGemini({ apiKey: key, model, options });
     }
     case 'custom': {
-      if (!settings.baseURL) {
-        throw new LLMError(
-          'Custom provider requires a server address in Settings',
-          0,
-          ''
-        );
-      }
       return callOpenAICompatible({
         provider,
-        baseURL: settings.baseURL,
+        baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey,
         model,
         options,

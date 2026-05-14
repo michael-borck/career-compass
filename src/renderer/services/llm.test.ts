@@ -308,6 +308,152 @@ describe('chat — error handling', () => {
   );
 });
 
+describe('chat — malformed JSON', () => {
+  it('throws LLMError when an OpenAI-compatible provider returns non-JSON', async () => {
+    mockElectronAPI({
+      settings: { provider: 'openai', baseURL: 'https://api.openai.com/v1', model: 'gpt-4' },
+      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: '<html>error</html>',
+      },
+    });
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(200);
+    expect((err as LLMError).body).toBe('<html>error</html>');
+    expect((err as LLMError).message).toMatch(/OpenAI.*malformed JSON/i);
+  });
+
+  it('throws LLMError when Anthropic returns non-JSON', async () => {
+    mockElectronAPI({
+      settings: { provider: 'claude', baseURL: '', model: 'claude-3-haiku-20240307' },
+      secureStorage: { 'career-compass-llm-claude': 'ant-test' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: '<html>error</html>',
+      },
+    });
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(200);
+    expect((err as LLMError).body).toBe('<html>error</html>');
+    expect((err as LLMError).message).toMatch(/Anthropic.*malformed JSON/i);
+  });
+
+  it('throws LLMError when Gemini returns non-JSON', async () => {
+    mockElectronAPI({
+      settings: { provider: 'gemini', baseURL: '', model: 'gemini-1.5-flash' },
+      secureStorage: { 'career-compass-llm-gemini': 'goog-test' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: '<html>error</html>',
+      },
+    });
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(200);
+    expect((err as LLMError).body).toBe('<html>error</html>');
+    expect((err as LLMError).message).toMatch(/Gemini.*malformed JSON/i);
+  });
+});
+
+describe('chat — network errors', () => {
+  it('wraps apiFetch rejection in LLMError for OpenAI-compatible providers', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'openai', baseURL: 'https://api.openai.com/v1', model: 'gpt-4' },
+      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+    });
+    api.apiFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(0);
+    expect((err as LLMError).message).toMatch(/Network error/i);
+    expect((err as LLMError).message).toMatch(/ECONNREFUSED/);
+  });
+
+  it('wraps apiFetch rejection in LLMError for Anthropic', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'claude', baseURL: '', model: 'claude-3-haiku-20240307' },
+      secureStorage: { 'career-compass-llm-claude': 'ant-test' },
+    });
+    api.apiFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(0);
+    expect((err as LLMError).message).toMatch(/Network error/i);
+    expect((err as LLMError).message).toMatch(/Anthropic/);
+  });
+
+  it('wraps apiFetch rejection in LLMError for Gemini', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'gemini', baseURL: '', model: 'gemini-1.5-flash' },
+      secureStorage: { 'career-compass-llm-gemini': 'goog-test' },
+    });
+    api.apiFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const err = await chat({ messages: [{ role: 'user', content: 'hi' }] }).catch(
+      (e) => e as LLMError
+    );
+    expect(err).toBeInstanceOf(LLMError);
+    expect((err as LLMError).status).toBe(0);
+    expect((err as LLMError).message).toMatch(/Network error/i);
+    expect((err as LLMError).message).toMatch(/Gemini/);
+  });
+});
+
+describe('chat — baseURL fallback', () => {
+  it('empty baseURL falls back to OpenAI default endpoint', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'openai', baseURL: '', model: 'gpt-4' },
+      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(api.apiFetch.mock.calls[0][0].url).toBe(
+      'https://api.openai.com/v1/chat/completions'
+    );
+  });
+
+  it('empty baseURL for ollama falls back to localhost default', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'ollama', baseURL: '', model: 'llama3' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(api.apiFetch.mock.calls[0][0].url).toBe(
+      'http://localhost:11434/v1/chat/completions'
+    );
+  });
+
+  it('explicit baseURL wins over provider default', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'openai', baseURL: 'https://proxy.example.com/v1', model: 'gpt-4' },
+      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(api.apiFetch.mock.calls[0][0].url).toBe(
+      'https://proxy.example.com/v1/chat/completions'
+    );
+  });
+});
+
 describe('chat — custom provider', () => {
   it('uses the configured baseURL and optional API key', async () => {
     const api = mockElectronAPI({
