@@ -15,19 +15,7 @@ import LoadingDots from '@/components/ui/loadingdots';
 import PitchResultView from '@/components/pitch/PitchResultView';
 import { generatePitch } from '../services/pitch';
 import { extractTextFromFile } from '../services/file-upload';
-import { settingsStore } from '@/lib/settings-store';
-
-// Lightweight gating check that mirrors lib/llm-client.ts isLLMConfigured.
-// We don't import that module directly — Phase 4 deletes it — but the check
-// is two lines and renderer-local.
-async function isLLMConfigured(): Promise<boolean> {
-  try {
-    const saved = await settingsStore.get();
-    return !!(saved.model && saved.model.trim());
-  } catch {
-    return false;
-  }
-}
+import { isConfigured as isLLMConfigured } from '../services/llm';
 
 export default function Pitch() {
   const navigate = useNavigate();

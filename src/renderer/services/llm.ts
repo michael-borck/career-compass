@@ -54,6 +54,22 @@ export class LLMError extends Error {
   }
 }
 
+// Gating check used by every LLM page before invoking chat(). Returns true if
+// settings have a non-empty model selected. Pages should call this from inside
+// runGeneration and route to /settings if false.
+export async function isConfigured(): Promise<boolean> {
+  try {
+    const raw = await window.electronAPI.store.get<Partial<Settings>>(
+      'settings',
+      DEFAULT_SETTINGS
+    );
+    const merged = { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
+    return !!(merged.model && merged.model.trim());
+  } catch {
+    return false;
+  }
+}
+
 type Settings = {
   provider: Provider;
   baseURL: string;
