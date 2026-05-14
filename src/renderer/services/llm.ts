@@ -242,6 +242,8 @@ async function callOpenAICompatible(args: {
       method: 'POST',
       headers,
       body,
+      // LLM requests legitimately run 30-60s; this bounds the worst case.
+      timeoutMs: 60000,
     });
   } catch (err) {
     throw new LLMError(
@@ -292,6 +294,8 @@ async function callAnthropic(args: {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify(body),
+      // LLM requests legitimately run 30-60s; this bounds the worst case.
+      timeoutMs: 60000,
     });
   } catch (err) {
     throw new LLMError(
@@ -366,6 +370,8 @@ async function callGemini(args: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      // LLM requests legitimately run 30-60s; this bounds the worst case.
+      timeoutMs: 60000,
     });
   } catch (err) {
     throw new LLMError(

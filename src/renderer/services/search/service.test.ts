@@ -320,3 +320,276 @@ describe('runEngineSearch', () => {
     expect(results).toEqual([]);
   });
 });
+
+// ---------- DuckDuckGo ----------
+
+function ddgHtml(rows: Array<{ href: string; title: string }>): string {
+  // Mirrors the shape lite.duckduckgo.com returns: each result is an
+  // <a class="result-link" href="...">Title</a>. The DDG regex is permissive
+  // about other attributes, so we only need href, class, and inner text.
+  return rows
+    .map((r) => `<a href="${r.href}" class="result-link">${r.title}</a>`)
+    .join('\n');
+}
+
+describe('search — DuckDuckGo engine', () => {
+  it('returns mapped SourceRef[] from a 3-result HTML body (happy path)', async () => {
+    const api = mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          { href: 'https://example.com/a', title: 'Data analyst career path' },
+          { href: 'https://example.org/b', title: 'How to become a data analyst' },
+          { href: 'https://example.net/c', title: 'Data analyst salary guide 2026' },
+        ]),
+      },
+    });
+    const results = await search({ query: 'data analyst' });
+    expect(api.apiFetch).toHaveBeenCalledTimes(1);
+    const call = api.apiFetch.mock.calls[0][0];
+    expect(call.url).toContain('lite.duckduckgo.com/lite/');
+    expect(call.url).toContain('q=data+analyst');
+    expect(call.method).toBe('GET');
+    expect(results).toEqual([
+      { title: 'Data analyst career path', url: 'https://example.com/a', domain: 'example.com' },
+      { title: 'How to become a data analyst', url: 'https://example.org/b', domain: 'example.org' },
+      { title: 'Data analyst salary guide 2026', url: 'https://example.net/c', domain: 'example.net' },
+    ]);
+  });
+
+  it('decodes a duckduckgo.com/l/?uddg=... redirect href', async () => {
+    const encoded = encodeURIComponent('https://example.com/page');
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          {
+            href: `//duckduckgo.com/l/?uddg=${encoded}&rut=abc123`,
+            title: 'Decoded redirect result title',
+          },
+        ]),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results).toEqual([
+      {
+        title: 'Decoded redirect result title',
+        url: 'https://example.com/page',
+        domain: 'example.com',
+      },
+    ]);
+  });
+
+  it('filters out excluded domains (youtube.com, pinterest.com)', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          { href: 'https://example.com/keep', title: 'A keepable career article' },
+          { href: 'https://www.youtube.com/watch?v=1', title: 'A YouTube career video' },
+          { href: 'https://pinterest.com/pin/1', title: 'A Pinterest career board' },
+          { href: 'https://example.org/also-keep', title: 'Another keepable article' },
+        ]),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results.map((r) => r.url)).toEqual([
+      'https://example.com/keep',
+      'https://example.org/also-keep',
+    ]);
+  });
+
+  it('caps results at 9 even when 12 valid results are present', async () => {
+    const rows = Array.from({ length: 12 }, (_, i) => ({
+      href: `https://example.com/r${i}`,
+      title: `Result number ${i} title long enough`,
+    }));
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml(rows),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results).toHaveLength(9);
+    expect(results[0].url).toBe('https://example.com/r0');
+    expect(results[8].url).toBe('https://example.com/r8');
+  });
+
+  it('drops titles 10 characters or shorter (length threshold)', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          // 10 chars exactly — must be dropped (predicate is `> 10`).
+          { href: 'https://example.com/short', title: 'Short Ttle' },
+          // 11 chars — keep.
+          { href: 'https://example.com/keep', title: 'Long Titlee' },
+        ]),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results).toEqual([
+      { title: 'Long Titlee', url: 'https://example.com/keep', domain: 'example.com' },
+    ]);
+  });
+
+  it('filters out pagination links by title ("Next Page")', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          { href: 'https://example.com/real', title: 'A real career article result' },
+          { href: 'https://lite.duckduckgo.com/lite/?s=20', title: 'Next Page (more results)' },
+        ]),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results.map((r) => r.title)).toEqual([
+      'A real career article result',
+    ]);
+  });
+
+  it('drops hrefs that do not start with http (relative or javascript:)', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: ddgHtml([
+          { href: '/relative/path', title: 'A relative href result xyz' },
+          { href: 'https://example.com/abs', title: 'An absolute href result xyz' },
+        ]),
+      },
+    });
+    const results = await search({ query: 'x' });
+    expect(results.map((r) => r.url)).toEqual(['https://example.com/abs']);
+  });
+
+  it('throws SearchError on non-OK response', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: {
+        ok: false,
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: {},
+        body: '<html>rate limited</html>',
+      },
+    });
+    await expect(search({ query: 'x' })).rejects.toMatchObject({
+      name: 'SearchError',
+      status: 503,
+    });
+  });
+
+  it('wraps network rejections as SearchError', async () => {
+    mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchReject: new Error('ETIMEDOUT'),
+    });
+    await expect(search({ query: 'x' })).rejects.toMatchObject({
+      name: 'SearchError',
+      message: expect.stringContaining('ETIMEDOUT'),
+    });
+  });
+});
+
+// ---------- Timeout plumbing ----------
+
+describe('search — timeout plumbing', () => {
+  it('DuckDuckGo passes timeoutMs=10000 to apiFetch', async () => {
+    const api = mockElectronAPI({
+      storedSettings: { searchEngine: 'duckduckgo' },
+      apiFetchResponse: { ok: true, status: 200, headers: {}, body: '' },
+    });
+    await search({ query: 'x' });
+    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
+  });
+
+  it('Brave passes timeoutMs=10000 to apiFetch', async () => {
+    const api = mockElectronAPI({
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        headers: {},
+        body: JSON.stringify({ web: { results: [] } }),
+      },
+    });
+    const settings: SearchSettings = { engine: 'brave', apiKey: 'k', url: '' };
+    await search({ query: 'x' }, { settings });
+    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
+  });
+
+  it('Bing passes timeoutMs=10000 to apiFetch', async () => {
+    const api = mockElectronAPI({
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        headers: {},
+        body: JSON.stringify({ webPages: { value: [] } }),
+      },
+    });
+    const settings: SearchSettings = { engine: 'bing', apiKey: 'k', url: '' };
+    await search({ query: 'x' }, { settings });
+    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
+  });
+
+  it('Serper passes timeoutMs=10000 to apiFetch', async () => {
+    const api = mockElectronAPI({
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        headers: {},
+        body: JSON.stringify({ organic: [] }),
+      },
+    });
+    const settings: SearchSettings = { engine: 'serper', apiKey: 'k', url: '' };
+    await search({ query: 'x' }, { settings });
+    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
+  });
+
+  it('SearXNG passes timeoutMs=15000 to apiFetch (longer for self-hosted)', async () => {
+    const api = mockElectronAPI({
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        headers: {},
+        body: JSON.stringify({ results: [] }),
+      },
+    });
+    const settings: SearchSettings = {
+      engine: 'searxng',
+      apiKey: '',
+      url: 'https://searx.example.com',
+    };
+    await search({ query: 'x' }, { settings });
+    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(15000);
+  });
+});

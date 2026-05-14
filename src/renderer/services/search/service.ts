@@ -9,8 +9,8 @@
 //   - fetch(...) replaced with window.electronAPI.apiFetch(...)
 //   - JSON.parse wrapped in try/catch and surfaced as a clear error
 //   - network rejections caught and wrapped as SearchError
-//   - AbortSignal.timeout omitted (apiFetch in main runs its own timeout
-//     via Electron net; engine-level timeouts can be added later if needed)
+//   - per-engine timeouts passed via apiFetch's timeoutMs (10s for most
+//     engines, 15s for SearXNG which is often a slow self-hosted instance)
 
 import type { SourceRef } from './prompt';
 import { getCached, setCached, makeKey } from './cache';
@@ -138,6 +138,7 @@ async function runDuckDuckGo(query: string): Promise<SourceRef[]> {
         Connection: 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
       },
+      timeoutMs: 10000,
     });
   } catch (err) {
     throw new SearchError(
@@ -219,6 +220,7 @@ async function runBrave(query: string, apiKey: string): Promise<SourceRef[]> {
         Accept: 'application/json',
         'User-Agent': 'CareerCompass/1.0',
       },
+      timeoutMs: 10000,
     });
   } catch (err) {
     throw new SearchError(
@@ -262,6 +264,7 @@ async function runBing(query: string, apiKey: string): Promise<SourceRef[]> {
       url: `https://api.bing.microsoft.com/v7.0/search?${params}`,
       method: 'GET',
       headers: { 'Ocp-Apim-Subscription-Key': apiKey },
+      timeoutMs: 10000,
     });
   } catch (err) {
     throw new SearchError(
@@ -300,6 +303,7 @@ async function runSerper(query: string, apiKey: string): Promise<SourceRef[]> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ q: query, num: 9 }),
+      timeoutMs: 10000,
     });
   } catch (err) {
     throw new SearchError(
@@ -352,6 +356,7 @@ async function runSearxng(query: string, searxngUrl: string): Promise<SourceRef[
         'Accept-Language': 'en-US,en;q=0.9',
         Referer: searxngUrl,
       },
+      timeoutMs: 15000,
     });
   } catch (err) {
     throw new SearchError(

@@ -6,6 +6,11 @@ export type ApiFetchArgs = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
   body?: string | Record<string, unknown> | unknown[];
+  // Per-request timeout in milliseconds. When set, the main-process
+  // apiFetch aborts the underlying Electron net.request after this many
+  // ms and rejects with "Request timed out after <ms>ms". Omit for no
+  // timeout (default behavior — discouraged; prefer a value).
+  timeoutMs?: number;
 };
 
 export type ApiFetchResponse = {
