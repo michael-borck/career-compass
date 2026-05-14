@@ -15,6 +15,7 @@ import CareerStory from './pages/CareerStory';
 import ResumeReview from './pages/ResumeReview';
 import Portfolio from './pages/Portfolio';
 import Odyssey from './pages/Odyssey';
+import Interview from './pages/Interview';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/resume-review" element={<ResumeReview />} />
       <Route path="/portfolio" element={<Portfolio />} />
       <Route path="/odyssey" element={<Odyssey />} />
+      <Route path="/interview" element={<Interview />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );
