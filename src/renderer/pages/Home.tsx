@@ -31,7 +31,7 @@ const SECTIONS: { label: string; cards: CardDef[] }[] = [
     cards: [
       { title: 'Imagine three lives', description: 'Three alternative five-year futures.', path: '/odyssey' },
       { title: 'Board of advisors', description: 'Four perspectives on your profile.', path: '/board' },
-      { title: 'Values compass', description: 'Discover what matters most to you.', path: '/values' },
+      { title: 'Values compass', description: 'Discover what matters most to you.', path: '/values', ported: true },
       { title: 'Career story', description: 'Find the thread connecting your experiences.', path: '/career-story' },
     ],
   },
