@@ -8,6 +8,21 @@ export type CareersInput = {
   distilledProfile?: StudentProfile;
 };
 
+export type CareerBasicInfo = {
+  jobTitle: string;
+  jobDescription: string;
+  timeline: string;
+  salary: string;
+  difficulty: string;
+};
+
+export type CareerDetailInfo = {
+  workRequired: string;
+  aboutTheRole: string;
+  whyItsagoodfit: string[];
+  roadmap: { [key: string]: string }[];
+};
+
 const EXAMPLE = `<example>
 [
   {
@@ -108,4 +123,62 @@ ${context}
 </context>
 
 ONLY respond with JSON, nothing else.`;
+}
+
+function cleanJSON(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+  }
+  return cleaned.trim();
+}
+
+function toStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
+  return [];
+}
+
+function toString(v: unknown, fallback = ''): string {
+  return typeof v === 'string' ? v : fallback;
+}
+
+export function parseCareersList(raw: string): CareerBasicInfo[] {
+  const parsed = JSON.parse(cleanJSON(raw));
+  if (!Array.isArray(parsed)) {
+    throw new Error('parseCareersList: expected an array of careers');
+  }
+  return parsed.map((c: unknown) => {
+    const obj = (c ?? {}) as Record<string, unknown>;
+    return {
+      jobTitle: toString(obj.jobTitle, 'Unknown role'),
+      jobDescription: toString(obj.jobDescription),
+      timeline: toString(obj.timeline),
+      salary: toString(obj.salary),
+      difficulty: toString(obj.difficulty),
+    };
+  });
+}
+
+export function parseCareerDetail(raw: string): CareerDetailInfo {
+  const parsed = JSON.parse(cleanJSON(raw));
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('parseCareerDetail: expected an object');
+  }
+  const obj = parsed as Record<string, unknown>;
+  const roadmapRaw = Array.isArray(obj.roadmap) ? obj.roadmap : [];
+  const roadmap: { [key: string]: string }[] = roadmapRaw
+    .filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
+    .map((step) => {
+      const out: { [key: string]: string } = {};
+      for (const [k, v] of Object.entries(step)) {
+        out[k] = typeof v === 'string' ? v : String(v ?? '');
+      }
+      return out;
+    });
+  return {
+    workRequired: toString(obj.workRequired),
+    aboutTheRole: toString(obj.aboutTheRole),
+    whyItsagoodfit: toStringArray(obj.whyItsagoodfit),
+    roadmap,
+  };
 }
