@@ -48,7 +48,7 @@ const SECTIONS: { label: string; cards: CardDef[] }[] = [
 
 const OTHER: CardDef[] = [
   { title: 'Settings', description: 'Provider, API keys, model preferences.', path: '/settings', ported: true },
-  { title: 'About', description: 'Privacy notes and project background.', path: '/about' },
+  { title: 'About', description: 'Privacy notes and project background.', path: '/about', ported: true },
 ];
 
 function Card({ def }: { def: CardDef }) {
