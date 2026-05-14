@@ -12,6 +12,7 @@ import Industry from './pages/Industry';
 import SkillsMapping from './pages/SkillsMapping';
 import Compare from './pages/Compare';
 import CareerStory from './pages/CareerStory';
+import ResumeReview from './pages/ResumeReview';
 import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/skills-mapping" element={<SkillsMapping />} />
       <Route path="/compare" element={<Compare />} />
       <Route path="/career-story" element={<CareerStory />} />
+      <Route path="/resume-review" element={<ResumeReview />} />
       <Route path="*" element={<NotMigrated />} />
     </Routes>
   );
