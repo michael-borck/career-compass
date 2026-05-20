@@ -1,4 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
 import About from './pages/About';
@@ -22,27 +24,33 @@ import NotMigrated from './pages/NotMigrated';
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/pitch" element={<Pitch />} />
-      <Route path="/cover-letter" element={<CoverLetter />} />
-      <Route path="/gap-analysis" element={<GapAnalysis />} />
-      <Route path="/learning-path" element={<LearningPath />} />
-      <Route path="/values" element={<Values />} />
-      <Route path="/board" element={<Board />} />
-      <Route path="/industry" element={<Industry />} />
-      <Route path="/skills-mapping" element={<SkillsMapping />} />
-      <Route path="/compare" element={<Compare />} />
-      <Route path="/career-story" element={<CareerStory />} />
-      <Route path="/resume-review" element={<ResumeReview />} />
-      <Route path="/portfolio" element={<Portfolio />} />
-      <Route path="/odyssey" element={<Odyssey />} />
-      <Route path="/interview" element={<Interview />} />
-      <Route path="/chat" element={<Chat />} />
-      <Route path="/careers" element={<Careers />} />
-      <Route path="*" element={<NotMigrated />} />
-    </Routes>
+    <>
+      <Header />
+      <main className="flex-1 min-h-0">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/pitch" element={<Pitch />} />
+          <Route path="/cover-letter" element={<CoverLetter />} />
+          <Route path="/gap-analysis" element={<GapAnalysis />} />
+          <Route path="/learning-path" element={<LearningPath />} />
+          <Route path="/values" element={<Values />} />
+          <Route path="/board" element={<Board />} />
+          <Route path="/industry" element={<Industry />} />
+          <Route path="/skills-mapping" element={<SkillsMapping />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/career-story" element={<CareerStory />} />
+          <Route path="/resume-review" element={<ResumeReview />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/odyssey" element={<Odyssey />} />
+          <Route path="/interview" element={<Interview />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="*" element={<NotMigrated />} />
+        </Routes>
+      </main>
+      <Footer />
+    </>
   );
 }
