@@ -4,22 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Career Compass is a privacy-first career exploration desktop application built as a hybrid Next.js/Electron app. It analyzes resumes locally using multiple LLM providers to suggest personalized career paths. The architecture prioritizes user privacy with local file processing and secure storage.
+Career Compass is a privacy-first career exploration desktop application built as a Vite + React + Electron app. It analyzes resumes locally using multiple LLM providers to suggest personalized career paths. The architecture prioritizes user privacy with local file processing and secure storage.
+
+Originally built on Next.js 14 (App Router + static export, wrapped in Electron). Phases 1–4 of the migration moved the renderer to Vite + React Router and the API routes into Electron IPC handlers. Talk-buddy parity.
 
 ## Common Commands
 
 ### Development
 ```bash
-npm run dev                    # Start Next.js development server
-npm run electron:dev           # Start both Next.js and Electron (main development command)
-npm run electron:dev-unsafe    # Development with disabled web security for debugging
+npm run dev                    # Start Vite dev server only (renderer at :5180)
+npm run electron:dev           # Start Vite + Electron together (main dev command)
 ```
 
 ### Building
 ```bash
-npm run build                  # Build Next.js static export
-npm run electron:pack          # Package Electron app for testing (no installer)
+npm run build                  # Vite production build → dist/
+npm run electron:pack          # Package for testing (no installer)
 npm run electron:dist          # Build production distributables for current platform
+```
+
+### Testing
+```bash
+npm test                       # Run vitest suite (renderer services + main IPC handlers)
+npm run test:watch             # vitest in watch mode
 ```
 
 ### Release Process
@@ -31,15 +38,15 @@ git push origin v0.x.x        # Triggers GitHub Actions multi-platform build
 
 ## Architecture Overview
 
-### Hybrid Web/Desktop Application
-- **Next.js 14** with App Router and static export (`output: 'export'`)
-- **Electron wrapper** provides desktop functionality while maintaining web compatibility
-- **Dual runtime environments**: Web (localStorage) vs Desktop (electron-store + secure storage)
+### Vite Renderer + Electron Main
+- **Vite 8** builds the React renderer with `react-router-dom` v6 in hash router mode (Electron-friendly)
+- **Electron main** (`src/main/index.js`) owns the window, IPC handlers, file dialogs, and secure storage
+- **No web fallback** — this is a desktop app. Renderer always assumes `window.electronAPI` is present.
 
 ### Multi-Provider LLM Architecture
-Located in `lib/llm-providers.ts`, implements a provider abstraction pattern:
-- **Common interface** (`LLMProvider`) for all AI providers
-- **OpenAI SDK** used as base client for API compatibility across providers
+Located in `src/renderer/services/llm.ts`, implements a provider abstraction pattern:
+- **Common `chat()` entry point** that builds provider-specific request bodies
+- **Network call goes over IPC** (`api:fetch` handler in main) — the renderer never makes direct cross-origin HTTP from Chromium
 - **Environment variable fallback** when no stored API keys
 - **Connection testing** with provider-specific health check endpoints
 
@@ -49,83 +56,83 @@ Supported providers:
 - **Anthropic Claude**
 - **Groq** (fast inference)
 - **Google Gemini**
+- **OpenRouter**
+- **Custom OpenAI-compatible**
 
 ### Settings and Storage Architecture
-Dual storage system in `lib/settings-store.ts`:
+Settings live in `lib/settings-store.ts` (still in the legacy tree — will move to `src/renderer/services/` in a later cleanup pass).
 
-**Desktop (Electron)**:
-- Settings: `electron-store` in user data directory
-- API Keys: `safeStorage` with OS-native encryption (keychain/credential manager)
-- **Async IPC operations** - all store methods return Promises
-
-**Web (Fallback)**:
-- Settings: `localStorage`
-- API Keys: `localStorage` (less secure)
-
-**Critical Implementation Detail**: Settings store operations are async to handle IPC communication. Always use `await` when calling `settingsStore.get()`, `settingsStore.set()`, etc.
+- **Settings**: `electron-store` in user data directory
+- **API Keys**: `safeStorage` with OS-native encryption (Keychain on macOS, Credential Manager on Windows, libsecret on Linux)
+- **All store methods are async** — they cross the IPC bridge. Always `await` `settingsStore.get()`/`set()`.
 
 ### File Processing Pipeline
-Located in `lib/file-processors.ts` with API routes in `app/api/parsePdf/`:
-- **PDF**: `pdf-parse` library (configured as external package in Next.js)
-- **DOCX**: `mammoth` library for Word document conversion
-- **Markdown**: Direct text processing
-- **Client-side validation** before server processing
-- **ArrayBuffer handling** for binary file data
+- **Renderer side** (`src/renderer/services/file-upload.ts` + `text.ts`): validates type/size, reads as ArrayBuffer for binary files (PDF/DOCX), passes through for text
+- **Main side** (`src/main/services/file-processors.js`): uses `pdf-parse` and `mammoth` to extract text — Node-only deps that can't run in the renderer
+- **IPC**: `files:parsePdf` and `files:parseDocx` handlers
 
 ### Security Architecture
 
-**Electron Security Hardening**:
-- `contextIsolation: true` with secure IPC bridge (`electron/preload.js`)
+**Electron Security Hardening** (`src/main/index.js`):
+- `contextIsolation: true` with secure IPC bridge (`src/main/preload.js`)
 - `nodeIntegration: false` and `webSecurity: true`
-- External URLs opened in system browser, not within app
-- Secure API key storage using OS-native encryption
+- `titleBarStyle: 'hiddenInset'` on macOS — requires `.drag-region` element in the renderer (see `src/renderer/components/Header.tsx`)
+- External URLs opened in system browser, not within the app
+- Secure API key storage via OS-native encryption
 
 **Privacy Design**:
-- Local file processing (files never sent to external servers except LLM APIs for analysis)
-- No analytics or tracking implementation
-- User data remains on device
+- All file processing happens locally; files never leave the device except as text in LLM API calls
+- No analytics or tracking
+- User data stays on device
 
 ### IPC Communication Pattern
-Between main and renderer processes via `electron/preload.js`:
+Main ↔ renderer via `src/main/preload.js`:
 ```javascript
-// Settings operations
+// Generic outbound HTTP (avoids renderer CORS, lets us add timeouts/headers)
+window.electronAPI.apiFetch(url, options)
+
+// Settings + secure storage
 window.electronAPI.store.get(key, defaultValue)
 window.electronAPI.store.set(key, value)
-
-// Secure storage for API keys
 window.electronAPI.secureStorage.setPassword(service, password)
 window.electronAPI.secureStorage.getPassword(service)
 
-// Model management
+// Provider model management
 window.electronAPI.models.getOllamaModels(baseURL)
 window.electronAPI.models.testConnection(provider, config)
+
+// File parsing (PDF/DOCX → text)
+window.electronAPI.files.parsePdf(arrayBuffer)
+window.electronAPI.files.parseDocx(arrayBuffer)
 ```
 
 ### Career Generation Workflow
-Two-stage LLM process in `app/api/getCareers/route.ts`:
+Two-stage LLM process in `src/renderer/services/careers.ts`:
 1. **Initial Analysis**: Resume + context → 6 career suggestions with basic info
 2. **Detailed Analysis**: Each career → comprehensive roadmap, skills analysis, timeline
 
-**ReactFlow Integration**: Career suggestions rendered as interactive nodes in `components/CareerNode.tsx` with visualization in `app/careers/page.tsx`.
+**ReactFlow Integration**: Career suggestions rendered as interactive nodes in `components/CareerNode.tsx` with visualization in `src/renderer/pages/Careers.tsx`.
 
 ## Build Configuration
 
-### Next.js Configuration (`next.config.mjs`)
-```javascript
-output: 'export'                                    // Static export for Electron
-serverComponentsExternalPackages: ['pdf-parse']     // External package handling
-images: { unoptimized: true }                       // Required for static export
-```
+### Vite (`vite.config.ts`)
+- `base: './'` so Electron can load `dist/index.html` over `file://`
+- React plugin only; no SSR
+- Aliases:
+  - `next/link` and `next/navigation` → renderer-side shims (`src/renderer/shims/*`) — kept until the rest of the legacy `components/` tree is moved into `src/renderer/`
+  - `@/components/*` → `components/*` (legacy tree, still imported by ported pages)
+  - `@/lib/*` → `lib/*` (legacy tree)
+  - `@` → `src/renderer` (everything new lives under here)
 
 ### Electron Builder (`package.json` build section)
 - **Cross-platform targets**: Windows (NSIS), macOS (DMG), Linux (AppImage)
 - **Artifact naming**: `Career-Compass-{version}-{arch}.{ext}` (no spaces)
-- **Auto-updater**: GitHub releases integration
-- **Code signing**: Placeholder configuration for certificates
+- **Auto-updater**: GitHub releases integration via `electron-updater`
+- **Code signing**: Placeholder configuration; macOS notarisation hasn't been wired up yet (Phase 5)
 
-### GitHub Actions (`/.github/workflows/release.yml`)
+### GitHub Actions (`.github/workflows/release.yml`)
 - **Matrix build**: Parallel builds on macOS, Windows, Ubuntu
-- **Tag-triggered**: Activates on `v*` tags (e.g., `v0.2.0`)
+- **Tag-triggered**: Activates on `v*` tags (e.g., `v0.4.0`)
 - **Automated releases**: Creates GitHub release with platform-specific binaries
 
 ## Development Guidelines
@@ -133,25 +140,30 @@ images: { unoptimized: true }                       // Required for static expor
 ### Environment Variable Support
 Settings system supports environment variables as fallback:
 - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `GOOGLE_API_KEY`
-- Accessed via `window.electronAPI.getEnvVar()` in renderer process
+- Accessed via `window.electronAPI.getEnvVar()` in the renderer
 - Check `lib/settings-store.ts` for precedence order
 
 ### Error Handling Patterns
+- **`LLMError`** in `src/renderer/services/llm.ts` wraps parse + network failures with structured `code` strings
 - **Toast notifications** using `react-hot-toast` for user feedback
-- **Graceful degradation** when desktop features unavailable in web mode
-- **Fallback stores** when electron-store initialization fails
+- **`isTokenLimitError()`** (`lib/token-limit.ts`) recognises provider-specific token-budget errors so pages can suggest trimming context
 
 ### File Structure Conventions
-- `/app/*` - Next.js App Router pages and API routes
-- `/lib/*` - Core business logic and utilities
-- `/components/*` - React components (UI components in `/components/ui/`)
-- `/electron/*` - Desktop-specific code (main process and preload script)
+- `/src/renderer/*` — Vite-built React app (pages, components, services, shims)
+  - `pages/` — route components (one per `/<path>` in `App.tsx`)
+  - `services/` — business logic (llm, file-upload, board, careers, …) with co-located `.test.ts`
+  - `components/` — shared UI (Header, Footer, Hero, ActionCards, SessionBanner)
+  - `shims/` — Next.js compatibility shims for legacy imports (`next/link`, `next/navigation`)
+- `/src/main/*` — Electron main process (`index.js`, `preload.js`, `services/`)
+- `/lib/*` — legacy business logic still consumed by renderer (`session-store`, `settings-store`, `prompts/`, `markdown-export`, …). Slated to move under `src/renderer/` in a future cleanup pass.
+- `/components/*` — legacy UI components still consumed by renderer (UI primitives in `ui/`, per-feature `ResultView` and `-docx` files). Same migration trajectory as `lib/`.
+- `/assets/*` — icons for electron-builder
 
 ### Testing Connection to LLM Providers
-Connection testing implementation varies by provider:
-- **Ollama**: `GET /api/tags` endpoint
-- **OpenAI/Groq**: `GET /v1/models` endpoint
-- **Claude**: `POST /v1/messages` with minimal test request
-- **Gemini**: `GET /v1beta/models` endpoint
+Connection testing implementation varies by provider, all routed through `api:fetch` IPC:
+- **Ollama**: `GET /api/tags`
+- **OpenAI / Groq / OpenRouter / custom**: `GET /v1/models`
+- **Claude**: `POST /v1/messages` with a minimal test request
+- **Gemini**: `GET /v1beta/models`
 
 All connection tests include API key validation and environment variable fallback logic.
