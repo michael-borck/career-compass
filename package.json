@@ -31,7 +31,6 @@
     "jsdom": "^29.0.2",
     "lucide-react": "^0.378.0",
     "mammoth": "^1.9.1",
-    "next": "14.2.3",
     "openai": "^4.45.0",
     "pdf-parse": "^1.1.1",
     "react": "^18",
@@ -74,15 +73,6 @@
       "assets/**/*",
       "node_modules/**/*",
       "!node_modules/.cache/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "public",
-        "to": "public",
-        "filter": [
-          "**/*"
-        ]
-      }
     ],
     "mac": {
       "category": "public.app-category.productivity",
