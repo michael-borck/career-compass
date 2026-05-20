@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DefaultModels } from '@/lib/llm-providers';
 import {
   settingsStore,
   secureStorage,
@@ -203,7 +202,7 @@ export default function Settings() {
       ...prev,
       provider,
       baseURL: providerInfo.defaultURL,
-      model: DefaultModels[provider],
+      model: '',
       apiKey: provider === 'ollama' ? '' : prev.apiKey,
     }));
   };
