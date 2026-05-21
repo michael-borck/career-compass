@@ -59,7 +59,10 @@ jobs:
           # trigger its own (buggy) notarize wrapper alongside our afterSign
           # hook in scripts/notarize.js.
           NOTARIZE_APPLE_ID: ${{ secrets.APPLE_ID }}
-          NOTARIZE_APPLE_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          # App-specific password (appleid.apple.com), NOT the account password.
+          # The older APPLE_ID_PASSWORD secret (set in the Next.js era) returns
+          # HTTP 401 from notarytool; APPLE_APP_SPECIFIC_PASSWORD is the valid one.
+          NOTARIZE_APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           NOTARIZE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Build Electron app (Linux)
