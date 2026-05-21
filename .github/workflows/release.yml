@@ -3,19 +3,29 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags like v1.0.0
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  build:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
+      # Don't cancel sibling platform builds if one fails — debugging is
+      # easier when all platforms report their result.
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-    
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -23,152 +33,67 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js app
+      - name: Build Vite app
         run: npm run build
 
-      - name: Import macOS signing certificate
-        if: matrix.os == 'macos-latest'
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run electron:build -- --win --publish=always
         env:
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        run: |
-          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
-          security create-keychain -p actions build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p actions build.keychain
-          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-          rm certificate.p12
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Electron app for macOS
+      - name: Build Electron app (macOS)
         if: matrix.os == 'macos-latest'
-        run: npm run electron:dist
-        # env:
-          # macOS code signing (optional - add your certificates to secrets)
-          # CSC_LINK: ${{ secrets.CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          # Apple notarization (optional)
-          # APPLE_ID: ${{ secrets.APPLE_ID }}
-          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+        run: npm run electron:build -- --mac --publish=always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          # Renamed from APPLE_* so electron-builder's auto-detection doesn't
+          # trigger its own (buggy) notarize wrapper alongside our afterSign
+          # hook in scripts/notarize.js.
+          NOTARIZE_APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARIZE_APPLE_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          NOTARIZE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Build Electron app for Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run electron:dist
-        # env:
-          # Windows code signing (optional - add your certificate to secrets)
-          # CSC_LINK: ${{ secrets.CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-
-      - name: Build Electron app for Linux
+      - name: Build Electron app (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: npm run electron:dist
+        run: npm run electron:build -- --linux --publish=always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifacts (macOS)
-        if: matrix.os == 'macos-latest'
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-build
-          path: dist/*.dmg
-
-      - name: Upload artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: dist/*.exe
-
-      - name: Upload artifacts (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-build
-          path: dist/*.AppImage
+          name: ${{ matrix.platform }}-distributables
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+            release/*.yml
+            release/*.yaml
 
   publish:
-    needs: release
+    # Promote the draft release that electron-builder's --publish=always
+    # creates into a published "Latest" release — but only after every
+    # matrix build has succeeded, so we never publish a partial release
+    # missing one or more platforms.
+    needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./artifacts
-
-      - name: Display structure of downloaded files
-        run: ls -la ./artifacts
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Mark release as published and Latest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Career Compass ${{ github.ref_name }}
-          body: |
-            ## Career Compass ${{ github.ref_name }}
-            
-            Privacy-first career exploration powered by AI.
-            
-            ### Downloads
-            - **Windows**: Download the `.exe` installer
-            - **macOS**: Download the `.dmg` file  
-            - **Linux**: Download the `.AppImage` file
-            
-            ### Features
-            - ✅ Multiple LLM providers (OpenAI, Claude, Gemini, Groq, Ollama)
-            - ✅ Local file processing (PDF, Markdown, DOCX)
-            - ✅ Privacy-first architecture
-            - ✅ No external data transmission
-            - ✅ Secure API key storage
-            
-            ### Installation
-            1. Download the appropriate file for your operating system
-            2. **Windows**: Run the installer and follow the setup wizard
-            3. **macOS**: Open the DMG and drag to Applications folder
-            4. **Linux**: Make the AppImage executable and run it
-            
-            For detailed setup instructions, see the [README](https://github.com/michael-borck/career-compass#readme).
-          draft: false
-          prerelease: false
-
-      - name: Find and upload release assets
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Extract version from tag (remove 'v' prefix)
-          VERSION=${GITHUB_REF_NAME#v}
-          
-          # Find and upload macOS assets
-          for file in ./artifacts/macos-build/*.dmg; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              gh release upload ${{ github.ref_name }} "$file" --clobber
-            fi
-          done
-          
-          # Find and upload Windows assets
-          for file in ./artifacts/windows-build/*.exe; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              gh release upload ${{ github.ref_name }} "$file" --clobber
-            fi
-          done
-          
-          # Find and upload Linux assets
-          for file in ./artifacts/linux-build/*.AppImage; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              gh release upload ${{ github.ref_name }} "$file" --clobber
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Publishing release $TAG"
+          gh release edit "$TAG" \
+            --draft=false \
+            --latest \
+            --repo "${{ github.repository }}"

@@ -11,8 +11,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5180 && cross-env NODE_ENV=development electron . --no-sandbox\"",
-    "electron:pack": "npm run build && electron-builder --dir",
-    "electron:dist": "npm run build && electron-builder --publish never",
+    "electron:pack": "npm run build && electron-builder --config electron-builder.config.js --dir",
+    "electron:build": "npm run build && electron-builder --config electron-builder.config.js",
+    "electron:dist": "npm run build && electron-builder --config electron-builder.config.js --publish=never",
     "postinstall": "electron-builder install-app-deps",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -43,6 +44,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.1.1",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.4",
@@ -60,64 +62,5 @@
     "vite": "^8.0.12",
     "vitest": "^4.1.4",
     "wait-on": "^8.0.3"
-  },
-  "build": {
-    "appId": "com.michaelborck.career-compass",
-    "productName": "Career Compass",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "src/main/**/*",
-      "assets/**/*",
-      "node_modules/**/*",
-      "!node_modules/.cache/**/*"
-    ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.png",
-      "artifactName": "Career-Compass-${version}-${arch}.${ext}"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.png",
-      "artifactName": "Career-Compass-Setup-${version}.${ext}"
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "category": "Office",
-      "icon": "assets/icon.png",
-      "artifactName": "Career-Compass-${version}-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    }
   }
 }
