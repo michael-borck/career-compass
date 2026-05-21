@@ -14,10 +14,18 @@ try {
 } catch (error) {
   console.error('Failed to load electron-store:', error);
 }
-// Only require electron-updater in production builds
+// Only require electron-updater in production builds. Wrapped in try/catch
+// because a corrupted install (e.g. electron-updater shipped without its
+// out/ dir) would otherwise throw at module load and crash the app before
+// any window appears. Auto-update is non-essential — degrade to "no updates"
+// rather than bricking startup. All autoUpdater usages guard on truthiness.
 let autoUpdater;
 if (!isDev) {
-  autoUpdater = require('electron-updater').autoUpdater;
+  try {
+    autoUpdater = require('electron-updater').autoUpdater;
+  } catch (error) {
+    console.error('Failed to load electron-updater; auto-update disabled:', error);
+  }
 }
 
 // Keep a global reference of the window object
