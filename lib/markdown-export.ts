@@ -1,4 +1,4 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel, IndustryExploration, ValuesCompass } from './session-store';
+import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef, OdysseyLife, OdysseyLifeType, BoardReview, Comparison, ElevatorPitch, CoverLetter, ResumeReview, CareerStory, SkillsMapping, IndustryExploration, ValuesCompass } from './session-store';
 import { toMarkdown } from './export/to-markdown';
 import { coverLetterToExportDoc } from './export/features/cover-letter';
 import { pitchToExportDoc } from './export/features/pitch';
@@ -12,6 +12,7 @@ import { odysseyPlanToExportDoc } from './export/features/odyssey';
 import { boardReviewToExportDoc } from './export/features/board';
 import { careerStoryToExportDoc } from './export/features/career-story';
 import { skillsMappingToExportDoc } from './export/features/skills-mapping';
+import { comparisonToExportDoc } from './export/features/compare';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   return toMarkdown(gapAnalysisToExportDoc(g, sources));
@@ -33,62 +34,8 @@ export function boardReviewToMarkdown(r: BoardReview): string {
   return toMarkdown(boardReviewToExportDoc(r));
 }
 
-const DIMENSION_LABELS: Record<ComparisonDimension, string> = {
-  typicalDay: 'Typical day',
-  coreSkills: 'Core skills',
-  trainingNeeded: 'Training needed',
-  salaryRange: 'Salary range',
-  workSetting: 'Work setting',
-  whoItSuits: 'Who it suits',
-  mainChallenge: 'Main challenge',
-};
-
-const DIMENSION_ORDER: ComparisonDimension[] = [
-  'typicalDay',
-  'coreSkills',
-  'trainingNeeded',
-  'salaryRange',
-  'workSetting',
-  'whoItSuits',
-  'mainChallenge',
-];
-
 export function comparisonToMarkdown(c: Comparison): string {
-  const lines: string[] = [];
-  lines.push('# Career Comparison');
-  lines.push('');
-
-  if (c.mode === 'quick') {
-    lines.push('**Mode:** Quick compare *(LLM-generated from job titles — vague, makes assumptions)*');
-  } else {
-    lines.push('**Mode:** Rich compare *(based on careers from your spider graph)*');
-  }
-  lines.push('');
-
-  lines.push('## Roles compared');
-  c.roles.forEach((role, i) => {
-    lines.push(`${i + 1}. ${role.label}`);
-  });
-  lines.push('');
-
-  lines.push('## Comparison');
-  lines.push('');
-
-  for (const dim of DIMENSION_ORDER) {
-    lines.push(`### ${DIMENSION_LABELS[dim]}`);
-    for (const role of c.roles) {
-      lines.push(`- **${role.label}:** ${role.cells[dim]}`);
-    }
-    lines.push('');
-  }
-
-  lines.push('---');
-  lines.push('');
-  lines.push(
-    '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
-  );
-
-  return lines.join('\n');
+  return toMarkdown(comparisonToExportDoc(c));
 }
 
 export function pitchToMarkdown(p: ElevatorPitch): string {
