@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import ReactFlow, {
@@ -20,6 +20,7 @@ import { useSessionStore } from '@/lib/session-store';
 import { generateCareers } from '../services/careers';
 import { extractTextFromFile } from '../services/file-upload';
 import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 const nodeTypes = { careerNode: CareerNode } satisfies NodeTypes;
 
@@ -72,7 +73,6 @@ export default function Careers() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as any[]);
-  const [loading, setLoading] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
 
   useEffect(() => {
@@ -106,52 +106,32 @@ export default function Careers() {
     }
   }, [careers]);
 
-  const runGeneration = useCallback(async () => {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const result = await generateCareers({
+      return generateCareers({
         resume: state.resumeText ?? undefined,
         freeText: state.freeText || undefined,
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setCareers(result);
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to generate careers'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  // Auto-run on mount when inputs are present but no careers exist yet.
-  // This preserves the landing-page hand-off pattern from the legacy app.
-  const autoRanRef = useRef(false);
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasInput =
-      !!state.resumeText ||
-      !!state.freeText?.trim() ||
-      !!state.jobTitle?.trim() ||
-      !!state.jobAdvert?.trim() ||
-      !!state.distilledProfile;
-    if (!hasInput || state.careers || needsSetup) return;
-
-    runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needsSetup]);
+    },
+    persist: (result) => useSessionStore.getState().setCareers(result),
+    errorFallback: 'Failed to generate careers',
+    // Auto-run on mount when inputs are present but no careers exist yet —
+    // preserves the landing-page hand-off from the legacy app.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      const hasInput =
+        !!state.resumeText ||
+        !!state.freeText?.trim() ||
+        !!state.jobTitle?.trim() ||
+        !!state.jobAdvert?.trim() ||
+        !!state.distilledProfile;
+      return hasInput && !state.careers && !needsSetup;
+    },
+  });
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
