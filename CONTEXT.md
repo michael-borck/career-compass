@@ -84,6 +84,22 @@ tested without live network. Distinct from the **chat() client**, which runs in
 the renderer and only sends chat turns.
 _Avoid_: provider service, llm main.
 
+### Export
+
+**ExportDoc**:
+A format-neutral representation of a feature's exportable content — a `title`
+plus a list of blocks (heading, paragraph, bullets, note, disclaimer). Each
+feature builds one (`lib/export/features/*`); it's the single content
+definition both export formats render from.
+_Avoid_: document, report, output.
+
+**Renderer**:
+A function that turns an **ExportDoc** into one concrete format — `toDocx`
+(a .docx Blob) or `toMarkdown` (a Markdown string). Two renderers over one
+ExportDoc; adding a third format (PDF, HTML) is one more renderer, not another
+per-feature traversal.
+_Avoid_: exporter, formatter, serializer.
+
 ## Example dialogue
 
 **Dev:** The cover-letter feature service was timing out on long resumes.

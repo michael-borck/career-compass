@@ -1,39 +1,10 @@
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+// Cover Letter -> .docx. Thin adapter: the content is defined once in
+// lib/export/features/cover-letter.ts and rendered by the shared ExportDoc
+// docx renderer.
+import { toDocx } from '@/lib/export/to-docx';
+import { coverLetterToExportDoc } from '@/lib/export/features/cover-letter';
 import type { CoverLetter } from '@/lib/session-store';
 
-export async function coverLetterToDocx(letter: CoverLetter): Promise<Blob> {
-  const bodyParagraphs = letter.body
-    .split('\n\n')
-    .filter(Boolean)
-    .map(
-      (text) =>
-        new Paragraph({
-          children: [new TextRun({ text, size: 24, font: 'Calibri' })],
-          spacing: { after: 200 },
-        })
-    );
-
-  const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph({
-            children: [
-              new TextRun({ text: letter.greeting, size: 24, font: 'Calibri' }),
-            ],
-            spacing: { after: 200 },
-          }),
-          ...bodyParagraphs,
-          new Paragraph({
-            children: [
-              new TextRun({ text: letter.closing, size: 24, font: 'Calibri' }),
-            ],
-            spacing: { before: 200 },
-          }),
-        ],
-      },
-    ],
-  });
-
-  return await Packer.toBlob(doc);
+export function coverLetterToDocx(letter: CoverLetter): Promise<Blob> {
+  return toDocx(coverLetterToExportDoc(letter));
 }

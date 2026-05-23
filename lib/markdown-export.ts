@@ -1,4 +1,6 @@
 import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel, IndustryExploration, ValuesCompass } from './session-store';
+import { toMarkdown } from './export/to-markdown';
+import { coverLetterToExportDoc } from './export/features/cover-letter';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
   const lines: string[] = [];
@@ -420,21 +422,7 @@ export function pitchToMarkdown(p: ElevatorPitch): string {
 }
 
 export function coverLetterToMarkdown(l: CoverLetter): string {
-  const lines: string[] = [];
-  lines.push('# Cover Letter');
-  lines.push('');
-  lines.push(`**Target:** ${l.target}`);
-  lines.push('');
-  lines.push(l.greeting);
-  lines.push('');
-  lines.push(l.body);
-  lines.push('');
-  lines.push(l.closing);
-  lines.push('');
-  lines.push('---');
-  lines.push('');
-  lines.push('*AI-generated draft. Edit before sending.*');
-  return lines.join('\n');
+  return toMarkdown(coverLetterToExportDoc(l));
 }
 
 export function resumeReviewToMarkdown(r: ResumeReview): string {
