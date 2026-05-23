@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Globe } from 'lucide-react';
@@ -11,59 +10,36 @@ import LoadingDots from '@/components/ui/loadingdots';
 import PortfolioPreview from '@/components/portfolio/PortfolioPreview';
 import { generatePortfolio } from '../services/portfolio';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function Portfolio() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const portfolio = store.portfolio;
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasResume = !!store.resumeText;
   const hasFreeText = !!store.freeText.trim();
   const canRun = hasResume || hasFreeText || !!store.distilledProfile;
 
-  async function runPortfolio() {
-    if (!canRun) return;
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runPortfolio, resetAutoRun } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { portfolio: result, trimmed } = await generatePortfolio({
+      return generatePortfolio({
         resume: state.resumeText ?? undefined,
         freeText: state.freeText || undefined,
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setPortfolio(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Portfolio generation failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives with profile signal already in the session
-  // store but no portfolio yet. Cold landing falls through to the input card.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasP = !!(state.resumeText || state.freeText?.trim() || state.distilledProfile);
-    if (!hasP || state.portfolio) return;
-
-    runPortfolio();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    persist: (r) => useSessionStore.getState().setPortfolio(r.portfolio),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Portfolio generation failed',
+    // Auto-run when the user arrives with profile signal but no portfolio yet.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      return !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) && !state.portfolio;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -85,7 +61,7 @@ export default function Portfolio() {
     if (!portfolio) return;
     if (!confirm('Generate another? The current portfolio will be cleared.')) return;
     store.setPortfolio(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   function handleSaveHtml() {

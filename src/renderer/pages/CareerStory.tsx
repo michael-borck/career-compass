@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, BookOpen } from 'lucide-react';
@@ -15,30 +14,21 @@ import LoadingDots from '@/components/ui/loadingdots';
 import CareerStoryResultView from '@/components/career-story/CareerStoryResultView';
 import { generateCareerStory } from '../services/careerStory';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function CareerStory() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const careerStory = store.careerStory;
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasResume = !!store.resumeText;
   const hasFreeText = !!store.freeText.trim();
   const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
   const canRun = hasResume || hasFreeText;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { story, trimmed } = await generateCareerStory({
+      return generateCareerStory({
         resume: state.resumeText ?? undefined,
         freeText: state.freeText || undefined,
         jobTitle: state.jobTitle || undefined,
@@ -56,33 +46,16 @@ export default function CareerStory() {
         interviewFeedback: state.interviewFeedback ?? undefined,
         valuesCompass: state.valuesCompass ?? undefined,
       });
-      useSessionStore.getState().setCareerStory(story);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Career story generation failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run on mount when there's enough profile in session AND no story yet.
-  // Matches the legacy page behaviour where users land on /career-story after
-  // exploring earlier features.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasInput =
-      !!state.resumeText ||
-      !!state.freeText?.trim() ||
-      !!state.distilledProfile;
-    if (!hasInput || state.careerStory) return;
-
-    void runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    persist: (r) => useSessionStore.getState().setCareerStory(r.story),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Career story generation failed',
+    // Auto-run on mount when there's enough profile in session and no story yet.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      return !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) && !state.careerStory;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -104,7 +77,7 @@ export default function CareerStory() {
     if (!careerStory) return;
     if (!confirm('Build another? The current story will be cleared.')) return;
     store.setCareerStory(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (
