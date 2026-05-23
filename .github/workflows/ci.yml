@@ -1,0 +1,30 @@
+name: CI
+
+# Gate for pull requests (and pushes to main after merge). Runs the same two
+# checks you run locally: the TypeScript type gate and the vitest suite.
+# Builds/releases stay in release.yml (tag-triggered) — this is just the safety
+# net that keeps main green.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # --ignore-scripts skips the electron-builder install-app-deps postinstall:
+      # CI only type-checks and runs vitest (both pure Node), so there's no need
+      # to download the Electron binary or rebuild native deps here.
+      - run: npm ci --ignore-scripts
+
+      - run: npm run typecheck
+
+      - run: npm test
