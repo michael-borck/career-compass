@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Presentation } from 'lucide-react';
@@ -15,15 +14,12 @@ import LoadingDots from '@/components/ui/loadingdots';
 import PitchResultView from '@/components/pitch/PitchResultView';
 import { generatePitch } from '../services/pitch';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function Pitch() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const pitch = store.elevatorPitch;
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasResume = !!store.resumeText;
   const hasFreeText = !!store.freeText.trim();
   const hasJobTitle = !!store.jobTitle.trim();
@@ -31,51 +27,33 @@ export default function Pitch() {
   const hasAny =
     hasResume || hasFreeText || hasJobTitle || hasJobAdvert || !!store.distilledProfile;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { pitch: result, trimmed } = await generatePitch({
+      return generatePitch({
         resume: state.resumeText ?? undefined,
         freeText: state.freeText || undefined,
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setElevatorPitch(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Pitch generation failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives from elsewhere with inputs already in the
-  // session store but no pitch yet (the canonical "I just generated careers,
-  // jump to pitch" flow). If they land cold, the input card below handles it.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasInput =
-      !!state.resumeText ||
-      !!state.freeText?.trim() ||
-      !!state.jobTitle?.trim() ||
-      !!state.jobAdvert?.trim() ||
-      !!state.distilledProfile;
-    if (!hasInput || state.elevatorPitch) return;
-
-    runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    persist: (r) => useSessionStore.getState().setElevatorPitch(r.pitch),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Pitch generation failed',
+    // Auto-run when the user arrives with inputs already in the store but no
+    // pitch yet. If they land cold, the input card below handles it.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      const hasInput =
+        !!state.resumeText ||
+        !!state.freeText?.trim() ||
+        !!state.jobTitle?.trim() ||
+        !!state.jobAdvert?.trim() ||
+        !!state.distilledProfile;
+      return hasInput && !state.elevatorPitch;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -97,7 +75,7 @@ export default function Pitch() {
     if (!pitch) return;
     if (!confirm('Write another? The current pitch will be cleared.')) return;
     store.setElevatorPitch(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (

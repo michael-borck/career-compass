@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, FileText } from 'lucide-react';
@@ -15,59 +14,37 @@ import LoadingDots from '@/components/ui/loadingdots';
 import CoverLetterResultView from '@/components/cover-letter/CoverLetterResultView';
 import { generateCoverLetter } from '../services/coverLetter';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function CoverLetter() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const letter = store.coverLetter;
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasJobTitle = !!store.jobTitle.trim();
   const hasJobAdvert = !!store.jobAdvert.trim();
   const hasTarget = hasJobTitle || hasJobAdvert;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { letter: result, trimmed } = await generateCoverLetter({
+      return generateCoverLetter({
         resume: state.resumeText ?? undefined,
         freeText: state.freeText || undefined,
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setCoverLetter(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Cover letter generation failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives from elsewhere with a target already in
-  // the session store but no cover letter yet. If they land cold, the input
-  // card below handles it.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
-    if (!hasT || state.coverLetter) return;
-
-    runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    persist: (r) => useSessionStore.getState().setCoverLetter(r.letter),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Cover letter generation failed',
+    // Auto-run when the user arrives with a target already in the store but no
+    // cover letter yet. If they land cold, the input card below handles it.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      return !!(state.jobTitle?.trim() || state.jobAdvert?.trim()) && !state.coverLetter;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -89,7 +66,7 @@ export default function CoverLetter() {
     if (!letter) return;
     if (!confirm('Draft another? The current letter will be cleared.')) return;
     store.setCoverLetter(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (

@@ -100,6 +100,16 @@ ExportDoc; adding a third format (PDF, HTML) is one more renderer, not another
 per-feature traversal.
 _Avoid_: exporter, formatter, serializer.
 
+### Pages
+
+**useGeneration**:
+The hook (`src/renderer/hooks/useGeneration.ts`) that owns a feature page's
+generation policy: the LLM-configured gate (toast + route to /settings), the
+loading flag, the try/catch/toast, persisting the result, the **trimmed flag**
+notice, and a once-only auto-run on mount. A page supplies only what varies —
+`generate`, `persist`, `trimmed`, `autoRun`.
+_Avoid_: runGeneration (the old per-page copy), handler.
+
 ## Example dialogue
 
 **Dev:** The cover-letter feature service was timing out on long resumes.
