@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, ClipboardCheck } from 'lucide-react';
@@ -15,56 +14,33 @@ import LoadingDots from '@/components/ui/loadingdots';
 import ResumeReviewResultView from '@/components/resume-review/ResumeReviewResultView';
 import { generateResumeReview } from '../services/resumeReview';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function ResumeReview() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const review = store.resumeReview;
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasResume = !!store.resumeText;
 
-  async function runReview() {
-    if (!hasResume) return;
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runReview, resetAutoRun } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { review: result, trimmed } = await generateResumeReview({
+      return generateResumeReview({
         resume: state.resumeText ?? '',
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setResumeReview(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Resume review failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives from elsewhere with a resume already in
-  // the session store but no review yet. If they land cold, the input card
-  // below handles it.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    if (!state.resumeText || state.resumeReview) return;
-
-    runReview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    persist: (r) => useSessionStore.getState().setResumeReview(r.review),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Resume review failed',
+    // Auto-run when the user arrives with a resume but no review yet.
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      return !!state.resumeText && !state.resumeReview;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -86,7 +62,7 @@ export default function ResumeReview() {
     if (!review) return;
     if (!confirm('Review again? The current feedback will be cleared.')) return;
     store.setResumeReview(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (

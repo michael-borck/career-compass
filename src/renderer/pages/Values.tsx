@@ -14,13 +14,12 @@ import LoadingDots from '@/components/ui/loadingdots';
 import ValuesResultView from '@/components/values/ValuesResultView';
 import { generateValuesCompass } from '../services/values';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function Values() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const compass = store.valuesCompass;
-  const [loading, setLoading] = useState(false);
   const [valuesSeed, setValuesSeed] = useState('');
 
   const hasResume = !!store.resumeText;
@@ -28,30 +27,20 @@ export default function Values() {
   const hasSeed = !!valuesSeed.trim();
   const hasAnything = hasResume || hasFreeText || !!store.distilledProfile || hasSeed;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { compass: result, trimmed } = await generateValuesCompass({
+      return generateValuesCompass({
         resume: state.resumeText ?? undefined,
         aboutYou: state.freeText || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
         valuesSeed: valuesSeed || undefined,
       });
-      useSessionStore.getState().setValuesCompass(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Values compass failed');
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    persist: (r) => useSessionStore.getState().setValuesCompass(r.compass),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Values compass failed',
+  });
 
   async function handleResumeSelect(file: File) {
     try {

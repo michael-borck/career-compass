@@ -15,43 +15,29 @@ import LoadingDots from '@/components/ui/loadingdots';
 import IndustryResultView from '@/components/industry/IndustryResultView';
 import { generateIndustryExploration } from '../services/industry';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function Industry() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const exploration = store.industryExploration;
-  const [loading, setLoading] = useState(false);
   const [industry, setIndustry] = useState('');
 
-  async function runGeneration() {
-    const trimmed = industry.trim();
-    if (!trimmed) return;
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { exploration: result, trimmed: wasTrimmed } =
-        await generateIndustryExploration({
-          industry: trimmed,
-          resume: state.resumeText ?? undefined,
-          aboutYou: state.freeText || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-          jobTitle: state.jobTitle || undefined,
-        });
-      useSessionStore.getState().setIndustryExploration(result);
-      if (wasTrimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Industry exploration failed');
-    } finally {
-      setLoading(false);
-    }
-  }
+      return generateIndustryExploration({
+        industry: industry.trim(),
+        resume: state.resumeText ?? undefined,
+        aboutYou: state.freeText || undefined,
+        distilledProfile: state.distilledProfile ?? undefined,
+        jobTitle: state.jobTitle || undefined,
+      });
+    },
+    persist: (r) => useSessionStore.getState().setIndustryExploration(r.exploration),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Industry exploration failed',
+  });
 
   async function handleResumeSelect(file: File) {
     try {

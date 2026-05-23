@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Grid3X3 } from 'lucide-react';
@@ -15,43 +14,30 @@ import LoadingDots from '@/components/ui/loadingdots';
 import SkillsMappingResultView from '@/components/skills-mapping/SkillsMappingResultView';
 import { generateSkillsMapping } from '../services/skillsMapping';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function SkillsMapping() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const mapping = store.skillsMapping;
-  const [loading, setLoading] = useState(false);
-
   const hasResume = !!store.resumeText;
   const hasFreeText = !!store.freeText.trim();
   const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
 
-  async function runGeneration() {
-    if (!hasProfile) return;
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { mapping: result, trimmed } = await generateSkillsMapping({
+      return generateSkillsMapping({
         resume: state.resumeText ?? undefined,
         aboutYou: state.freeText || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
         jobTitle: state.jobTitle || undefined,
       });
-      useSessionStore.getState().setSkillsMapping(result);
-      if (trimmed) toast('Input was trimmed to fit the model.', { icon: 'ℹ️' });
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Skills mapping failed');
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    persist: (r) => useSessionStore.getState().setSkillsMapping(r.mapping),
+    trimmed: (r) => r.trimmed,
+    errorFallback: 'Skills mapping failed',
+  });
 
   async function handleResumeSelect(file: File) {
     try {
