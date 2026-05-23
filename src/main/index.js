@@ -3,6 +3,7 @@ const path = require('path');
 const { apiFetch } = require('./services/api-fetch');
 const { parsePdf, parseDocx } = require('./services/file-processors');
 const { getOllamaModels, listModels, testConnection } = require('./services/providers');
+const { setPassword, getPassword, deletePassword } = require('./services/secure-storage');
 const isDev = process.env.NODE_ENV === 'development';
 
 // Import electron-store - only available in Electron context
@@ -348,58 +349,19 @@ ipcMain.handle('files:parseDocx', async (event, fileBytes) => {
   return parseDocx(buf);
 });
 
-// IPC handlers for secure storage (API keys)
-ipcMain.handle('secure-set-password', async (event, service, password) => {
-  try {
-    if (safeStorage.isEncryptionAvailable()) {
-      const encrypted = safeStorage.encryptString(password);
-      store.set(`secure-${service}`, encrypted);
-      return true;
-    } else {
-      // Fallback to regular store if encryption not available
-      console.warn('Encryption not available, storing password in plain text');
-      store.set(`insecure-${service}`, password);
-      return false;
-    }
-  } catch (error) {
-    console.error('Failed to store password:', error);
-    throw error;
-  }
-});
+// IPC handlers for secure storage (API keys) — logic lives in
+// services/secure-storage.js (testable; store + safeStorage injected here).
+ipcMain.handle('secure-set-password', (event, service, password) =>
+  setPassword(store, safeStorage, service, password)
+);
 
-ipcMain.handle('secure-get-password', async (event, service) => {
-  try {
-    // First try encrypted storage
-    const encrypted = store.get(`secure-${service}`);
-    if (encrypted && safeStorage.isEncryptionAvailable()) {
-      // electron-store deserializes Buffer as {type:'Buffer', data:[...]}
-      // Convert back to a real Buffer before decrypting
-      let buf = encrypted;
-      if (encrypted && encrypted.type === 'Buffer' && Array.isArray(encrypted.data)) {
-        buf = Buffer.from(encrypted.data);
-      } else if (!(encrypted instanceof Buffer)) {
-        buf = Buffer.from(encrypted);
-      }
-      return safeStorage.decryptString(buf);
-    }
+ipcMain.handle('secure-get-password', (event, service) =>
+  getPassword(store, safeStorage, service)
+);
 
-    // Fallback to insecure storage
-    return store.get(`insecure-${service}`, null);
-  } catch (error) {
-    console.error('Failed to retrieve password:', error);
-    return null;
-  }
-});
-
-ipcMain.handle('secure-delete-password', async (event, service) => {
-  try {
-    store.delete(`secure-${service}`);
-    store.delete(`insecure-${service}`);
-  } catch (error) {
-    console.error('Failed to delete password:', error);
-    throw error;
-  }
-});
+ipcMain.handle('secure-delete-password', (event, service) =>
+  deletePassword(store, service)
+);
 
 // IPC handlers for model management
 ipcMain.handle('get-ollama-models', (event, baseURL) => getOllamaModels(baseURL));
