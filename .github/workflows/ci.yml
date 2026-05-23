@@ -20,10 +20,11 @@ jobs:
           node-version: 20
           cache: npm
 
-      # --ignore-scripts skips the electron-builder install-app-deps postinstall:
-      # CI only type-checks and runs vitest (both pure Node), so there's no need
-      # to download the Electron binary or rebuild native deps here.
-      - run: npm ci --ignore-scripts
+      # Full install (NOT --ignore-scripts): src/main/services/api-fetch.test.js
+      # imports api-fetch.js, which require()s the 'electron' module at load.
+      # That throws ("Electron failed to install correctly") unless electron's
+      # postinstall has downloaded its binary — so we need the install scripts.
+      - run: npm ci
 
       - run: npm run typecheck
 
