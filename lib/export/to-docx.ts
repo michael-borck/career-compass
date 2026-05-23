@@ -40,13 +40,16 @@ function blockToParagraphs(block: Block): Paragraph[] {
       return [new Paragraph({ children: block.runs.map(run), spacing: { after: 200 } })];
     case 'bullets': {
       const marker = block.marker ?? '•';
-      return block.items.map(
-        (item) =>
-          new Paragraph({
-            children: [new TextRun({ text: `  ${marker}  ${item}`, size: 24, font: FONT })],
-            spacing: { after: 50 },
-          })
-      );
+      return block.items.map((item) => {
+        const itemRuns = typeof item === 'string' ? [item] : item;
+        return new Paragraph({
+          children: [
+            new TextRun({ text: `  ${marker}  `, size: 24, font: FONT }),
+            ...itemRuns.map(run),
+          ],
+          spacing: { after: 50 },
+        });
+      });
     }
     case 'note':
       return [
