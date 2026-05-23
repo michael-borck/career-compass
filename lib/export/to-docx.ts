@@ -38,14 +38,16 @@ function blockToParagraphs(block: Block): Paragraph[] {
     }
     case 'paragraph':
       return [new Paragraph({ children: block.runs.map(run), spacing: { after: 200 } })];
-    case 'bullets':
+    case 'bullets': {
+      const marker = block.marker ?? '•';
       return block.items.map(
         (item) =>
           new Paragraph({
-            children: [new TextRun({ text: `  •  ${item}`, size: 24, font: FONT })],
+            children: [new TextRun({ text: `  ${marker}  ${item}`, size: 24, font: FONT })],
             spacing: { after: 50 },
           })
       );
+    }
     case 'note':
       return [
         new Paragraph({
@@ -53,6 +55,14 @@ function blockToParagraphs(block: Block): Paragraph[] {
           spacing: { after: 150 },
         }),
       ];
+    case 'sources':
+      return block.items.map(
+        (s, i) =>
+          new Paragraph({
+            children: [new TextRun({ text: `${i + 1}. ${s.title} — ${s.domain}`, size: 24, font: FONT })],
+            spacing: { after: 50 },
+          })
+      );
     case 'disclaimer':
       return [
         new Paragraph({

@@ -21,6 +21,10 @@ function renderBlock(block: Block): string {
       return block.items.map((item) => `- ${item}`).join('\n');
     case 'note':
       return `*${block.text}*`;
+    case 'sources':
+      return block.items
+        .map((s, i) => `${i + 1}. [${s.title}](${s.url}) — ${s.domain}`)
+        .join('\n');
     case 'disclaimer':
       return `---\n\n*${block.text}*`;
   }
