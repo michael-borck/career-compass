@@ -1,21 +1,19 @@
 // Renderer-side orchestration for the Values Compass feature.
 //
 // Replaces the legacy POST /api/values route handler (app/api/values/route.ts).
-// All LLM calls now happen in the renderer via the shared chat() client.
-// Prompt building + JSON parsing logic still lives in lib/prompts/values.ts
-// (framework-agnostic, no node-only deps).
+// All LLM calls go through the shared structured-generation core (generate),
+// which owns the token-limit trim ladder. Prompt building + JSON parsing live
+// in lib/prompts/values.ts (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the resume
-// once and retry. If that still fails (or fails for any non-token reason),
-// surface a user-facing error. This mirrors the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the resume once, then
+// surrender with a user-facing error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildValuesPrompt,
   parseValuesCompass,
   type ValuesInput,
 } from '@/lib/prompts/values';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { ValuesCompass } from '@/lib/session-store';
 
 export type { ValuesInput };
@@ -37,17 +35,6 @@ function trimResume(input: ValuesInput): ValuesInput {
   };
 }
 
-async function callOnce(input: ValuesInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildValuesPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate a values compass from the given input.
  *
@@ -60,24 +47,21 @@ async function callOnce(input: ValuesInput): Promise<string> {
 export async function generateValuesCompass(
   input: ValuesInput
 ): Promise<GenerateValuesResult> {
-  let trimmed = false;
-  let raw: string;
-
-  try {
-    raw = await callOnce(input);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    try {
-      raw = await callOnce(trimResume(input));
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      throw new Error(
-        'Input is too long for the model. Try trimming your resume or about-you text.'
-      );
+  const { result: compass, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildValuesPrompt(i) },
+      ],
+      parse: (raw) => parseValuesCompass(raw),
+    },
+    {
+      steps: [trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or about-you text.',
     }
-  }
+  );
 
-  const compass = parseValuesCompass(raw);
   return { compass, trimmed };
 }

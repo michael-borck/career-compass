@@ -1,15 +1,14 @@
 // Renderer-side orchestration for the Learning Path feature.
 //
 // Replaces the legacy POST /api/learningPath route handler
-// (app/api/learningPath/route.ts). All LLM calls now happen in the renderer
-// via the shared chat() client. Prompt building + JSON parsing logic still
-// lives in lib/prompts/learningPath.ts (framework-agnostic, no node-only deps).
+// (app/api/learningPath/route.ts). The LLM call goes through the shared
+// structured-generation core (generate); prompt building + JSON parsing live
+// in lib/prompts/learningPath.ts (framework-agnostic, no node-only deps).
 //
 // Search-grounded, mirroring gapAnalysis.ts:
 //   1. If `grounded` is requested and search is configured, run a web
 //      search to gather supporting sources (course / certification candidates).
-//   2. Pass the sources into the prompt (the prompt builder formats them
-//      as inline citation candidates).
+//   2. Pass the sources into the prompt (held constant across retries).
 //   3. Call the LLM, parse, and return path + sources + flags.
 //
 // Search query differs from gap-analysis: when an existing gap analysis is
@@ -17,21 +16,18 @@
 // to a generic "learning path courses certifications" query. Intent is
 // 'course' (gap-analysis uses 'salary').
 //
-// Search failures are swallowed — the path still runs, just without
-// citations. This mirrors the legacy route's behaviour (try/catch around
-// the search call, with `groundingFailed=true` surfaced for telemetry).
+// Search failures are swallowed (groundingFailed=true surfaced for telemetry).
 //
-// Token-limit fallback: a single retry with a trimmed job advert. This
-// matches the legacy route exactly (no resume trim, no second retry).
+// Trim ladder mirrors the legacy route exactly: a single retry with a
+// trimmed job advert, then rethrow (no resume trim, no custom message).
 
-import { chat } from './llm';
+import { generate } from './generate';
 import { search, loadSearchSettings, isSearchConfigured } from './search';
 import {
   buildLearningPathPrompt,
   parseLearningPath,
   type LearningPathInput,
 } from '@/lib/prompts/learningPath';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { LearningPath, SourceRef } from '@/lib/session-store';
 
 export type { LearningPathInput };
@@ -64,20 +60,6 @@ function hasTarget(input: LearningPathInput): boolean {
     (input.jobAdvert && input.jobAdvert.trim()) ||
     (input.jobTitle && input.jobTitle.trim())
   );
-}
-
-async function callOnce(
-  input: LearningPathInput,
-  sources: SourceRef[]
-): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildLearningPathPrompt({ ...input, sources }) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
 }
 
 /**
@@ -130,18 +112,17 @@ export async function generateLearningPath(
   }
 
   // ---- LLM call with token-limit retry ----
-  let trimmed = false;
-  let raw: string;
+  const { result: path, trimmed } = await generate(
+    {
+      input: rest,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildLearningPathPrompt({ ...i, sources }) },
+      ],
+      parse: (raw) => parseLearningPath(raw),
+    },
+    { steps: [trimAdvert] }
+  );
 
-  try {
-    raw = await callOnce(rest, sources);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    const shorter = trimAdvert(rest);
-    raw = await callOnce(shorter, sources);
-  }
-
-  const path = parseLearningPath(raw);
   return { path, sources, trimmed, groundingFailed };
 }

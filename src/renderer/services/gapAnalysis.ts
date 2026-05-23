@@ -1,33 +1,32 @@
 // Renderer-side orchestration for the Gap Analysis feature.
 //
 // Replaces the legacy POST /api/gapAnalysis route handler
-// (app/api/gapAnalysis/route.ts). All LLM calls now happen in the renderer
-// via the shared chat() client. Prompt building + JSON parsing logic still
-// lives in lib/prompts/gaps.ts (framework-agnostic, no node-only deps).
+// (app/api/gapAnalysis/route.ts). The LLM call goes through the shared
+// structured-generation core (generate); prompt building + JSON parsing live
+// in lib/prompts/gaps.ts (framework-agnostic, no node-only deps).
 //
 // This is the FIRST page that uses the renderer-side search subsystem
 // (src/renderer/services/search/, P3-T1.5). Flow:
 //   1. If `grounded` is requested and search is configured, run a web
 //      search to gather supporting sources.
 //   2. Pass the sources into the prompt (the prompt builder formats them
-//      as inline citation candidates).
+//      as inline citation candidates). Sources are gathered once and held
+//      constant across token-limit retries.
 //   3. Call the LLM, parse, and return analysis + sources + flags.
 //
 // Search failures are swallowed — the analysis still runs, just without
-// citations. This mirrors the legacy route's behaviour (try/catch around
-// the search call, with `groundingFailed=true` surfaced for telemetry).
+// citations (groundingFailed=true surfaced for telemetry).
 //
-// Token-limit fallback: a single retry with a trimmed job advert. This
-// matches the legacy route exactly (no resume trim, no second retry).
+// Trim ladder mirrors the legacy route exactly: a single retry with a
+// trimmed job advert, then rethrow (no resume trim, no custom message).
 
-import { chat } from './llm';
+import { generate } from './generate';
 import { search, loadSearchSettings, isSearchConfigured } from './search';
 import {
   buildGapAnalysisPrompt,
   parseGapAnalysis,
   type GapAnalysisInput,
 } from '@/lib/prompts/gaps';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 
 export type { GapAnalysisInput };
@@ -68,20 +67,6 @@ function hasProfile(input: GapAnalysisInput): boolean {
     (input.aboutYou && input.aboutYou.trim()) ||
     input.distilledProfile
   );
-}
-
-async function callOnce(
-  input: GapAnalysisInput,
-  sources: SourceRef[]
-): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildGapAnalysisPrompt({ ...input, sources }) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
 }
 
 /**
@@ -130,18 +115,17 @@ export async function generateGapAnalysis(
   }
 
   // ---- LLM call with token-limit retry ----
-  let trimmed = false;
-  let raw: string;
+  const { result: analysis, trimmed } = await generate(
+    {
+      input: rest,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildGapAnalysisPrompt({ ...i, sources }) },
+      ],
+      parse: (raw) => parseGapAnalysis(raw),
+    },
+    { steps: [trimAdvert] }
+  );
 
-  try {
-    raw = await callOnce(rest, sources);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    const shorter = trimAdvert(rest);
-    raw = await callOnce(shorter, sources);
-  }
-
-  const analysis = parseGapAnalysis(raw);
   return { analysis, sources, trimmed, groundingFailed };
 }

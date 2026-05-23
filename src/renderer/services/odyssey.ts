@@ -4,22 +4,18 @@
 //   - POST /api/odysseySuggest  (app/api/odysseySuggest/route.ts)
 //   - POST /api/odysseyElaborate (app/api/odysseyElaborate/route.ts)
 //
-// The feature has a two-stage workflow:
-//   1. suggestLife(input)   — short LLM call, returns a seed (label + description)
-//                              for one of three life types. No retry on token
-//                              limit; the prompt is small and the legacy route
-//                              doesn't retry either.
-//   2. elaborateLife(input) — longer LLM call, takes a seed and returns a
-//                              full elaboration (headline, day-in-the-life,
-//                              week, tools, etc.). Includes a 3-step retry
-//                              chain on token-limit errors that mirrors the
-//                              legacy route 1:1: original → trim advert →
-//                              trim resume → give up with a clear error.
+// Two-stage workflow:
+//   1. suggestLife(input)   — short LLM call via callStructured (no retry; the
+//                              prompt is small and the legacy route doesn't
+//                              retry either).
+//   2. elaborateLife(input) — longer LLM call via generate, with a trim ladder
+//                              that mirrors the legacy route 1:1: trim advert,
+//                              then resume, then surrender.
 //
 // Prompt building + JSON parsing live in lib/prompts/odyssey-suggest.ts and
 // lib/prompts/odyssey.ts (framework-agnostic, no node-only deps).
 
-import { chat } from './llm';
+import { callStructured, generate } from './generate';
 import {
   buildSeedSuggestionPrompt,
   parseSeedSuggestion,
@@ -32,7 +28,6 @@ import {
   type OdysseyElaborateInput,
   type OdysseyElaboration,
 } from '@/lib/prompts/odyssey';
-import { isTokenLimitError } from '@/lib/token-limit';
 
 export type { SeedSuggestionInput, SeedSuggestion, OdysseyElaborateInput, OdysseyElaboration };
 
@@ -65,23 +60,11 @@ function trimResume(input: OdysseyElaborateInput): OdysseyElaborateInput {
   return input;
 }
 
-async function callElaborate(input: OdysseyElaborateInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: ELABORATE_SYSTEM },
-      { role: 'user', content: buildOdysseyElaboratePrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Suggest a single life seed for an Odyssey Plan.
  *
- * Requires a valid life type ('current' | 'pivot' | 'wildcard'). The prompt
- * is short and the legacy route does NOT retry on token limit, so this
- * function makes a single LLM call.
+ * Requires a valid life type ('current' | 'pivot' | 'wildcard'). One LLM
+ * call, no retry (the prompt is short and the legacy route does not retry).
  *
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
@@ -93,14 +76,14 @@ export async function suggestLife(
     throw new Error('A valid life type is required.');
   }
 
-  const result = await chat({
-    messages: [
+  return callStructured({
+    input,
+    buildMessages: (i) => [
       { role: 'system', content: SUGGEST_SYSTEM },
-      { role: 'user', content: buildSeedSuggestionPrompt(input) },
+      { role: 'user', content: buildSeedSuggestionPrompt(i) },
     ],
-    response_format: { type: 'json_object' },
+    parse: (raw) => parseSeedSuggestion(raw),
   });
-  return parseSeedSuggestion(result.content);
 }
 
 /**
@@ -108,13 +91,8 @@ export async function suggestLife(
  *
  * Requires a valid type, a non-empty label, and a non-empty seed.
  *
- * Token-limit retry chain (mirrors legacy /api/odysseyElaborate):
- *   1. try original input
- *   2. on token-limit error: trim jobAdvert, retry
- *   3. on token-limit error: trim resume too, retry
- *   4. on token-limit error: surrender with a user-facing error
- *
- * Non-token-limit errors are rethrown immediately without retrying.
+ * Trim ladder mirrors the legacy /api/odysseyElaborate route 1:1: trim
+ * jobAdvert, then resume, then surrender with a user-facing error.
  *
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
@@ -132,32 +110,21 @@ export async function elaborateLife(
     throw new Error('A seed is required to elaborate this life.');
   }
 
-  let trimmed = false;
-  let raw: string;
-  let current = input;
-
-  try {
-    raw = await callElaborate(current);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    current = trimAdvert(current);
-    try {
-      raw = await callElaborate(current);
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      current = trimResume(current);
-      try {
-        raw = await callElaborate(current);
-      } catch (err3) {
-        if (!isTokenLimitError(err3)) throw err3;
-        throw new Error(
-          'This life seed is too long to elaborate. Try a shorter description.'
-        );
-      }
+  const { result: elaboration, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: ELABORATE_SYSTEM },
+        { role: 'user', content: buildOdysseyElaboratePrompt(i) },
+      ],
+      parse: (raw) => parseOdysseyElaboration(raw),
+    },
+    {
+      steps: [trimAdvert, trimResume],
+      tooLongMessage:
+        'This life seed is too long to elaborate. Try a shorter description.',
     }
-  }
+  );
 
-  const elaboration = parseOdysseyElaboration(raw);
   return { elaboration, trimmed };
 }

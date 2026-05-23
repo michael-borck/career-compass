@@ -7,27 +7,16 @@
 //
 // Unlike the interview, chat is NOT auto-grounded each turn. The page calls
 // runChatSearch() explicitly via the "Look up" composer button and then
-// passes those results into runChatTurn() via searchSources. Most turns run
-// with searchSources=undefined and no search is performed.
+// passes those results into runChatTurn() via searchSources.
 //
-// Like the interview port (P3-T17), this is non-streaming — the legacy route
-// was also non-streaming, the page waits for the full reply before rendering.
-//
-// Token-limit retry chain for runChatTurn (mirrors legacy):
-//   1. try original message history
-//   2. on token-limit error: trim history to last 20 messages (preserving
-//      older attachment-summary messages) via trimHistory, retry
-//   3. on token-limit error: rethrow with the original LLM error message
-//
-// Token-limit retry chain for distillProfile (mirrors legacy):
-//   1. try original input
-//   2. on token-limit error: trim messages to last 30 (preserving attachments)
-//      and re-build prompt with trimmed=true, retry
-//   3. on token-limit error: rethrow
-//
-// Non-token-limit errors are rethrown immediately without retrying.
+// This is non-streaming — the legacy route was also non-streaming. Both LLM
+// paths go through the structured-generation core (generate):
+//   - runChatTurn runs in text mode (no JSON), with a 1-step trim ladder that
+//     trims history to the last 20 messages, then rethrows (no custom message).
+//   - distillProfile runs in JSON mode, with a 1-step trim ladder that trims
+//     history to the last 30 messages and re-flags the prompt as trimmed.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import { search } from './search';
 import { buildAdvisorSystemPrompt } from '@/lib/prompts/advisor';
 import { buildContextBlock } from '@/lib/context-block';
@@ -36,7 +25,6 @@ import {
   parseDistilledProfile,
 } from '@/lib/prompts/distill';
 import { trimHistory } from '@/lib/chat-history';
-import { isTokenLimitError } from '@/lib/token-limit';
 import { formatSourcesForFootnote } from '@/lib/search-prompt';
 import type {
   ChatMessage,
@@ -102,13 +90,6 @@ function toProviderMessages(
   return out;
 }
 
-async function callTurn(
-  providerMessages: { role: 'system' | 'user' | 'assistant'; content: string }[]
-): Promise<string> {
-  const result = await chat({ messages: providerMessages });
-  return result.content;
-}
-
 /**
  * Run a single advisor turn. The caller is responsible for appending the
  * student's message to the history BEFORE calling this — the full history
@@ -120,34 +101,28 @@ async function callTurn(
 export async function runChatTurn(
   input: RunChatTurnInput
 ): Promise<RunChatTurnResult> {
-  const {
-    messages,
-    currentFocus,
-    resumeText,
-    freeText,
-    jobTitle,
-    jobAdvert,
-    searchSources,
-  } = input;
+  const systemPrompt = buildAdvisorSystemPrompt(input.currentFocus);
+  const contextBlock = buildContextBlock(
+    input.resumeText,
+    input.freeText,
+    input.jobTitle,
+    input.jobAdvert
+  );
 
-  const systemPrompt = buildAdvisorSystemPrompt(currentFocus);
-  const contextBlock = buildContextBlock(resumeText, freeText, jobTitle, jobAdvert);
-
-  let trimmed = false;
-  let reply: string;
-
-  try {
-    reply = await callTurn(
-      toProviderMessages(messages, systemPrompt, contextBlock, searchSources)
-    );
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    const shorter = trimHistory(messages, MESSAGE_TRIM_COUNT_TURN);
-    reply = await callTurn(
-      toProviderMessages(shorter, systemPrompt, contextBlock, searchSources)
-    );
-  }
+  const { result: reply, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) =>
+        toProviderMessages(i.messages, systemPrompt, contextBlock, i.searchSources),
+      parse: (raw) => raw,
+      responseFormat: { type: 'text' },
+    },
+    {
+      steps: [
+        (i) => ({ ...i, messages: trimHistory(i.messages, MESSAGE_TRIM_COUNT_TURN) }),
+      ],
+    }
+  );
 
   return { reply, trimmed };
 }
@@ -191,17 +166,6 @@ export type DistillProfileResult = {
   trimmed: boolean;
 };
 
-async function callDistill(userPrompt: string): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: DISTILL_SYSTEM },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Distill a chat transcript (plus optional resume/freeText/jobTitle/guidance)
  * into a structured StudentProfile.
@@ -213,20 +177,25 @@ async function callDistill(userPrompt: string): Promise<string> {
 export async function distillProfile(
   input: DistillProfileInput
 ): Promise<DistillProfileResult> {
-  let trimmed = false;
-  let raw: string;
+  const { result: profile, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: DISTILL_SYSTEM },
+        { role: 'user', content: buildDistillationPrompt(i) },
+      ],
+      parse: (raw) => parseDistilledProfile(raw),
+    },
+    {
+      steps: [
+        (i) => ({
+          ...i,
+          messages: trimHistory(i.messages, MESSAGE_TRIM_COUNT_DISTILL),
+          trimmed: true,
+        }),
+      ],
+    }
+  );
 
-  try {
-    raw = await callDistill(buildDistillationPrompt(input));
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    const shorter = trimHistory(input.messages, MESSAGE_TRIM_COUNT_DISTILL);
-    raw = await callDistill(
-      buildDistillationPrompt({ ...input, messages: shorter, trimmed: true })
-    );
-  }
-
-  const profile = parseDistilledProfile(raw);
   return { profile, trimmed };
 }

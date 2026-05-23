@@ -1,21 +1,19 @@
 // Renderer-side orchestration for the Resume Review feature.
 //
 // Replaces the legacy POST /api/resumeReview route handler
-// (app/api/resumeReview/route.ts). All LLM calls now happen in the renderer
-// via the shared chat() client. Prompt building + JSON parsing logic still
-// lives in lib/prompts/resume-review.ts (framework-agnostic, no node-only deps).
+// (app/api/resumeReview/route.ts). The LLM call goes through the shared
+// structured-generation core (generate); prompt building + JSON parsing live
+// in lib/prompts/resume-review.ts (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the job
-// advert, then the resume, then surrender with a helpful error. This mirrors
-// the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the job advert, then the
+// resume, then surrender with a helpful error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildResumeReviewPrompt,
   parseResumeReview,
   type ResumeReviewInput,
 } from '@/lib/prompts/resume-review';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { ResumeReview } from '@/lib/session-store';
 
 export type { ResumeReviewInput };
@@ -45,17 +43,6 @@ function trimResume(input: ResumeReviewInput): ResumeReviewInput {
   return input;
 }
 
-async function callOnce(input: ResumeReviewInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildResumeReviewPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate a structured resume review from the given input.
  *
@@ -70,33 +57,22 @@ export async function generateResumeReview(
     throw new Error('A resume is required for review.');
   }
 
-  let trimmed = false;
-  let current = input;
-  let raw: string;
-
-  try {
-    raw = await callOnce(current);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    current = trimAdvert(current);
-    try {
-      raw = await callOnce(current);
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      current = trimResume(current);
-      try {
-        raw = await callOnce(current);
-      } catch (err3) {
-        if (!isTokenLimitError(err3)) throw err3;
-        throw new Error(
-          'Input is too long for the model. Try trimming your resume or job advert.'
-        );
-      }
+  const { result: parsed, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildResumeReviewPrompt(i) },
+      ],
+      parse: (raw) => parseResumeReview(raw),
+    },
+    {
+      steps: [trimAdvert, trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or job advert.',
     }
-  }
+  );
 
-  const parsed = parseResumeReview(raw);
   const target = input.jobTitle?.trim() || null;
   const review: ResumeReview = { target, ...parsed };
   return { review, trimmed };

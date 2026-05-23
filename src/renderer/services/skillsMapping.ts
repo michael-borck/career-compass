@@ -1,22 +1,19 @@
 // Renderer-side orchestration for the Skills Mapping feature.
 //
 // Replaces the legacy POST /api/skillsMapping route handler
-// (app/api/skillsMapping/route.ts). All LLM calls now happen in the renderer
-// via the shared chat() client. Prompt building + JSON parsing logic still
-// lives in lib/prompts/skills-mapping.ts (framework-agnostic, no node-only
-// deps).
+// (app/api/skillsMapping/route.ts). The LLM call goes through the shared
+// structured-generation core (generate); prompt building + JSON parsing live
+// in lib/prompts/skills-mapping.ts (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the resume
-// once and retry. If that still fails (or fails for any non-token reason),
-// surface a user-facing error. This mirrors the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the resume once, then
+// surrender with a user-facing error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildSkillsMappingPrompt,
   parseSkillsMapping,
   type SkillsMappingInput,
 } from '@/lib/prompts/skills-mapping';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { SkillsMapping } from '@/lib/session-store';
 
 export type { SkillsMappingInput };
@@ -36,17 +33,6 @@ function trimResume(input: SkillsMappingInput): SkillsMappingInput {
     ...input,
     resume: input.resume ? input.resume.slice(0, RESUME_TRIM_CHARS) : undefined,
   };
-}
-
-async function callOnce(input: SkillsMappingInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildSkillsMappingPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
 }
 
 /**
@@ -72,24 +58,21 @@ export async function generateSkillsMapping(
     );
   }
 
-  let trimmed = false;
-  let raw: string;
-
-  try {
-    raw = await callOnce(input);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    try {
-      raw = await callOnce(trimResume(input));
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      throw new Error(
-        'Input is too long for the model. Try trimming your resume or about-you text.'
-      );
+  const { result: mapping, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildSkillsMappingPrompt(i) },
+      ],
+      parse: (raw) => parseSkillsMapping(raw),
+    },
+    {
+      steps: [trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or about-you text.',
     }
-  }
+  );
 
-  const mapping = parseSkillsMapping(raw);
   return { mapping, trimmed };
 }
