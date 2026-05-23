@@ -18,9 +18,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "next/navigation": ["./src/renderer/shims/next-navigation"],
+      "next/link": ["./src/renderer/shims/next-link"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  // vite.config.ts is excluded from the typecheck program because it imports
+  // @vitejs/plugin-react, whose generated .d.ts uses a string-literal export
+  // alias (`as "module.exports"`) that TypeScript 5.4 cannot PARSE — a syntax
+  // error skipLibCheck can't suppress. It's the only file pulling that dep in.
+  "exclude": ["node_modules", "vite.config.ts"]
 }
