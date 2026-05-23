@@ -16,22 +16,15 @@
 // from two identical inline copies that lived in the get-provider-models and
 // test-connection handlers.
 //
-// Kept in sync with llm.ts's ENV_VAR_MAP so the main process (model listing,
-// connection tests) and the renderer (chat) resolve the same keys. openrouter
-// was previously missing here — that drift meant OPENROUTER_API_KEY worked for
-// chat but failed in the Settings model dropdown / test-connection.
-const ENV_VAR = {
-  openai: 'OPENAI_API_KEY',
-  claude: 'ANTHROPIC_API_KEY',
-  groq: 'GROQ_API_KEY',
-  gemini: 'GOOGLE_API_KEY',
-  openrouter: 'OPENROUTER_API_KEY',
-};
+// Provider facts (env var, default base URLs) come from the shared registry so
+// the main process and the renderer's chat() client can't drift apart — this
+// is what previously let OPENROUTER_API_KEY work for chat but not here.
+const { PROVIDERS } = require('../../shared/providers');
 
 function resolveApiKey(provider, config) {
   if (config && config.apiKey) return config.apiKey;
-  const envName = ENV_VAR[provider];
-  return envName ? process.env[envName] : undefined;
+  const envVar = PROVIDERS[provider] && PROVIDERS[provider].envVar;
+  return envVar ? process.env[envVar] : undefined;
 }
 
 // Fetch installed models from a local Ollama server (legacy get-ollama-models).
@@ -67,7 +60,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
 
       case 'openai': {
         if (!apiKey) throw new Error('Secret key required');
-        const response = await fetchImpl('https://api.openai.com/v1/models', {
+        const response = await fetchImpl(`${PROVIDERS.openai.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
@@ -92,7 +85,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
 
       case 'groq': {
         if (!apiKey) throw new Error('Secret key required');
-        const response = await fetchImpl('https://api.groq.com/openai/v1/models', {
+        const response = await fetchImpl(`${PROVIDERS.groq.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`Groq error: ${response.status}`);
@@ -117,7 +110,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
 
       case 'openrouter': {
         if (!apiKey) throw new Error('Secret key required');
-        const response = await fetchImpl('https://openrouter.ai/api/v1/models', {
+        const response = await fetchImpl(`${PROVIDERS.openrouter.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`);
@@ -169,7 +162,7 @@ async function testConnection(provider, config, fetchImpl = fetch) {
         if (!apiKey) {
           return { success: false, error: 'API key required (set OPENAI_API_KEY or enter in settings)' };
         }
-        const openaiResponse = await fetchImpl('https://api.openai.com/v1/models', {
+        const openaiResponse = await fetchImpl(`${PROVIDERS.openai.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!openaiResponse.ok) {
@@ -207,7 +200,7 @@ async function testConnection(provider, config, fetchImpl = fetch) {
         if (!apiKey) {
           return { success: false, error: 'API key required (set GROQ_API_KEY or enter in settings)' };
         }
-        const groqResponse = await fetchImpl('https://api.groq.com/openai/v1/models', {
+        const groqResponse = await fetchImpl(`${PROVIDERS.groq.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!groqResponse.ok) {
@@ -233,7 +226,7 @@ async function testConnection(provider, config, fetchImpl = fetch) {
         if (!apiKey) {
           return { success: false, error: 'Secret key required (set OPENROUTER_API_KEY or enter in settings)' };
         }
-        const orResponse = await fetchImpl('https://openrouter.ai/api/v1/models', {
+        const orResponse = await fetchImpl(`${PROVIDERS.openrouter.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!orResponse.ok) {
@@ -268,4 +261,4 @@ async function testConnection(provider, config, fetchImpl = fetch) {
   }
 }
 
-module.exports = { getOllamaModels, listModels, testConnection, resolveApiKey, ENV_VAR };
+module.exports = { getOllamaModels, listModels, testConnection, resolveApiKey };
