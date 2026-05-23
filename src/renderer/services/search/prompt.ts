@@ -1,32 +1,16 @@
-// SourceRef shape mirrors lib/session-store.ts. Duplicated locally so the
-// new search service has no imports from lib/. Once session-store is also
-// ported to the renderer, this can re-export from there.
+// SourceRef shape mirrors lib/session-store.ts. Kept local so the search
+// service internals don't take a hard dependency on the legacy lib/ tree.
 export type SourceRef = {
   title: string;
   url: string;
   domain: string;
 };
 
-export function formatSourcesForFootnote(sources: SourceRef[]): string {
-  if (sources.length === 0) return '';
-  const lines = sources.map(
-    (s, i) => `[${i + 1}] ${s.title} (${s.domain}) — ${s.url}`
-  );
-  return `<sources>
-The following current web sources were retrieved for this task. You may draw on them to make your answer more accurate and up-to-date. You do not need to cite them inline; they will be shown to the student as a separate list at the end.
-
-${lines.join('\n')}
-</sources>`;
-}
-
-export function formatSourcesForInlineCite(sources: SourceRef[]): string {
-  if (sources.length === 0) return '';
-  const lines = sources.map(
-    (s, i) => `[${i + 1}] ${s.title} (${s.domain}) — ${s.url}`
-  );
-  return `<sources>
-The following current web sources were retrieved for this task. When you state a specific factual claim that came from one of these sources (salary numbers, timelines, specific requirements), add the source number as an inline marker like [1] or [2] at the end of the claim. Only cite when the source actually supports the claim — never fabricate a citation. If a claim is general knowledge, do not add a marker.
-
-${lines.join('\n')}
-</sources>`;
-}
+// The citation formatters live once in lib/search-prompt.ts (also imported by
+// the framework-agnostic prompt builders in lib/prompts/*). Re-exported here so
+// the renderer search module keeps a single import surface and there's one
+// source of truth for the <sources> prompt block.
+export {
+  formatSourcesForFootnote,
+  formatSourcesForInlineCite,
+} from '@/lib/search-prompt';
