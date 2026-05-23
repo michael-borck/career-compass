@@ -1,4 +1,5 @@
 import type { StudentProfile, OdysseyLifeType } from '@/lib/session-store';
+import { parseModelJson } from './model-json';
 
 export type SeedSuggestionInput = {
   type: OdysseyLifeType;
@@ -62,16 +63,8 @@ ONLY respond with JSON.`,
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
 export function parseSeedSuggestion(raw: string): SeedSuggestion {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseSeedSuggestion: not an object');
   }

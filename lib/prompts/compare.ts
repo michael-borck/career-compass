@@ -1,4 +1,5 @@
 import type { StudentProfile, Comparison, ComparisonRole, ComparisonDimension } from '@/lib/session-store';
+import { parseModelJson, toRecord } from './model-json';
 import type { finalCareerInfo } from '@/lib/types';
 
 export type CompareMode = 'quick' | 'rich';
@@ -123,16 +124,8 @@ The roles array must contain exactly ${n} entries in the same order as the targe
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
 function coerceCells(raw: unknown): Record<ComparisonDimension, string> {
-  const cells = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const cells = toRecord(raw);
   const out = {} as Record<ComparisonDimension, string>;
   for (const dim of DIMENSIONS) {
     const value = cells[dim];
@@ -142,7 +135,7 @@ function coerceCells(raw: unknown): Record<ComparisonDimension, string> {
 }
 
 export function parseComparison(raw: string, input: CompareInput): Comparison {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseComparison: not an object');
   }

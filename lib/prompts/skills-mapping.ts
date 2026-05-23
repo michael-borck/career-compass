@@ -1,4 +1,5 @@
 import type { StudentProfile, SkillsMapping, SkillFrameworkMapping, FrameworkLevel } from '@/lib/session-store';
+import { parseModelJson } from './model-json';
 
 export type SkillsMappingInput = {
   resume?: string;
@@ -88,14 +89,6 @@ For framework objects: "name" is the framework's skill/category name, "level" is
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
 function toStringOrNull(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v : null;
 }
@@ -111,7 +104,7 @@ function parseFrameworkLevel(v: unknown): FrameworkLevel {
 }
 
 export function parseSkillsMapping(raw: string): SkillsMapping {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseSkillsMapping: not an object');
   }

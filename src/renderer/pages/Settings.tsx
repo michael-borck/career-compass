@@ -23,7 +23,7 @@ type LLMProvider =
 interface AvailableModel {
   id: string;
   name: string;
-  size?: string;
+  size?: number;
 }
 
 const ProviderInfo: Record<

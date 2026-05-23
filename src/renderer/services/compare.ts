@@ -1,21 +1,19 @@
 // Renderer-side orchestration for the Compare feature.
 //
 // Replaces the legacy POST /api/compare route handler (app/api/compare/route.ts).
-// All LLM calls now happen in the renderer via the shared chat() client.
-// Prompt building + JSON parsing logic still lives in lib/prompts/compare.ts
-// (framework-agnostic, no node-only deps).
+// All LLM calls go through the shared structured-generation core (generate),
+// which owns the token-limit trim ladder. Prompt building + JSON parsing live
+// in lib/prompts/compare.ts (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: the legacy route retries up to twice — first trimming
-// long target labels, then trimming the resume. After two trimmed retries it
-// surrenders with a user-facing error. This mirrors that behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: first trim long target labels,
+// then the resume, then surrender with a user-facing error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildComparePrompt,
   parseComparison,
   type CompareInput,
 } from '@/lib/prompts/compare';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { Comparison } from '@/lib/session-store';
 
 export type { CompareInput };
@@ -49,17 +47,6 @@ function trimResume(input: CompareInput): CompareInput {
   return input;
 }
 
-async function callOnce(input: CompareInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildComparePrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate a side-by-side career comparison.
  *
@@ -81,32 +68,21 @@ export async function generateComparison(
     }
   }
 
-  let trimmed = false;
-  let raw: string;
-  let current = input;
-
-  try {
-    raw = await callOnce(current);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    current = trimTargets(current);
-    try {
-      raw = await callOnce(current);
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      current = trimResume(current);
-      try {
-        raw = await callOnce(current);
-      } catch (err3) {
-        if (!isTokenLimitError(err3)) throw err3;
-        throw new Error(
-          'These comparisons are too long to run together. Try shorter descriptions or remove a target.'
-        );
-      }
+  const { result, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildComparePrompt(i) },
+      ],
+      parse: (raw, i) => parseComparison(raw, i),
+    },
+    {
+      steps: [trimTargets, trimResume],
+      tooLongMessage:
+        'These comparisons are too long to run together. Try shorter descriptions or remove a target.',
     }
-  }
+  );
 
-  const comparison = parseComparison(raw, current);
-  return { comparison, trimmed };
+  return { comparison: result, trimmed };
 }

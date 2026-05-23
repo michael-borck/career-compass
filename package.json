@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5180 && cross-env NODE_ENV=development electron . --no-sandbox\"",
     "electron:pack": "npm run build && electron-builder --config electron-builder.config.js --dir",
     "electron:build": "npm run build && electron-builder --config electron-builder.config.js",

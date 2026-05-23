@@ -130,9 +130,12 @@ describe('generateCareerStory — prompt construction', () => {
         gaps: [
           {
             title: 'Statistics',
+            category: 'technical',
             severity: 'critical',
             why: 'Needed for ML',
-            how: 'Course',
+            targetLevel: 'Advanced',
+            currentLevel: 'Beginner',
+            evidenceIdeas: ['Complete a stats course'],
           },
         ],
         realisticTimeline: '6 months',

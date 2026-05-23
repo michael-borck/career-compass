@@ -1,21 +1,20 @@
 // Renderer-side orchestration for the Cover Letter feature.
 //
 // Replaces the legacy POST /api/coverLetter route handler
-// (app/api/coverLetter/route.ts). All LLM calls now happen in the renderer
-// via the shared chat() client. Prompt building + JSON parsing logic still
-// lives in lib/prompts/cover-letter.ts (framework-agnostic, no node-only deps).
+// (app/api/coverLetter/route.ts). All LLM calls go through the shared
+// structured-generation core (generate), which owns the token-limit trim
+// ladder. Prompt building + JSON parsing live in lib/prompts/cover-letter.ts
+// (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the job
-// advert, then the resume, then surrender with a helpful error. This mirrors
-// the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the job advert, then the
+// resume, then surrender with a helpful error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildCoverLetterPrompt,
   parseCoverLetter,
   type CoverLetterInput,
 } from '@/lib/prompts/cover-letter';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { CoverLetter } from '@/lib/session-store';
 
 export type { CoverLetterInput };
@@ -52,17 +51,6 @@ function hasTarget(input: CoverLetterInput): boolean {
   );
 }
 
-async function callOnce(input: CoverLetterInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildCoverLetterPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate a cover letter from the given input.
  *
@@ -79,33 +67,22 @@ export async function generateCoverLetter(
     );
   }
 
-  let trimmed = false;
-  let current = input;
-  let raw: string;
-
-  try {
-    raw = await callOnce(current);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    current = trimAdvert(current);
-    try {
-      raw = await callOnce(current);
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      current = trimResume(current);
-      try {
-        raw = await callOnce(current);
-      } catch (err3) {
-        if (!isTokenLimitError(err3)) throw err3;
-        throw new Error(
-          'Input is too long for the model. Try trimming your resume or job advert.'
-        );
-      }
+  const { result: parsed, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildCoverLetterPrompt(i) },
+      ],
+      parse: (raw) => parseCoverLetter(raw),
+    },
+    {
+      steps: [trimAdvert, trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or job advert.',
     }
-  }
+  );
 
-  const parsed = parseCoverLetter(raw);
   const target =
     input.jobTitle?.trim() ||
     (input.jobAdvert?.trim() ? input.jobAdvert.trim().split('\n')[0] : null) ||

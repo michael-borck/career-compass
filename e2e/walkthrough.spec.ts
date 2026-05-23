@@ -78,6 +78,6 @@ async function navigateTo(window: Page, route: string): Promise<void> {
   // HashRouter — change the fragment directly instead of clicking through
   // the UI, so we don't depend on a specific path to reach each route.
   await window.evaluate((target) => {
-    window.location.hash = `#${target}`;
+    globalThis.location.hash = `#${target}`;
   }, route);
 }

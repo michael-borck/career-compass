@@ -1,4 +1,5 @@
 import type { GapAnalysis, StudentProfile, SourceRef, SkillsMapping } from '@/lib/session-store';
+import { parseModelJson, toStringArray } from './model-json';
 import { formatSourcesForInlineCite } from '@/lib/search-prompt';
 
 export type GapAnalysisInput = {
@@ -101,24 +102,11 @@ Each Gap has the shape:
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
-function toStringArray(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
-  return [];
-}
-
 const VALID_CATEGORIES = new Set(['technical', 'experience', 'qualification', 'soft', 'domain']);
 const VALID_SEVERITIES = new Set(['critical', 'important', 'nice-to-have']);
 
 export function parseGapAnalysis(raw: string): GapAnalysis {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseGapAnalysis: not an object');
   }

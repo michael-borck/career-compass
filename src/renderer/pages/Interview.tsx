@@ -107,7 +107,7 @@ export default function Interview() {
 // Pre-fill target for the setup card from existing inputs.
 // Job advert wins (if present, take its first non-empty line).
 // Otherwise fall back to jobTitle, then any prior interviewTarget.
-function deriveInitialTarget(store: ReturnType<typeof useSessionStore>): string {
+function deriveInitialTarget(store: ReturnType<typeof useSessionStore.getState>): string {
   if (store.jobAdvert && store.jobAdvert.trim()) {
     const firstLine = store.jobAdvert.trim().split('\n').find((l) => l.trim());
     if (firstLine) return firstLine.slice(0, 100);

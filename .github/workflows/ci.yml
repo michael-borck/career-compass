@@ -1,0 +1,31 @@
+name: CI
+
+# Gate for pull requests (and pushes to main after merge). Runs the same two
+# checks you run locally: the TypeScript type gate and the vitest suite.
+# Builds/releases stay in release.yml (tag-triggered) — this is just the safety
+# net that keeps main green.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Full install (NOT --ignore-scripts): src/main/services/api-fetch.test.js
+      # imports api-fetch.js, which require()s the 'electron' module at load.
+      # That throws ("Electron failed to install correctly") unless electron's
+      # postinstall has downloaded its binary — so we need the install scripts.
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test

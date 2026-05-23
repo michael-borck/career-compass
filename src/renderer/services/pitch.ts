@@ -1,21 +1,19 @@
 // Renderer-side orchestration for the Elevator Pitch feature.
 //
 // Replaces the legacy POST /api/pitch route handler (app/api/pitch/route.ts).
-// All LLM calls now happen in the renderer via the shared chat() client.
-// Prompt building + JSON parsing logic still lives in lib/prompts/pitch.ts
-// (framework-agnostic, no node-only deps).
+// All LLM calls go through the shared structured-generation core (generate),
+// which owns the token-limit trim ladder. Prompt building + JSON parsing live
+// in lib/prompts/pitch.ts (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the job
-// advert, then the resume, then surrender with a helpful error. This mirrors
-// the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the job advert, then the
+// resume, then surrender with a helpful error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildPitchPrompt,
   parsePitch,
   type PitchInput,
 } from '@/lib/prompts/pitch';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { ElevatorPitch } from '@/lib/session-store';
 
 export type { PitchInput };
@@ -55,17 +53,6 @@ function hasAnyInput(input: PitchInput): boolean {
   );
 }
 
-async function callOnce(input: PitchInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildPitchPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate an elevator pitch from the given input.
  *
@@ -81,33 +68,22 @@ export async function generatePitch(
     );
   }
 
-  let trimmed = false;
-  let current = input;
-  let raw: string;
-
-  try {
-    raw = await callOnce(current);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    current = trimAdvert(current);
-    try {
-      raw = await callOnce(current);
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      current = trimResume(current);
-      try {
-        raw = await callOnce(current);
-      } catch (err3) {
-        if (!isTokenLimitError(err3)) throw err3;
-        throw new Error(
-          'Input is too long for the model. Try trimming your resume or job advert.'
-        );
-      }
+  const { result: parsed, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildPitchPrompt(i) },
+      ],
+      parse: (raw) => parsePitch(raw),
+    },
+    {
+      steps: [trimAdvert, trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or job advert.',
     }
-  }
+  );
 
-  const parsed = parsePitch(raw);
   const target =
     input.jobTitle?.trim() ||
     (input.jobAdvert?.trim() ? input.jobAdvert.trim().split('\n')[0] : null) ||

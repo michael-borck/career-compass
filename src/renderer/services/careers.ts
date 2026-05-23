@@ -1,27 +1,22 @@
 // Renderer-side orchestration for the Careers feature.
 //
 // Replaces the legacy POST /api/getCareers route handler
-// (app/api/getCareers/route.ts). All LLM calls now happen in the renderer via
-// the shared chat() client. Prompt building + JSON parsing live in
+// (app/api/getCareers/route.ts). LLM calls go through callStructured (the
+// no-retry tier of the structured-generation core) — the legacy route never
+// trimmed-and-retried for this feature. Prompt building + JSON parsing live in
 // lib/prompts/careers.ts (framework-agnostic).
 //
 // Two-stage workflow (mirrors legacy 1:1):
 //   1. suggestCareers(input)            one LLM call returning 6 basic
 //                                        career suggestions.
 //   2. elaborateCareer(basic, input)    one LLM call per career returning the
-//                                        detail block. Six of these run in
-//                                        parallel via Promise.all.
+//                                        detail block. Six run in parallel.
 //
 // The legacy route catches detail errors per-career and falls back to the
 // basic info for that career — five other careers can still succeed. We keep
-// that behavior in generateCareers().
-//
-// generateCareers(input) is the convenience entrypoint the page uses; it
-// orchestrates both stages and returns the 6 final careers. suggestCareers
-// and elaborateCareer are exported individually for tests and future
-// fine-grained UIs (e.g. lazy-loaded details).
+// that behaviour in generateCareers().
 
-import { chat } from './llm';
+import { callStructured } from './generate';
 import {
   buildCareersPrompt,
   buildCareerDetailPrompt,
@@ -62,22 +57,21 @@ export async function suggestCareers(
   if (!hasAnyInput(input)) {
     throw new Error('Add a resume, job title, or some context to get started.');
   }
-  const result = await chat({
-    messages: [
+  return callStructured({
+    input,
+    buildMessages: (i) => [
       { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildCareersPrompt(input) },
+      { role: 'user', content: buildCareersPrompt(i) },
     ],
-    response_format: { type: 'json_object' },
+    parse: (raw) => parseCareersList(raw),
   });
-  return parseCareersList(result.content);
 }
 
 /**
  * Stage 2: ask the LLM to elaborate a single career suggestion.
  *
- * Returns the basic info merged with the detail block. The legacy route
- * runs this without retries and per-career errors are caught upstream by
- * generateCareers().
+ * Returns the basic info merged with the detail block. Runs without retries;
+ * per-career errors are caught upstream by generateCareers().
  *
  * Throws on terminal failure (network, parse, validation).
  */
@@ -88,20 +82,20 @@ export async function elaborateCareer(
   if (!basic.jobTitle || !basic.jobTitle.trim()) {
     throw new Error('elaborateCareer: a jobTitle is required.');
   }
-  const result = await chat({
-    messages: [
+  const detail = await callStructured({
+    input,
+    buildMessages: (i) => [
       { role: 'system', content: SYSTEM },
       {
         role: 'user',
         content: buildCareerDetailPrompt(
           { jobTitle: basic.jobTitle, timeline: basic.timeline },
-          input
+          i
         ),
       },
     ],
-    response_format: { type: 'json_object' },
+    parse: (raw) => parseCareerDetail(raw),
   });
-  const detail = parseCareerDetail(result.content);
   return { ...basic, ...detail };
 }
 
@@ -113,8 +107,7 @@ export async function elaborateCareer(
  * career falls back to the basic info (with empty detail fields) so the
  * other five can still surface — matches the legacy route 1:1.
  *
- * Throws only if stage 1 fails. Once stage 1 succeeds, the result is
- * always returned (possibly with some careers missing details).
+ * Throws only if stage 1 fails.
  */
 export async function generateCareers(
   input: CareersInput

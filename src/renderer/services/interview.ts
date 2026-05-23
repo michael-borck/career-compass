@@ -2,37 +2,24 @@
 //
 // Replaces two legacy route handlers:
 //   - POST /api/interview          (app/api/interview/route.ts)        — one turn
-//   - POST /api/interviewFeedback  (app/api/interviewFeedback/route.ts) — end-of-interview feedback
+//   - POST /api/interviewFeedback  (app/api/interviewFeedback/route.ts) — feedback
 //
-// The interview is multi-turn. Each call to runInterviewTurn() is a fresh
-// LLM completion that takes the entire conversation history (plus phase /
-// difficulty / target) and returns the next interviewer message. The page
-// owns the message list (via zustand sessionStore) and advances the
-// phase/turn counters based on the result.
+// The interview is multi-turn. Each runInterviewTurn() is a fresh completion
+// over the whole conversation history (plus phase / difficulty / target) and
+// returns the next interviewer message. Phase progression is computed locally
+// via nextPhase() — no LLM round-trip needed to know when it's complete.
 //
-// Phase progression is computed locally via nextPhase() from
-// lib/interview-phases.ts — no LLM round-trip is needed to know when the
-// interview is complete.
+// Search-grounded for the role-specific phase only. Search failures are
+// swallowed (groundingFailed=true) and the turn still runs without sources.
 //
-// Search-grounded for the role-specific phase only, mirroring the legacy
-// route. Search failures are swallowed (groundingFailed=true) and the turn
-// still runs without sources. Other phases skip the search entirely.
-//
-// Token-limit retry chain for runInterviewTurn (mirrors legacy):
-//   1. try original input
-//   2. on token-limit error: trim jobAdvert to 4000 chars, retry
-//   3. on token-limit error: also drop history to last 20 messages, retry
-//   4. on token-limit error: rethrow with the original LLM error message
-//
-// Token-limit retry chain for generateInterviewFeedback (mirrors legacy):
-//   1. try original input
-//   2. on token-limit error: trim transcript to last 30 messages with a
-//      heads-up note prepended, retry
-//   3. on token-limit error: rethrow
-//
-// Non-token-limit errors are rethrown immediately without retrying.
+// Both LLM paths go through the structured-generation core (generate):
+//   - runInterviewTurn runs in text mode with a 2-step trim ladder: trim the
+//     job advert (context is rebuilt from the trimmed value), then drop history
+//     to the last 20 messages. Exhausted -> rethrow (no custom message).
+//   - generateInterviewFeedback runs in JSON mode with a 1-step ladder: trim
+//     the transcript to the last 30 messages and prepend a heads-up note.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import { search, loadSearchSettings, isSearchConfigured } from './search';
 import { buildInterviewSystemPrompt } from '@/lib/prompts/interview';
 import {
@@ -41,7 +28,6 @@ import {
 } from '@/lib/prompts/interview-feedback';
 import { buildContextBlock } from '@/lib/context-block';
 import { nextPhase } from '@/lib/interview-phases';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type {
   ChatMessage,
   InterviewDifficulty,
@@ -104,12 +90,9 @@ function toProviderMessages(
   return out;
 }
 
-async function callTurn(
-  providerMessages: { role: 'system' | 'user' | 'assistant'; content: string }[]
-): Promise<string> {
-  const result = await chat({ messages: providerMessages });
-  return result.content;
-}
+// The mutable slice of a turn that the trim ladder shrinks. The system prompt
+// and the rest of the profile are constant across attempts (closed over).
+type TurnGenInput = { messages: ChatMessage[]; jobAdvert?: string };
 
 /**
  * Run a single interviewer turn.
@@ -167,14 +150,6 @@ export async function runInterviewTurn(
     sources: sources.length > 0 ? sources : undefined,
   });
 
-  const fullContext = buildContextBlock(
-    resumeText,
-    freeText,
-    jobTitle,
-    jobAdvert,
-    distilledProfile ?? undefined
-  );
-
   // Anthropic (and some other providers) require at least one user/assistant
   // message — system messages alone are rejected. On the opening turn we
   // seed a synthetic kickoff so the model produces its warm-up question.
@@ -191,42 +166,42 @@ export async function runInterviewTurn(
         ]
       : messages;
 
-  let trimmed = false;
-  let reply: string;
-
-  try {
-    reply = await callTurn(
-      toProviderMessages(seededMessages, systemPrompt, fullContext)
-    );
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    // First retry: trim job advert
-    let trimmedJobAdvert = jobAdvert;
-    if (jobAdvert && jobAdvert.length > ADVERT_TRIM_CHARS) {
-      trimmedJobAdvert = jobAdvert.slice(0, ADVERT_TRIM_CHARS);
+  const { result: reply, trimmed } = await generate(
+    {
+      input: { messages: seededMessages, jobAdvert },
+      buildMessages: (i) =>
+        toProviderMessages(
+          i.messages,
+          systemPrompt,
+          buildContextBlock(
+            resumeText,
+            freeText,
+            jobTitle,
+            i.jobAdvert,
+            distilledProfile ?? undefined
+          )
+        ),
+      parse: (raw) => raw,
+      responseFormat: { type: 'text' },
+    },
+    {
+      steps: [
+        // 1. trim the job advert (context is rebuilt from the trimmed value)
+        (i: TurnGenInput) => ({
+          ...i,
+          jobAdvert:
+            i.jobAdvert && i.jobAdvert.length > ADVERT_TRIM_CHARS
+              ? i.jobAdvert.slice(0, ADVERT_TRIM_CHARS)
+              : i.jobAdvert,
+        }),
+        // 2. also drop history to the last 20 messages (advert stays trimmed)
+        (i: TurnGenInput) => ({
+          ...i,
+          messages: i.messages.slice(-MESSAGE_TRIM_COUNT_TURN),
+        }),
+      ],
     }
-    const trimmedContext = buildContextBlock(
-      resumeText,
-      freeText,
-      jobTitle,
-      trimmedJobAdvert,
-      distilledProfile ?? undefined
-    );
-
-    try {
-      reply = await callTurn(
-        toProviderMessages(seededMessages, systemPrompt, trimmedContext)
-      );
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      // Second retry: trim message history to last 20
-      const shortMessages = seededMessages.slice(-MESSAGE_TRIM_COUNT_TURN);
-      reply = await callTurn(
-        toProviderMessages(shortMessages, systemPrompt, trimmedContext)
-      );
-    }
-  }
+  );
 
   const next = nextPhase(phase, turnInPhase);
   return {
@@ -254,16 +229,12 @@ export type GenerateInterviewFeedbackResult = {
   trimmed: boolean;
 };
 
-async function callFeedback(userPrompt: string): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: FEEDBACK_SYSTEM },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
+const TRIM_NOTE =
+  'NOTE: This is the most recent portion of a longer transcript. Earlier messages were dropped to fit the token budget. Acknowledge this in your summary.';
+
+// The mutable slice of a feedback request. `noted` flips on once the
+// transcript has been trimmed, prepending a heads-up to the prompt.
+type FeedbackGenInput = { messages: ChatMessage[]; noted: boolean };
 
 /**
  * Generate structured end-of-interview feedback.
@@ -288,24 +259,32 @@ export async function generateInterviewFeedback(
     throw new Error('No interview transcript to evaluate.');
   }
 
-  let trimmed = false;
-  let raw: string;
+  const { result: feedback, trimmed } = await generate(
+    {
+      input: { messages, noted: false } as FeedbackGenInput,
+      buildMessages: (i) => {
+        const prompt = buildFeedbackPrompt({
+          target,
+          difficulty,
+          messages: i.messages,
+          reachedPhase,
+        });
+        return [
+          { role: 'system', content: FEEDBACK_SYSTEM },
+          { role: 'user', content: i.noted ? `${TRIM_NOTE}\n\n${prompt}` : prompt },
+        ];
+      },
+      parse: (raw) => parseFeedback(raw),
+    },
+    {
+      steps: [
+        (i: FeedbackGenInput) => ({
+          messages: i.messages.slice(-MESSAGE_TRIM_COUNT_FEEDBACK),
+          noted: true,
+        }),
+      ],
+    }
+  );
 
-  try {
-    raw = await callFeedback(
-      buildFeedbackPrompt({ target, difficulty, messages, reachedPhase })
-    );
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    const shortMessages = messages.slice(-MESSAGE_TRIM_COUNT_FEEDBACK);
-    raw = await callFeedback(
-      `NOTE: This is the most recent portion of a longer transcript. Earlier messages were dropped to fit the token budget. Acknowledge this in your summary.\n\n${buildFeedbackPrompt(
-        { target, difficulty, messages: shortMessages, reachedPhase }
-      )}`
-    );
-  }
-
-  const feedback = parseFeedback(raw);
   return { feedback, trimmed };
 }

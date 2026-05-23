@@ -1,21 +1,20 @@
 // Renderer-side orchestration for the Industry Exploration feature.
 //
 // Replaces the legacy POST /api/industry route handler
-// (app/api/industry/route.ts). All LLM calls now happen in the renderer via
-// the shared chat() client. Prompt building + JSON parsing logic still lives
-// in lib/prompts/industry.ts (framework-agnostic, no node-only deps).
+// (app/api/industry/route.ts). All LLM calls go through the shared
+// structured-generation core (generate), which owns the token-limit trim
+// ladder. Prompt building + JSON parsing live in lib/prompts/industry.ts
+// (framework-agnostic, no node-only deps).
 //
-// Token-limit fallback: if the model rejects the prompt, we trim the resume
-// once and retry. If that still fails (or fails for any non-token reason),
-// surface a user-facing error. This mirrors the legacy route's behavior 1:1.
+// Trim ladder mirrors the legacy route 1:1: trim the resume once, then
+// surrender with a user-facing error.
 
-import { chat } from './llm';
+import { generate } from './generate';
 import {
   buildIndustryPrompt,
   parseIndustryExploration,
   type IndustryInput,
 } from '@/lib/prompts/industry';
-import { isTokenLimitError } from '@/lib/token-limit';
 import type { IndustryExploration } from '@/lib/session-store';
 
 export type { IndustryInput };
@@ -37,17 +36,6 @@ function trimResume(input: IndustryInput): IndustryInput {
   };
 }
 
-async function callOnce(input: IndustryInput): Promise<string> {
-  const result = await chat({
-    messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: buildIndustryPrompt(input) },
-    ],
-    response_format: { type: 'json_object' },
-  });
-  return result.content;
-}
-
 /**
  * Generate an industry exploration from the given input.
  *
@@ -63,24 +51,21 @@ export async function generateIndustryExploration(
     throw new Error('An industry name is required.');
   }
 
-  let trimmed = false;
-  let raw: string;
-
-  try {
-    raw = await callOnce(input);
-  } catch (err) {
-    if (!isTokenLimitError(err)) throw err;
-    trimmed = true;
-    try {
-      raw = await callOnce(trimResume(input));
-    } catch (err2) {
-      if (!isTokenLimitError(err2)) throw err2;
-      throw new Error(
-        'Input is too long for the model. Try trimming your resume or about-you text.'
-      );
+  const { result: exploration, trimmed } = await generate(
+    {
+      input,
+      buildMessages: (i) => [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: buildIndustryPrompt(i) },
+      ],
+      parse: (raw) => parseIndustryExploration(raw),
+    },
+    {
+      steps: [trimResume],
+      tooLongMessage:
+        'Input is too long for the model. Try trimming your resume or about-you text.',
     }
-  }
+  );
 
-  const exploration = parseIndustryExploration(raw);
   return { exploration, trimmed };
 }
