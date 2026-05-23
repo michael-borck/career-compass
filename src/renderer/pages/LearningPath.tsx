@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Route as RouteIcon } from 'lucide-react';
@@ -15,76 +14,49 @@ import LoadingDots from '@/components/ui/loadingdots';
 import LearningPathView from '@/components/results/LearningPathView';
 import { generateLearningPath } from '../services/learningPath';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function LearningPath() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const path = store.learningPath;
   const sources = useSessionStore((s) => s.learningPathSources) ?? [];
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasJobTitle = !!store.jobTitle.trim();
   const hasJobAdvert = !!store.jobAdvert.trim();
   const hasTarget = hasJobTitle || hasJobAdvert;
   const canRun = hasTarget;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+    generate: async () => {
       const state = useSessionStore.getState();
-      // Read the user's stored search-engine preference so we mirror the
-      // legacy flow: any non-disabled engine counts as opt-in for grounding.
-      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>(
-        'settings',
-        {}
-      );
+      // Mirror the legacy flow: any non-disabled engine counts as opt-in.
+      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>('settings', {});
       const grounded = (settings?.searchEngine ?? 'duckduckgo') !== 'disabled';
-
-      const { path: result, sources: srcList, groundingFailed } =
-        await generateLearningPath({
-          jobAdvert: state.jobAdvert || undefined,
-          jobTitle: state.jobTitle || undefined,
-          resume: state.resumeText ?? undefined,
-          aboutYou: state.freeText || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-          gapAnalysis: state.gapAnalysis ?? undefined,
-          skillsMapping: state.skillsMapping ?? undefined,
-          grounded,
-        });
-      useSessionStore.getState().setLearningPath(result);
-      useSessionStore.getState().setLearningPathSources(srcList);
-      if (groundingFailed) {
+      return generateLearningPath({
+        jobAdvert: state.jobAdvert || undefined,
+        jobTitle: state.jobTitle || undefined,
+        resume: state.resumeText ?? undefined,
+        aboutYou: state.freeText || undefined,
+        distilledProfile: state.distilledProfile ?? undefined,
+        gapAnalysis: state.gapAnalysis ?? undefined,
+        skillsMapping: state.skillsMapping ?? undefined,
+        grounded,
+      });
+    },
+    persist: (r) => {
+      useSessionStore.getState().setLearningPath(r.path);
+      useSessionStore.getState().setLearningPathSources(r.sources);
+      if (r.groundingFailed) {
         toast('Web search failed — path generated without sources.', { icon: 'ℹ️' });
       }
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Learning path failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives with a target already in the session
-  // store but no path yet. If they land cold, the input card below
-  // handles it.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
-    if (!hasT || state.learningPath) return;
-
-    runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    errorFallback: 'Learning path failed',
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
+      return hasT && !state.learningPath;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -106,7 +78,7 @@ export default function LearningPath() {
     if (!path) return;
     if (!confirm('Run again? The current result will be cleared.')) return;
     store.setLearningPath(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (

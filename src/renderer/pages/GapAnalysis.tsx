@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, SearchCheck } from 'lucide-react';
@@ -15,16 +14,13 @@ import LoadingDots from '@/components/ui/loadingdots';
 import GapAnalysisView from '@/components/results/GapAnalysisView';
 import { generateGapAnalysis } from '../services/gapAnalysis';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function GapAnalysis() {
   const navigate = useNavigate();
   const store = useSessionStore();
   const analysis = store.gapAnalysis;
   const sources = useSessionStore((s) => s.gapAnalysisSources) ?? [];
-  const [loading, setLoading] = useState(false);
-  const autoRanRef = useRef(false);
-
   const hasJobTitle = !!store.jobTitle.trim();
   const hasJobAdvert = !!store.jobAdvert.trim();
   const hasTarget = hasJobTitle || hasJobAdvert;
@@ -33,61 +29,37 @@ export default function GapAnalysis() {
   const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
   const canRun = hasTarget && hasProfile;
 
-  async function runGeneration() {
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+    generate: async () => {
       const state = useSessionStore.getState();
-      // Read the user's stored search-engine preference so we mirror the
-      // legacy flow: any non-disabled engine counts as opt-in for grounding.
-      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>(
-        'settings',
-        {}
-      );
+      // Mirror the legacy flow: any non-disabled engine counts as opt-in.
+      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>('settings', {});
       const grounded = (settings?.searchEngine ?? 'duckduckgo') !== 'disabled';
-
-      const { analysis: result, sources: srcList, groundingFailed } =
-        await generateGapAnalysis({
-          jobAdvert: state.jobAdvert || undefined,
-          jobTitle: state.jobTitle || undefined,
-          resume: state.resumeText ?? undefined,
-          aboutYou: state.freeText || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-          skillsMapping: state.skillsMapping ?? undefined,
-          grounded,
-        });
-      useSessionStore.getState().setGapAnalysis(result);
-      useSessionStore.getState().setGapAnalysisSources(srcList);
-      if (groundingFailed) {
+      return generateGapAnalysis({
+        jobAdvert: state.jobAdvert || undefined,
+        jobTitle: state.jobTitle || undefined,
+        resume: state.resumeText ?? undefined,
+        aboutYou: state.freeText || undefined,
+        distilledProfile: state.distilledProfile ?? undefined,
+        skillsMapping: state.skillsMapping ?? undefined,
+        grounded,
+      });
+    },
+    persist: (r) => {
+      useSessionStore.getState().setGapAnalysis(r.analysis);
+      useSessionStore.getState().setGapAnalysisSources(r.sources);
+      if (r.groundingFailed) {
         toast('Web search failed — analysis ran without sources.', { icon: 'ℹ️' });
       }
-    } catch (err) {
-      console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Gap analysis failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Auto-run when the user arrives with target+profile already in the
-  // session store but no analysis yet. If they land cold, the input card
-  // below handles it.
-  useEffect(() => {
-    if (autoRanRef.current) return;
-    autoRanRef.current = true;
-
-    const state = useSessionStore.getState();
-    const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
-    const hasP = !!(state.resumeText || state.freeText?.trim() || state.distilledProfile);
-    if (!hasT || !hasP || state.gapAnalysis) return;
-
-    runGeneration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    errorFallback: 'Gap analysis failed',
+    autoRun: () => {
+      const state = useSessionStore.getState();
+      const hasT = !!(state.jobTitle?.trim() || state.jobAdvert?.trim());
+      const hasP = !!(state.resumeText || state.freeText?.trim() || state.distilledProfile);
+      return hasT && hasP && !state.gapAnalysis;
+    },
+  });
 
   async function handleResumeSelect(file: File) {
     try {
@@ -109,7 +81,7 @@ export default function GapAnalysis() {
     if (!analysis) return;
     if (!confirm('Run again? The current result will be cleared.')) return;
     store.setGapAnalysis(null);
-    autoRanRef.current = false;
+    resetAutoRun();
   }
 
   return (
