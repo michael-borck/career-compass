@@ -18,7 +18,9 @@ function renderBlock(block: Block): string {
     case 'paragraph':
       return block.runs.map(renderInline).join('');
     case 'bullets':
-      return block.items.map((item) => `- ${item}`).join('\n');
+      return block.items
+        .map((item) => `- ${typeof item === 'string' ? item : item.map(renderInline).join('')}`)
+        .join('\n');
     case 'note':
       return `*${block.text}*`;
     case 'sources':

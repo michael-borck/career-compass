@@ -26,6 +26,11 @@ describe('toMarkdown', () => {
     expect(toMarkdown({ title: 'T', blocks: [bullets(['x'], '→')] })).toBe('# T\n\n- x\n');
   });
 
+  it('renders rich bullet items with bold labels', () => {
+    const doc: ExportDoc = { title: 'T', blocks: [bullets([[b('Resources:'), ' 4/5']])] };
+    expect(toMarkdown(doc)).toBe('# T\n\n- **Resources:** 4/5\n');
+  });
+
   it('renders sources as a numbered markdown link list', () => {
     const doc: ExportDoc = { title: 'T', blocks: [sources([{ title: 'A', url: 'http://a', domain: 'a.com' }])] };
     expect(toMarkdown(doc)).toBe('# T\n\n1. [A](http://a) — a.com\n');
