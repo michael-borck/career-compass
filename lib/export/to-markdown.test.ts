@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toMarkdown } from './to-markdown';
-import { type ExportDoc, b, it as italic, h2, h3, p, bullets, note, disclaimer } from './doc';
+import { type ExportDoc, b, it as italic, h2, h3, p, bullets, note, sources, disclaimer } from './doc';
 
 describe('toMarkdown', () => {
   it('renders the title as an H1', () => {
@@ -20,6 +20,15 @@ describe('toMarkdown', () => {
   it('renders bullets as a dash list', () => {
     const doc: ExportDoc = { title: 'T', blocks: [bullets(['one', 'two'])] };
     expect(toMarkdown(doc)).toBe('# T\n\n- one\n- two\n');
+  });
+
+  it('ignores the docx bullet marker (markdown always uses -)', () => {
+    expect(toMarkdown({ title: 'T', blocks: [bullets(['x'], '→')] })).toBe('# T\n\n- x\n');
+  });
+
+  it('renders sources as a numbered markdown link list', () => {
+    const doc: ExportDoc = { title: 'T', blocks: [sources([{ title: 'A', url: 'http://a', domain: 'a.com' }])] };
+    expect(toMarkdown(doc)).toBe('# T\n\n1. [A](http://a) — a.com\n');
   });
 
   it('renders a note in italics', () => {

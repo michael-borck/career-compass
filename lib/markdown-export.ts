@@ -1,54 +1,14 @@
 import type { GapAnalysis, LearningPath, InterviewFeedback, InterviewPhase, SourceRef, OdysseyLife, OdysseyLifeType, OdysseyDashboard, BoardReview, Comparison, ComparisonDimension, ElevatorPitch, CoverLetter, ResumeReview, ResumeReviewItem, CareerStory, CareerTheme, SkillsMapping, SkillFrameworkMapping, FrameworkLevel, IndustryExploration, ValuesCompass } from './session-store';
 import { toMarkdown } from './export/to-markdown';
 import { coverLetterToExportDoc } from './export/features/cover-letter';
+import { pitchToExportDoc } from './export/features/pitch';
+import { valuesCompassToExportDoc } from './export/features/values';
+import { industryExplorationToExportDoc } from './export/features/industry';
+import { resumeReviewToExportDoc } from './export/features/resume-review';
+import { gapAnalysisToExportDoc } from './export/features/gap-analysis';
 
 export function gapAnalysisToMarkdown(g: GapAnalysis, sources?: SourceRef[]): string {
-  const lines: string[] = [];
-
-  lines.push(`# Gap Analysis: ${g.target}`);
-  lines.push('');
-  lines.push(g.summary);
-  lines.push('');
-
-  if (g.matches.length > 0) {
-    lines.push('## What you already have');
-    for (const m of g.matches) {
-      lines.push(`- ${m}`);
-    }
-    lines.push('');
-  }
-
-  lines.push('## Gaps');
-  lines.push('');
-  for (const gap of g.gaps) {
-    lines.push(`### [${gap.severity.toUpperCase()}] ${gap.title}`);
-    if (gap.why) lines.push(`**Why it matters:** ${gap.why}`);
-    if (gap.targetLevel) lines.push(`**Target level:** ${gap.targetLevel}`);
-    if (gap.currentLevel) lines.push(`**Current level:** ${gap.currentLevel}`);
-    if (gap.evidenceIdeas.length > 0) {
-      lines.push('**How to demonstrate:**');
-      for (const e of gap.evidenceIdeas) {
-        lines.push(`- ${e}`);
-      }
-    }
-    lines.push('');
-  }
-
-  lines.push('## Rough timeline');
-  lines.push(g.realisticTimeline);
-  lines.push('');
-
-  if (sources && sources.length > 0) {
-    lines.push('## Sources');
-    sources.forEach((s, i) => {
-      lines.push(`${i + 1}. [${s.title}](${s.url}) — ${s.domain}`);
-    });
-    lines.push('');
-  }
-
-  lines.push('*AI-generated. Verify suggestions against your own situation.*');
-
-  return lines.join('\n');
+  return toMarkdown(gapAnalysisToExportDoc(g, sources));
 }
 
 export function learningPathToMarkdown(p: LearningPath, sources?: SourceRef[]): string {
@@ -398,27 +358,7 @@ export function comparisonToMarkdown(c: Comparison): string {
 }
 
 export function pitchToMarkdown(p: ElevatorPitch): string {
-  const lines: string[] = [];
-  lines.push('# Elevator Pitch');
-  lines.push('');
-  lines.push(`**Target:** ${p.target ?? 'General'}`);
-  lines.push('');
-  lines.push('## Your hook');
-  lines.push(p.hook);
-  lines.push('');
-  lines.push('## The pitch');
-  lines.push(p.body);
-  lines.push('');
-  lines.push('## Your close');
-  lines.push(p.close);
-  lines.push('');
-  lines.push('## Full script');
-  lines.push(p.fullScript);
-  lines.push('');
-  lines.push('---');
-  lines.push('');
-  lines.push('*AI-generated pitch. Edit to match your voice before using.*');
-  return lines.join('\n');
+  return toMarkdown(pitchToExportDoc(p));
 }
 
 export function coverLetterToMarkdown(l: CoverLetter): string {
@@ -426,42 +366,7 @@ export function coverLetterToMarkdown(l: CoverLetter): string {
 }
 
 export function resumeReviewToMarkdown(r: ResumeReview): string {
-  const lines: string[] = [];
-  lines.push('# Resume Review');
-  lines.push('');
-  lines.push(`**Target:** ${r.target ?? 'General review'}`);
-  lines.push('');
-  lines.push('## Overall impression');
-  lines.push(r.overallImpression);
-  lines.push('');
-  if (r.strengths.length > 0) {
-    lines.push("## What's working");
-    for (const s of r.strengths) lines.push(`- ${s}`);
-    lines.push('');
-  }
-  lines.push('## Suggested improvements');
-  lines.push('');
-  r.improvements.forEach((imp, idx) => {
-    lines.push(`### ${idx + 1}. ${imp.section}`);
-    lines.push(`**Suggestion:** ${imp.suggestion}`);
-    if (imp.why) lines.push(`**Why:** ${imp.why}`);
-    if (imp.example) lines.push(`**Example:** "${imp.example}"`);
-    lines.push('');
-  });
-  if (r.keywordsToAdd.length > 0) {
-    lines.push('## Keywords to add');
-    for (const k of r.keywordsToAdd) lines.push(`- ${k}`);
-    lines.push('');
-  }
-  if (r.structuralNotes.length > 0) {
-    lines.push('## Structural notes');
-    for (const n of r.structuralNotes) lines.push(`- ${n}`);
-    lines.push('');
-  }
-  lines.push('---');
-  lines.push('');
-  lines.push('*AI-generated feedback. Use as a starting point, not a final verdict.*');
-  return lines.join('\n');
+  return toMarkdown(resumeReviewToExportDoc(r));
 }
 
 export function careerStoryToMarkdown(s: CareerStory): string {
@@ -542,86 +447,9 @@ export function skillsMappingToMarkdown(m: SkillsMapping): string {
 }
 
 export function industryExplorationToMarkdown(e: IndustryExploration): string {
-  const lines: string[] = [];
-  lines.push(`# Industry Exploration: ${e.industry}`);
-  lines.push('');
-  lines.push('## Overview');
-  lines.push(e.overview);
-  lines.push('');
-
-  lines.push('## Key roles');
-  lines.push('');
-  for (const role of e.keyRoles) {
-    const entry = role.entryLevel ? ' *(entry-level friendly)*' : '';
-    lines.push(`### ${role.title}${entry}`);
-    lines.push(role.description);
-    lines.push('');
-  }
-
-  if (e.entryPoints.length > 0) {
-    lines.push('## How to break in');
-    for (const ep of e.entryPoints) lines.push(`- ${ep}`);
-    lines.push('');
-  }
-
-  if (e.growthAreas.length > 0) {
-    lines.push("## What's growing");
-    for (const g of e.growthAreas) lines.push(`- ${g}`);
-    lines.push('');
-  }
-
-  if (e.dayInTheLife) {
-    lines.push('## A day in the life');
-    lines.push(e.dayInTheLife);
-    lines.push('');
-  }
-
-  if (e.skillsInDemand.length > 0) {
-    lines.push('## Skills in demand');
-    for (const s of e.skillsInDemand) lines.push(`- ${s}`);
-    lines.push('');
-  }
-
-  if (e.challenges.length > 0) {
-    lines.push('## Challenges to know about');
-    for (const c of e.challenges) lines.push(`- ${c}`);
-    lines.push('');
-  }
-
-  lines.push('---');
-  lines.push('');
-  lines.push('*AI-generated overview. Verify specific claims before making decisions.*');
-  return lines.join('\n');
+  return toMarkdown(industryExplorationToExportDoc(e));
 }
 
 export function valuesCompassToMarkdown(compass: ValuesCompass): string {
-  const lines: string[] = [];
-  lines.push('# Values Compass');
-  lines.push('');
-  lines.push(compass.summary);
-  lines.push('');
-
-  lines.push('## Your values, ranked');
-  lines.push('');
-  for (const v of compass.values) {
-    lines.push(`### ${v.rank}. ${v.name}`);
-    lines.push(v.description);
-    if (v.evidence) lines.push(`**Why we think this:** ${v.evidence}`);
-    if (v.reflectionQuestion) {
-      lines.push('');
-      lines.push(`*${v.reflectionQuestion}*`);
-    }
-    lines.push('');
-  }
-
-  if (compass.tensions.length > 0) {
-    lines.push('## Tensions to explore');
-    for (const t of compass.tensions) lines.push(`- ${t}`);
-    lines.push('');
-  }
-
-  lines.push('---');
-  lines.push('');
-  lines.push('*AI-inferred values. Treat as a starting point for reflection, not a personality test.*');
-  return lines.join('\n');
+  return toMarkdown(valuesCompassToExportDoc(compass));
 }
