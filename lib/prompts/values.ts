@@ -1,4 +1,5 @@
 import type { ValuesCompass, WorkValue, StudentProfile } from '@/lib/session-store';
+import { parseModelJson } from './model-json';
 
 export type ValuesInput = {
   resume?: string;
@@ -68,16 +69,8 @@ Each WorkValue has the shape:
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
 export function parseValuesCompass(raw: string): ValuesCompass {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseValuesCompass: not an object');
   }

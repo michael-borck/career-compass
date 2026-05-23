@@ -1,4 +1,5 @@
 import type { ChatMessage, StudentProfile } from '@/lib/session-store';
+import { parseModelJson, toStringArray } from './model-json';
 
 export type DistillationInput = {
   messages: ChatMessage[];
@@ -65,21 +66,8 @@ export function buildDistillationPrompt(input: DistillationInput): string {
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
-function toStringArray(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
-  return [];
-}
-
 export function parseDistilledProfile(raw: string): StudentProfile {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseDistilledProfile: not an object');
   }

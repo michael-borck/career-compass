@@ -1,4 +1,5 @@
 import type { StudentProfile, ResumeReviewItem } from '@/lib/session-store';
+import { parseModelJson, toStringArray } from './model-json';
 
 export type ResumeReviewInput = {
   resume: string;
@@ -26,19 +27,8 @@ export function buildResumeReviewPrompt(input: ResumeReviewInput): string {
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  return cleaned.trim();
-}
-
-function toStringArray(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
-  return [];
-}
-
 export function parseResumeReview(raw: string): ResumeReviewOutput {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') throw new Error('parseResumeReview: not an object');
   if (typeof parsed.overallImpression !== 'string' || !parsed.overallImpression.trim()) throw new Error('parseResumeReview: missing overallImpression');
   const improvements: ResumeReviewItem[] = [];

@@ -1,4 +1,5 @@
 import type { StudentProfile } from '@/lib/session-store';
+import { parseModelJson } from './model-json';
 
 export type PitchInput = {
   resume?: string;
@@ -40,14 +41,8 @@ export function buildPitchPrompt(input: PitchInput): string {
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  return cleaned.trim();
-}
-
 export function parsePitch(raw: string): PitchOutput {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') throw new Error('parsePitch: not an object');
   if (typeof parsed.hook !== 'string' || !parsed.hook.trim()) throw new Error('parsePitch: missing hook');
   if (typeof parsed.body !== 'string' || !parsed.body.trim()) throw new Error('parsePitch: missing body');

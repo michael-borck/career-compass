@@ -1,4 +1,5 @@
 import type { finalCareerInfo } from '@/lib/types';
+import { parseModelJson } from './model-json';
 import type {
   GapAnalysis,
   LearningPath,
@@ -186,16 +187,8 @@ Return 2-5 themes. Each theme should appear in at least two different sources wh
   return sections.join('\n\n');
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
 export function parseCareerStory(raw: string): CareerStory {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
 
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseCareerStory: not an object');

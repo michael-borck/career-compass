@@ -1,4 +1,5 @@
 import type { StudentProfile } from '@/lib/session-store';
+import { parseModelJson, toString, toStringArray, toRecord } from './model-json';
 
 export type CareersInput = {
   resume?: string;
@@ -125,30 +126,13 @@ ${context}
 ONLY respond with JSON, nothing else.`;
 }
 
-function cleanJSON(text: string): string {
-  let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-  return cleaned.trim();
-}
-
-function toStringArray(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
-  return [];
-}
-
-function toString(v: unknown, fallback = ''): string {
-  return typeof v === 'string' ? v : fallback;
-}
-
 export function parseCareersList(raw: string): CareerBasicInfo[] {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!Array.isArray(parsed)) {
     throw new Error('parseCareersList: expected an array of careers');
   }
   return parsed.map((c: unknown) => {
-    const obj = (c ?? {}) as Record<string, unknown>;
+    const obj = toRecord(c);
     return {
       jobTitle: toString(obj.jobTitle, 'Unknown role'),
       jobDescription: toString(obj.jobDescription),
@@ -160,7 +144,7 @@ export function parseCareersList(raw: string): CareerBasicInfo[] {
 }
 
 export function parseCareerDetail(raw: string): CareerDetailInfo {
-  const parsed = JSON.parse(cleanJSON(raw));
+  const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('parseCareerDetail: expected an object');
   }
