@@ -15,6 +15,8 @@
 // Provider request/response shapes mirror lib/llm-providers.ts (legacy),
 // with the addition of native Gemini support per Phase 3 spec.
 
+import { PROVIDERS } from '../../shared/providers';
+
 export type Provider =
   | 'ollama'
   | 'openai'
@@ -82,23 +84,13 @@ const DEFAULT_SETTINGS: Settings = {
   model: '',
 };
 
-// Per-provider default base URLs for the OpenAI-compatible dispatch.
-// Only consulted when settings.baseURL is empty — explicit user values win.
-// claude/gemini use hardcoded URLs in their own dispatch branches and don't
-// go through resolveBaseURL; their entries here are unused placeholders.
-const PROVIDER_DEFAULT_BASE_URL: Record<Provider, string | null> = {
-  ollama: 'http://localhost:11434/v1',
-  openai: 'https://api.openai.com/v1',
-  groq: 'https://api.groq.com/openai/v1',
-  openrouter: 'https://openrouter.ai/api/v1',
-  claude: null,
-  gemini: null,
-  custom: null,
-};
-
+// Default base URLs for the OpenAI-compatible dispatch live in the shared
+// provider registry. Only consulted when settings.baseURL is empty — explicit
+// user values win. claude/gemini use bespoke URLs in their own dispatch
+// branches (their registry defaultBaseURL is null).
 function resolveBaseURL(provider: Provider, settingsBaseURL: string): string {
   const fromSettings = settingsBaseURL.trim();
-  const fromDefault = PROVIDER_DEFAULT_BASE_URL[provider];
+  const fromDefault = PROVIDERS[provider].defaultBaseURL;
 
   if (provider === 'custom') {
     if (!fromSettings) {
@@ -113,31 +105,11 @@ function resolveBaseURL(provider: Provider, settingsBaseURL: string): string {
   if (fromSettings) return fromSettings;
   if (fromDefault) return fromDefault;
   throw new LLMError(
-    `${PROVIDER_LABEL[provider]} has no baseURL configured`,
+    `${PROVIDERS[provider].label} has no baseURL configured`,
     0,
     ''
   );
 }
-
-const ENV_VAR_MAP: Record<Provider, string> = {
-  openai: 'OPENAI_API_KEY',
-  claude: 'ANTHROPIC_API_KEY',
-  groq: 'GROQ_API_KEY',
-  gemini: 'GOOGLE_API_KEY',
-  openrouter: 'OPENROUTER_API_KEY',
-  ollama: '',
-  custom: '',
-};
-
-const PROVIDER_LABEL: Record<Provider, string> = {
-  openai: 'OpenAI',
-  claude: 'Anthropic',
-  groq: 'Groq',
-  gemini: 'Gemini',
-  openrouter: 'OpenRouter',
-  ollama: 'Ollama',
-  custom: 'Custom',
-};
 
 const DEFAULT_MAX_TOKENS = 4096;
 
@@ -163,7 +135,7 @@ async function loadApiKey(provider: Provider): Promise<string | null> {
   if (legacy) return legacy;
 
   // Env var fallback (matches electron/main.js test-connection handler).
-  const envVar = ENV_VAR_MAP[provider];
+  const envVar = PROVIDERS[provider].envVar;
   if (envVar) {
     const fromEnv = await window.electronAPI.getEnvVar(envVar);
     if (fromEnv) return fromEnv;
@@ -175,7 +147,7 @@ async function loadApiKey(provider: Provider): Promise<string | null> {
 function requireApiKey(provider: Provider, key: string | null): string {
   if (!key) {
     throw new LLMError(
-      `${PROVIDER_LABEL[provider]} API key not configured in Settings`,
+      `${PROVIDERS[provider].label} API key not configured in Settings`,
       0,
       ''
     );
@@ -210,7 +182,7 @@ function parseJsonOrThrow(
     return JSON.parse(resp.body);
   } catch {
     throw new LLMError(
-      `${PROVIDER_LABEL[provider]} returned malformed JSON`,
+      `${PROVIDERS[provider].label} returned malformed JSON`,
       resp.status,
       resp.body
     );
@@ -263,14 +235,14 @@ async function callOpenAICompatible(args: {
     });
   } catch (err) {
     throw new LLMError(
-      `Network error contacting ${PROVIDER_LABEL[provider]}: ${err instanceof Error ? err.message : String(err)}`,
+      `Network error contacting ${PROVIDERS[provider].label}: ${err instanceof Error ? err.message : String(err)}`,
       0,
       ''
     );
   }
   if (!resp.ok) {
     throw new LLMError(
-      `${PROVIDER_LABEL[provider]} request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
+      `${PROVIDERS[provider].label} request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
       resp.status,
       resp.body
     );
@@ -315,7 +287,7 @@ async function callAnthropic(args: {
     });
   } catch (err) {
     throw new LLMError(
-      `Network error contacting ${PROVIDER_LABEL.claude}: ${err instanceof Error ? err.message : String(err)}`,
+      `Network error contacting ${PROVIDERS.claude.label}: ${err instanceof Error ? err.message : String(err)}`,
       0,
       ''
     );
@@ -391,7 +363,7 @@ async function callGemini(args: {
     });
   } catch (err) {
     throw new LLMError(
-      `Network error contacting ${PROVIDER_LABEL.gemini}: ${err instanceof Error ? err.message : String(err)}`,
+      `Network error contacting ${PROVIDERS.gemini.label}: ${err instanceof Error ? err.message : String(err)}`,
       0,
       ''
     );

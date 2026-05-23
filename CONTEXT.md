@@ -84,6 +84,14 @@ tested without live network. Distinct from the **chat() client**, which runs in
 the renderer and only sends chat turns.
 _Avoid_: provider service, llm main.
 
+**Provider registry**:
+The single source of truth for cross-cutting per-**provider** facts — label,
+API-key env var, default base URL — at `src/shared/providers.js`. Authored as
+CommonJS so the main process can `require` it and Vite can bundle it for the
+renderer; both the **chat() client** and the **provider module** consume it, so
+facts like the env-var map can't drift between the two processes again.
+_Avoid_: provider config, constants.
+
 ### Export
 
 **ExportDoc**:
