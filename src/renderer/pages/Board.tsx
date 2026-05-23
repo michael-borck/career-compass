@@ -16,7 +16,7 @@ import { boardReviewToMarkdown } from '@/lib/markdown-export';
 import { boardReviewToDocx } from '@/components/board/board-review-docx';
 import { generateBoardReview } from '../services/board';
 import { extractTextFromFile } from '../services/file-upload';
-import { isConfigured as isLLMConfigured } from '../services/llm';
+import { useGeneration } from '../hooks/useGeneration';
 
 export default function Board() {
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ export default function Board() {
 
   const [framing, setFraming] = useState('');
   const [focusRole, setFocusRole] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Consume any prefill from "Run again" (legacy parity).
   useEffect(() => {
@@ -51,17 +50,10 @@ export default function Board() {
     }
   }
 
-  async function runConvene() {
-    if (!hasProfile) return;
-    if (!(await isLLMConfigured())) {
-      toast.error('Set up an LLM provider first.');
-      navigate('/settings');
-      return;
-    }
-    setLoading(true);
-    try {
+  const { loading, run: runConvene } = useGeneration({
+    generate: () => {
       const state = useSessionStore.getState();
-      const { review, trimmed } = await generateBoardReview({
+      return generateBoardReview({
         framing,
         focusRole: focusRole.trim() || null,
         resume: state.resumeText ?? undefined,
@@ -70,21 +62,12 @@ export default function Board() {
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
       });
-      useSessionStore.getState().setBoardReview(review);
-      if (trimmed) {
-        toast('Context was trimmed to fit the model window.', { icon: 'ℹ️' });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "The board's response wasn't quite right. Try again — sometimes a second attempt works."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    persist: (r) => useSessionStore.getState().setBoardReview(r.review),
+    trimmed: (r) => r.trimmed,
+    errorFallback:
+      "The board's response wasn't quite right. Try again — sometimes a second attempt works.",
+  });
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your current session.')) return;
