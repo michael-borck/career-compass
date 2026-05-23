@@ -16,15 +16,16 @@
 // from two identical inline copies that lived in the get-provider-models and
 // test-connection handlers.
 //
-// NOTE: openrouter is intentionally absent here to preserve the previous
-// behaviour exactly — both inline maps omitted it. llm.ts documents an
-// OPENROUTER_API_KEY fallback, so this is a known main-vs-renderer drift;
-// closing it is part of the (not-yet-done) shared provider-registry work.
+// Kept in sync with llm.ts's ENV_VAR_MAP so the main process (model listing,
+// connection tests) and the renderer (chat) resolve the same keys. openrouter
+// was previously missing here — that drift meant OPENROUTER_API_KEY worked for
+// chat but failed in the Settings model dropdown / test-connection.
 const ENV_VAR = {
   openai: 'OPENAI_API_KEY',
   claude: 'ANTHROPIC_API_KEY',
   groq: 'GROQ_API_KEY',
   gemini: 'GOOGLE_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
 };
 
 function resolveApiKey(provider, config) {
