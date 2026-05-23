@@ -18,7 +18,8 @@
     "postinstall": "electron-builder install-app-deps",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "npm run build && playwright test"
+    "e2e": "npm run build && playwright test",
+    "release": "npm run typecheck && npm test && npm version patch && git push --follow-tags"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

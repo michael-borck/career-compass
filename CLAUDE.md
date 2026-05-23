@@ -31,10 +31,17 @@ npm run test:watch             # vitest in watch mode
 
 ### Release Process
 ```bash
-# Update version in package.json, commit, then:
-git tag v0.x.x
-git push origin v0.x.x        # Triggers GitHub Actions multi-platform build
+# From a clean, up-to-date main. One command bumps the version, commits it,
+# tags it, and pushes — the tag triggers the multi-platform build in
+# release.yml. Runs typecheck + tests first and refuses to release if either
+# fails (release.yml builds but does not test).
+npm run release                # patch bump (0.4.1 -> 0.4.2)
+
+# For a minor/major bump, run the underlying command directly:
+npm version minor && git push --follow-tags
+npm version major && git push --follow-tags
 ```
+See [RELEASE.md](RELEASE.md) for the full flow, artifacts, and code signing.
 
 ## Architecture Overview
 
