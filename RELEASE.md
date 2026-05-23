@@ -8,27 +8,32 @@ The GitHub workflow automatically builds and releases Career Compass for Windows
 
 ### Creating a Release
 
-1. **Update the version** in `package.json`:
-   ```json
-   {
-     "version": "0.2.0"
-   }
-   ```
+From a clean, up-to-date `main`, one command does the whole version dance:
 
-2. **Commit the version change**:
-   ```bash
-   git add package.json
-   git commit -m "Bump version to 0.2.0"
-   git push
-   ```
+```bash
+npm run release
+```
 
-3. **Create and push a version tag**:
-   ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
+This runs `npm run typecheck` and `npm test` first (and stops if either fails —
+`release.yml` builds but does not test), then `npm version patch` bumps
+`package.json`, commits it, and creates a `vX.Y.Z` tag, and finally
+`git push --follow-tags` pushes the commit and the tag. The tag is what
+triggers the build below.
 
-4. **Monitor the workflow**:
+For a minor or major bump, run the underlying command directly:
+
+```bash
+npm version minor && git push --follow-tags   # 0.4.2 -> 0.5.0
+npm version major && git push --follow-tags   # 0.4.2 -> 1.0.0
+```
+
+> Under the hood this is the old manual flow — edit `version` in
+> `package.json`, commit, `git tag vX.Y.Z`, `git push origin vX.Y.Z` — collapsed
+> into one atomic step so the tag and `package.json` version can never drift.
+
+After pushing the tag:
+
+1. **Monitor the workflow**:
    - Go to the [Actions tab](https://github.com/michael-borck/career-compass/actions)
    - Watch the "Build and Release" workflow progress
    - The workflow builds for all three platforms in parallel

@@ -137,7 +137,7 @@ npm run electron:dev
 ### Build for Production
 
 ```bash
-# Build the Next.js app
+# Build the renderer (Vite)
 npm run build
 
 # Package for current platform
@@ -145,6 +145,18 @@ npm run electron:pack
 
 # Build distributables for all platforms
 npm run electron:dist
+```
+
+### Checks & Releasing
+
+```bash
+# Type-check and run the test suite (also gated in CI on every PR)
+npm run typecheck
+npm test
+
+# Cut a release: bumps the version, tags it, and pushes — the tag triggers
+# the multi-platform build. See RELEASE.md for details.
+npm run release
 ```
 
 ### Tech Stack
