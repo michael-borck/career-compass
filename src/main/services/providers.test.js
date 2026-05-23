@@ -124,9 +124,13 @@ describe('listModels', () => {
     });
   });
 
-  it('openrouter: has NO env-var fallback (preserved drift vs llm.ts)', async () => {
+  it('openrouter: falls back to OPENROUTER_API_KEY (matches llm.ts)', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'env-key');
-    await expect(listModels('openrouter', {}, vi.fn())).rejects.toThrow('Secret key required');
+    const fetchImpl = fetchOk({ data: [{ id: 'x' }] });
+    await listModels('openrouter', {}, fetchImpl);
+    expect(fetchImpl).toHaveBeenCalledWith('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: 'Bearer env-key' },
+    });
   });
 });
 
@@ -180,8 +184,13 @@ describe('resolveApiKey', () => {
     expect(resolveApiKey('groq', {})).toBe('g');
   });
 
-  it('returns undefined for providers with no env mapping (openrouter)', () => {
+  it('falls back to OPENROUTER_API_KEY for openrouter (matches llm.ts)', () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'or');
-    expect(resolveApiKey('openrouter', {})).toBeUndefined();
+    expect(resolveApiKey('openrouter', {})).toBe('or');
+  });
+
+  it('returns undefined for providers with no env mapping', () => {
+    expect(resolveApiKey('ollama', {})).toBeUndefined();
+    expect(resolveApiKey('custom', {})).toBeUndefined();
   });
 });
