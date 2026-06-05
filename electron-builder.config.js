@@ -17,6 +17,7 @@ module.exports = {
   files: [
     'dist/**/*',
     'src/main/**/*',
+    'src/shared/**/*',
     'assets/**/*',
     'node_modules/**/*',
     '!node_modules/.cache/**/*',
