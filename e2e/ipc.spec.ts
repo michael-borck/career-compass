@@ -49,8 +49,9 @@ test('settings store + secure storage persist and clear via IPC', async () => {
       const secretAfterDelete = await api.secureStorage.getPassword('e2e-openai');
 
       const version = await api.getVersion();
+      const storageStatus = await api.secureStorage.getStorageStatus();
 
-      return { stored, afterDelete, secret, secretAfterDelete, version };
+      return { stored, afterDelete, secret, secretAfterDelete, version, storageStatus };
     });
 
     expect(result.stored).toEqual({ hello: 'world', n: 42 });
@@ -58,6 +59,11 @@ test('settings store + secure storage persist and clear via IPC', async () => {
     expect(result.secret).toBe('sk-secret-123');
     expect(result.secretAfterDelete).toBeNull();
     expect(result.version).toMatch(/^\d+\.\d+\.\d+/);
+    expect(result.storageStatus).toMatchObject({
+      secure: expect.any(Boolean),
+      encryptionAvailable: expect.any(Boolean),
+      backend: expect.any(String),
+    });
   } finally {
     await app.close();
   }

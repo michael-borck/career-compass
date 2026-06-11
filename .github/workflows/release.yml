@@ -73,9 +73,17 @@ jobs:
           NOTARIZE_APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           NOTARIZE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Build Electron app (Linux)
+      # Two invocations on purpose: building AppImage and deb in one
+      # electron-builder run races on the AppImage runtime download.
+      - name: Build Electron app (Linux AppImage)
         if: matrix.os == 'ubuntu-latest'
-        run: npm run electron:build -- --linux --publish=always
+        run: npm run electron:build -- --linux AppImage --x64 --publish=always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron app (Linux deb)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run electron:build -- --linux deb --x64 --publish=always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -87,6 +95,7 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+            release/*.deb
             release/*.yml
             release/*.yaml
 

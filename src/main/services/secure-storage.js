@@ -51,6 +51,29 @@ function getPassword(store, safeStorage, service) {
   }
 }
 
+// Reports how API keys will actually be protected on this machine. On Linux,
+// Chromium's basic_text backend reports isEncryptionAvailable() === true but
+// "encrypts" with a hardcoded key — obfuscation, not protection — so the
+// selected backend matters, not just availability.
+function getStorageStatus(safeStorage, platform = process.platform) {
+  const encryptionAvailable = safeStorage.isEncryptionAvailable();
+  let backend;
+  if (platform === 'darwin') {
+    backend = 'keychain';
+  } else if (platform === 'win32') {
+    backend = 'dpapi';
+  } else if (typeof safeStorage.getSelectedStorageBackend === 'function') {
+    backend = safeStorage.getSelectedStorageBackend();
+  } else {
+    backend = 'unknown';
+  }
+  return {
+    secure: encryptionAvailable && backend !== 'basic_text',
+    encryptionAvailable,
+    backend,
+  };
+}
+
 function deletePassword(store, service) {
   try {
     store.delete(`secure-${service}`);
@@ -61,4 +84,4 @@ function deletePassword(store, service) {
   }
 }
 
-module.exports = { setPassword, getPassword, deletePassword };
+module.exports = { setPassword, getPassword, deletePassword, getStorageStatus };

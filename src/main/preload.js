@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('secure-set-password', service, password),
     getPassword: (service) => ipcRenderer.invoke('secure-get-password', service),
     deletePassword: (service) => ipcRenderer.invoke('secure-delete-password', service),
+    getStorageStatus: () => ipcRenderer.invoke('secure-get-storage-status'),
   },
 
   // Model management

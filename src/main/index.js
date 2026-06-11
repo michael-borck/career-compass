@@ -3,7 +3,12 @@ const path = require('path');
 const { apiFetch } = require('./services/api-fetch');
 const { parsePdf, parseDocx } = require('./services/file-processors');
 const { getOllamaModels, listModels, testConnection } = require('./services/providers');
-const { setPassword, getPassword, deletePassword } = require('./services/secure-storage');
+const {
+  setPassword,
+  getPassword,
+  deletePassword,
+  getStorageStatus,
+} = require('./services/secure-storage');
 const { isSafeExternalUrl } = require('./services/external-urls');
 const { PROVIDERS } = require('../shared/providers');
 const isDev = process.env.NODE_ENV === 'development';
@@ -357,6 +362,8 @@ ipcMain.handle('secure-set-password', (event, service, password) =>
 ipcMain.handle('secure-get-password', (event, service) => getPassword(store, safeStorage, service));
 
 ipcMain.handle('secure-delete-password', (event, service) => deletePassword(store, service));
+
+ipcMain.handle('secure-get-storage-status', () => getStorageStatus(safeStorage));
 
 // IPC handlers for model management
 ipcMain.handle('get-ollama-models', (event, baseURL) => getOllamaModels(baseURL));

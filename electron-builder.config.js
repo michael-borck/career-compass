@@ -63,12 +63,32 @@ module.exports = {
     createStartMenuShortcut: true,
   },
   linux: {
-    // .deb dropped — electron-builder hits a race condition downloading
-    // the AppImage runtime when both targets are in the same job. AppImage
-    // is more universally compatible anyway.
-    target: [{ target: 'AppImage', arch: ['x64'] }],
+    // Both targets are declared here, but CI builds them in two separate
+    // electron-builder invocations (see release.yml) — building both in one
+    // job hits a race downloading the AppImage runtime. The .deb exists so
+    // apt installs libsecret-1-0, letting safeStorage use the Secret Service
+    // (GNOME Keyring / KWallet) instead of weak basic_text storage.
+    target: [
+      { target: 'AppImage', arch: ['x64'] },
+      { target: 'deb', arch: ['x64'] },
+    ],
     icon: 'assets/icon.png',
     category: 'Office',
     artifactName: 'Career-Compass-${version}-${arch}.${ext}',
+  },
+  deb: {
+    // electron-builder's default dependency list, restated so adding to it is
+    // explicit. libsecret-1-0 is the one that matters for key encryption.
+    depends: [
+      'libgtk-3-0',
+      'libnotify4',
+      'libnss3',
+      'libxss1',
+      'libxtst6',
+      'xdg-utils',
+      'libatspi2.0-0',
+      'libuuid1',
+      'libsecret-1-0',
+    ],
   },
 };

@@ -5,7 +5,7 @@
 // can assert round-trips and key namespacing without real OS crypto.
 
 import { describe, it, expect, vi } from 'vitest';
-import { setPassword, getPassword, deletePassword } from './secure-storage.js';
+import { setPassword, getPassword, deletePassword, getStorageStatus } from './secure-storage.js';
 
 function makeStore(initial = {}) {
   const data = { ...initial };
@@ -101,5 +101,56 @@ describe('deletePassword', () => {
     deletePassword(store, 's');
     expect(store.delete).toHaveBeenCalledWith('secure-s');
     expect(store.delete).toHaveBeenCalledWith('insecure-s');
+  });
+});
+
+describe('getStorageStatus', () => {
+  it('reports secure on macOS and Windows when encryption is available', () => {
+    const ss = makeSafeStorage({ available: true });
+    expect(getStorageStatus(ss, 'darwin')).toEqual({
+      secure: true,
+      encryptionAvailable: true,
+      backend: 'keychain',
+    });
+    expect(getStorageStatus(ss, 'win32')).toEqual({
+      secure: true,
+      encryptionAvailable: true,
+      backend: 'dpapi',
+    });
+  });
+
+  it('reports secure on Linux with a real keyring backend', () => {
+    const ss = makeSafeStorage({ available: true });
+    ss.getSelectedStorageBackend = vi.fn(() => 'gnome_libsecret');
+    expect(getStorageStatus(ss, 'linux')).toEqual({
+      secure: true,
+      encryptionAvailable: true,
+      backend: 'gnome_libsecret',
+    });
+  });
+
+  it('flags basic_text as insecure even though encryption reports available', () => {
+    const ss = makeSafeStorage({ available: true });
+    ss.getSelectedStorageBackend = vi.fn(() => 'basic_text');
+    expect(getStorageStatus(ss, 'linux')).toEqual({
+      secure: false,
+      encryptionAvailable: true,
+      backend: 'basic_text',
+    });
+  });
+
+  it('flags unavailable encryption as insecure', () => {
+    const ss = makeSafeStorage({ available: false });
+    ss.getSelectedStorageBackend = vi.fn(() => 'unknown');
+    expect(getStorageStatus(ss, 'linux')).toEqual({
+      secure: false,
+      encryptionAvailable: false,
+      backend: 'unknown',
+    });
+  });
+
+  it('tolerates an Electron without getSelectedStorageBackend', () => {
+    const ss = makeSafeStorage({ available: true });
+    expect(getStorageStatus(ss, 'linux').backend).toBe('unknown');
   });
 });

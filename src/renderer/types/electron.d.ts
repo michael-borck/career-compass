@@ -39,6 +39,11 @@ declare global {
         setPassword: (service: string, password: string) => Promise<void>;
         getPassword: (service: string) => Promise<string | null>;
         deletePassword: (service: string) => Promise<void>;
+        getStorageStatus: () => Promise<{
+          secure: boolean;
+          encryptionAvailable: boolean;
+          backend: string;
+        }>;
       };
 
       // Provider model listing and connection tests

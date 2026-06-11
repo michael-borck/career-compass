@@ -139,6 +139,27 @@ export default function Settings() {
   const [searchApiKey, setSearchApiKey] = useState('');
   const [searchUrl, setSearchUrl] = useState('');
   const [testingSearch, setTestingSearch] = useState(false);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+
+  // Linux systems without a keyring service get weak (basic_text) or
+  // plaintext key storage — surface that instead of silently degrading.
+  useEffect(() => {
+    const checkStorage = async () => {
+      try {
+        const status = await window.electronAPI.secureStorage.getStorageStatus();
+        if (status && !status.secure) {
+          setStorageWarning(
+            status.encryptionAvailable
+              ? 'Your system has no keyring service, so secret keys are stored with weak, reversible protection. Install or enable GNOME Keyring or KWallet, then re-enter your keys.'
+              : 'Your system has no encryption service, so secret keys are stored in plain text. Install or enable GNOME Keyring or KWallet, then re-enter your keys.'
+          );
+        }
+      } catch {
+        // Handler unavailable (e.g. outdated preload during dev) — stay quiet.
+      }
+    };
+    void checkStorage();
+  }, []);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -389,6 +410,13 @@ export default function Settings() {
               Choose how Career Compass connects to AI
             </p>
           </div>
+
+          {storageWarning && (
+            <div className='border border-amber-300 bg-amber-50 text-amber-900 rounded-lg p-4 text-[var(--text-sm)]'>
+              <span className='font-semibold'>Key storage warning: </span>
+              {storageWarning}
+            </div>
+          )}
 
           <div className='bg-paper border border-border rounded-lg p-8'>
             <h2 className='text-[var(--text-xl)] font-semibold mb-4 text-ink'>AI provider</h2>
