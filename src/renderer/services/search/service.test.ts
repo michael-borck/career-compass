@@ -53,7 +53,7 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
     apiFetch,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (globalThis as any).window = { electronAPI: api };
   return api;
 }
@@ -313,7 +313,7 @@ describe('runEngineSearch', () => {
   it('returns [] for an unknown engine via default branch', async () => {
     mockElectronAPI();
     const results = await runEngineSearch(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       { engine: 'no-such-engine' as any, apiKey: '', url: '' },
       'q'
     );

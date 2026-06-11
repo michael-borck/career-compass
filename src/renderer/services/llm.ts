@@ -193,7 +193,7 @@ function parseOpenAIResponse(
   provider: Provider,
   resp: { status: number; body: string }
 ): ChatResult {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const data = parseJsonOrThrow(provider, resp) as any;
   const content: string = data?.choices?.[0]?.message?.content ?? '';
   const usage = data?.usage
@@ -299,7 +299,7 @@ async function callAnthropic(args: {
       resp.body
     );
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const data = parseJsonOrThrow('claude', resp) as any;
   const textBlock = Array.isArray(data?.content)
     ? data.content.find((b: { type?: string }) => b?.type === 'text')
@@ -375,7 +375,7 @@ async function callGemini(args: {
       resp.body
     );
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const data = parseJsonOrThrow('gemini', resp) as any;
   const parts: Array<{ text?: string }> =
     data?.candidates?.[0]?.content?.parts ?? [];

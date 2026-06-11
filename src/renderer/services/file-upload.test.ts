@@ -6,7 +6,7 @@ import {
 } from './file-upload';
 
 beforeEach(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (globalThis as any).window = {
     electronAPI: {
       parsePdf: vi.fn(async () => 'pdf text'),
@@ -61,7 +61,7 @@ describe('extractTextFromFile', () => {
     const result = await extractTextFromFile(fakeFile('resume.pdf'));
     expect(result.text).toBe('pdf text');
     expect(result.filename).toBe('resume.pdf');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const api = (window as any).electronAPI;
     expect(api.parsePdf).toHaveBeenCalledTimes(1);
     // arg should be a Uint8Array
@@ -73,7 +73,7 @@ describe('extractTextFromFile', () => {
     const r2 = await extractTextFromFile(fakeFile('resume.doc'));
     expect(r1.text).toBe('docx text');
     expect(r2.text).toBe('docx text');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     expect((window as any).electronAPI.parseDocx).toHaveBeenCalledTimes(2);
   });
 
@@ -85,7 +85,7 @@ describe('extractTextFromFile', () => {
       fakeFile('notes.md', '  hello\n\n\nworld  ')
     );
     expect(result.text).toBe('hello world');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const api = (window as any).electronAPI;
     expect(api.parsePdf).not.toHaveBeenCalled();
     expect(api.parseDocx).not.toHaveBeenCalled();

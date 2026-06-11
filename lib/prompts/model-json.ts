@@ -15,7 +15,7 @@
 // typeof/Array.isArray guards, then reads fields off it directly. Tightening to
 // `unknown` would require adding narrowing to all of them — out of scope for the
 // cleaner consolidation.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function parseModelJson(raw: string): any {
   let cleaned = raw.trim();
   if (cleaned.startsWith('```')) {

@@ -37,7 +37,7 @@ describe('parseDocx', () => {
     if (!existsSync(docxFixture)) return;
     const text = await parseDocx(readFileSync(docxFixture));
     // normalize() collapses runs of whitespace to single spaces and trims
-    expect(text).not.toMatch(/  /);
+    expect(text).not.toMatch(/ {2}/);
     expect(text).toBe(text.trim());
   });
 

@@ -1,7 +1,8 @@
 name: CI
 
-# Gate for pull requests (and pushes to main after merge). Runs the same two
-# checks you run locally: the TypeScript type gate and the vitest suite.
+# Gate for pull requests (and pushes to main after merge). Runs the same
+# checks you run locally: the TypeScript type gate, ESLint, Prettier, and
+# the vitest suite.
 # Builds/releases stay in release.yml (tag-triggered) — this is just the safety
 # net that keeps main green.
 on:
@@ -27,5 +28,9 @@ jobs:
       - run: npm ci
 
       - run: npm run typecheck
+
+      - run: npm run lint
+
+      - run: npm run format:check
 
       - run: npm test

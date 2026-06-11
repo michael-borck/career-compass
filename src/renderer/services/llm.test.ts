@@ -59,7 +59,7 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
     apiFetch: vi.fn(async () => apiFetchResponse),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (globalThis as any).window = { electronAPI: api };
   return api;
 }

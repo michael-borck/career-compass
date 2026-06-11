@@ -291,11 +291,11 @@ if (!isDev && autoUpdater) {
     console.log('Checking for update...');
   });
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', () => {
     console.log('Update available.');
   });
 
-  autoUpdater.on('update-not-available', (info) => {
+  autoUpdater.on('update-not-available', () => {
     console.log('Update not available.');
   });
 
@@ -310,7 +310,7 @@ if (!isDev && autoUpdater) {
     console.log(log_message);
   });
 
-  autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.on('update-downloaded', () => {
     console.log('Update downloaded');
     autoUpdater.quitAndInstall();
   });
@@ -331,7 +331,7 @@ ipcMain.handle('store-delete', (event, key) => {
   store.delete(key);
 });
 
-ipcMain.handle('store-clear', (event) => {
+ipcMain.handle('store-clear', () => {
   store.clear();
 });
 

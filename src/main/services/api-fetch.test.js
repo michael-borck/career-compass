@@ -9,7 +9,7 @@
 // resolve/reject behavior — including the timeout abort that motivated
 // these changes.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { _apiFetchWithNet, MAX_RESPONSE_BYTES } from './api-fetch.js';
 
