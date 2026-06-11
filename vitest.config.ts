@@ -13,6 +13,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Legacy components still import next/link + next/navigation; the same
+      // shims vite.config.ts wires for the app build.
+      'next/navigation': path.resolve(__dirname, './src/renderer/shims/next-navigation.ts'),
+      'next/link': path.resolve(__dirname, './src/renderer/shims/next-link.tsx'),
       '@': path.resolve(__dirname, '.'),
     },
   },
