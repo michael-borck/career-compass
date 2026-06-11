@@ -99,4 +99,19 @@ describe('extractTextFromFile', () => {
   it('throws on missing extension', async () => {
     await expect(extractTextFromFile(fakeFile('noext'))).rejects.toThrow(/Unsupported file type/);
   });
+
+  it('rejects oversized files before reading or crossing IPC', async () => {
+    // A File-shaped stub — allocating a real 20MB+ payload is pointless when
+    // the check reads only .size, and arrayBuffer() throwing proves the
+    // rejection happens before any bytes are read.
+    const oversized = {
+      name: 'huge.pdf',
+      size: 20 * 1024 * 1024 + 1,
+      arrayBuffer: () => {
+        throw new Error('should not be read');
+      },
+    } as unknown as File;
+    await expect(extractTextFromFile(oversized)).rejects.toThrow(/too large/);
+    expect((window as any).electronAPI.parsePdf).not.toHaveBeenCalled();
+  });
 });

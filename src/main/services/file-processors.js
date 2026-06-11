@@ -4,6 +4,15 @@
 
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
+const { MAX_FILE_BYTES } = require('../../shared/limits');
+
+function assertWithinLimit(buffer) {
+  if (buffer.length > MAX_FILE_BYTES) {
+    throw new Error(
+      `File is too large (${Math.round(buffer.length / 1024 / 1024)}MB; limit is ${MAX_FILE_BYTES / 1024 / 1024}MB)`
+    );
+  }
+}
 
 // Port of lib/utils.ts normalizeText. Applied inside the parsers so callers
 // get the same whitespace-cleaned text the legacy /api/parsePdf route did.
@@ -17,6 +26,7 @@ async function parsePdf(buffer) {
   if (!Buffer.isBuffer(buffer)) {
     throw new TypeError('parsePdf requires a Node Buffer');
   }
+  assertWithinLimit(buffer);
   const data = await pdfParse(buffer);
   return normalize(data.text);
 }
@@ -25,6 +35,7 @@ async function parseDocx(buffer) {
   if (!Buffer.isBuffer(buffer)) {
     throw new TypeError('parseDocx requires a Node Buffer');
   }
+  assertWithinLimit(buffer);
   const result = await mammoth.extractRawText({ buffer });
   return normalize(result.value);
 }

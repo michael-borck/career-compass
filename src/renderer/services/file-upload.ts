@@ -6,6 +6,7 @@
 // Supported extensions mirror lib/file-processors.ts plus .markdown and .txt.
 
 import { normalizeText } from './text';
+import { MAX_FILE_BYTES } from '../../shared/limits';
 
 export type FileUploadResult = { text: string; filename: string };
 
@@ -27,6 +28,13 @@ export function getSupportedExtensions(): readonly string[] {
 
 export async function extractTextFromFile(file: File): Promise<FileUploadResult> {
   const ext = extOf(file.name);
+  // Pre-flight check before reading the bytes; the main process enforces
+  // the same limit on its side of the IPC bridge.
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error(
+      `File is too large (${Math.round(file.size / 1024 / 1024)}MB; limit is ${MAX_FILE_BYTES / 1024 / 1024}MB)`
+    );
+  }
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (ext === '.pdf') {

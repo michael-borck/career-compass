@@ -3,9 +3,18 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parsePdf, parseDocx } from './file-processors.js';
+import { MAX_FILE_BYTES } from '../../shared/limits.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, '__fixtures__');
+
+describe('file size limit', () => {
+  it('rejects oversized buffers in both parsers without parsing', async () => {
+    const oversized = Buffer.alloc(MAX_FILE_BYTES + 1);
+    await expect(parsePdf(oversized)).rejects.toThrow(/too large/);
+    await expect(parseDocx(oversized)).rejects.toThrow(/too large/);
+  });
+});
 
 describe('parsePdf', () => {
   it('rejects non-Buffer input', async () => {
