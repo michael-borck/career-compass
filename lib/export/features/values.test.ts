@@ -13,7 +13,13 @@ const compass: ValuesCompass = {
       evidence: 'You left structured roles twice.',
       reflectionQuestion: 'Where do you need guardrails?',
     },
-    { name: 'Impact', rank: 2, description: 'Work that lands.', evidence: '', reflectionQuestion: '' },
+    {
+      name: 'Impact',
+      rank: 2,
+      description: 'Work that lands.',
+      evidence: '',
+      reflectionQuestion: '',
+    },
   ],
   tensions: ['Autonomy vs stability'],
 };

@@ -42,7 +42,13 @@ describe('interviewFeedbackToExportDoc', () => {
   it('skips optional improvement fields and renders sources when provided', () => {
     const md = toMarkdown(
       interviewFeedbackToExportDoc(
-        { ...feedback, strengths: [], improvements: [feedback.improvements[1]], perPhase: [], nextSteps: [] },
+        {
+          ...feedback,
+          strengths: [],
+          improvements: [feedback.improvements[1]],
+          perPhase: [],
+          nextSteps: [],
+        },
         [{ title: 'Interview guide', url: 'https://example.com/i', domain: 'example.com' }]
       )
     );

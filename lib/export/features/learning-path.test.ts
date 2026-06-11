@@ -37,10 +37,9 @@ describe('learningPathToExportDoc', () => {
 
   it('omits empty optional sections and renders sources when provided', () => {
     const md = toMarkdown(
-      learningPathToExportDoc(
-        { ...path, prerequisites: [], portfolioProject: '', caveats: [] },
-        [{ title: 'Curriculum', url: 'https://example.com/c', domain: 'example.com' }]
-      )
+      learningPathToExportDoc({ ...path, prerequisites: [], portfolioProject: '', caveats: [] }, [
+        { title: 'Curriculum', url: 'https://example.com/c', domain: 'example.com' },
+      ])
     );
     expect(md).not.toContain('Before you start');
     expect(md).not.toContain('Portfolio project');
