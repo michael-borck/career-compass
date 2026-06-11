@@ -1,3 +1,4 @@
+// @ts-check
 // Limits shared between the renderer (pre-flight checks with friendly
 // errors) and the main process (the enforcing boundary — renderer checks
 // can be bypassed). CommonJS so src/main can require() it; Vite handles

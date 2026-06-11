@@ -23,11 +23,19 @@
       "next/link": ["./src/renderer/shims/next-link"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "src/main/**/*.js", "src/shared/**/*.js"],
   // vite.config.ts and vitest.config.ts are excluded from the typecheck
   // program because they import @vitejs/plugin-react, whose generated .d.ts
   // uses a string-literal export alias (`as "module.exports"`) that
   // TypeScript 5.4 cannot PARSE — a syntax error skipLibCheck can't suppress.
   // They are the only files pulling that dep in.
-  "exclude": ["node_modules", "vite.config.ts", "vitest.config.ts"]
+  // The main-process *.test.js files are ESM run through vitest's transform,
+  // not plain Node CommonJS — they stay out of the tsc program.
+  "exclude": [
+    "node_modules",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "src/main/**/*.test.js",
+    "src/shared/**/*.test.js"
+  ]
 }

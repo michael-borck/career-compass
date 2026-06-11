@@ -1,3 +1,4 @@
+// @ts-check
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = require('electron');
 const path = require('path');
 const { apiFetch } = require('./services/api-fetch');
@@ -30,6 +31,7 @@ const ALLOWED_ENV_VARS = new Set(
 );
 
 // Import electron-store - only available in Electron context
+/** @type {any} */
 let Store;
 try {
   const ElectronStore = require('electron-store');
@@ -44,6 +46,7 @@ try {
 // out/ dir) would otherwise throw at module load and crash the app before
 // any window appears. Auto-update is non-essential — degrade to "no updates"
 // rather than bricking startup. All autoUpdater usages guard on truthiness.
+/** @type {import('electron-updater').AppUpdater | undefined} */
 let autoUpdater;
 if (!isDev) {
   try {
@@ -54,9 +57,11 @@ if (!isDev) {
 }
 
 // Keep a global reference of the window object
-let mainWindow;
+/** @type {import('electron').BrowserWindow | null} */
+let mainWindow = null;
 
 // Initialize electron-store
+/** @type {ReturnType<typeof createFallbackStore>} */
 let store;
 if (Store) {
   try {
@@ -82,6 +87,13 @@ if (Store) {
   store = createFallbackStore();
 }
 
+/**
+ * @returns {{ get: (key: string, defaultValue?: unknown) => unknown,
+ *             set: (key: string, value?: unknown) => void,
+ *             delete: (key: string) => void,
+ *             clear: () => void,
+ *             path?: string }}
+ */
 function createFallbackStore() {
   return {
     get: (key, defaultValue) => defaultValue,
@@ -99,10 +111,11 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     icon: path.join(__dirname, '../../assets/icon.png'),
+    // (enableRemoteModule was removed here — the remote module itself was
+    // removed from Electron in v14; the flag had been a silent no-op.)
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       webSecurity: true,
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -142,8 +155,17 @@ function createWindow() {
   }
 }
 
+// Navigate the renderer's hash router from a native menu item.
+/** @param {string} route */
+function navigateRenderer(route) {
+  void mainWindow?.webContents
+    .executeJavaScript(`window.location.hash = ${JSON.stringify(route)};`)
+    .catch((err) => console.error('Menu navigation failed:', err));
+}
+
 // Create application menu
 function createMenu() {
+  /** @type {import('electron').MenuItemConstructorOptions[]} */
   const template = [
     {
       label: 'Career Compass',
@@ -151,7 +173,8 @@ function createMenu() {
         {
           label: 'About Career Compass',
           click: () => {
-            dialog.showMessageBox(mainWindow, {
+            if (!mainWindow) return;
+            void dialog.showMessageBox(mainWindow, {
               type: 'info',
               title: 'About Career Compass',
               message: 'Career Compass',
@@ -165,11 +188,7 @@ function createMenu() {
         {
           label: 'Settings',
           accelerator: 'CmdOrCtrl+,',
-          click: () => {
-            mainWindow.webContents.executeJavaScript(`
-              window.location.hash = '/settings';
-            `);
-          },
+          click: () => navigateRenderer('/settings'),
         },
         { type: 'separator' },
         {
@@ -190,7 +209,9 @@ function createMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectall' },
+        // Typed menu roles caught this: Electron's role is camelCase
+        // 'selectAll' ('selectall' relied on undocumented normalization).
+        { role: 'selectAll' },
       ],
     },
     {
@@ -213,29 +234,17 @@ function createMenu() {
         {
           label: 'Home',
           accelerator: 'CmdOrCtrl+H',
-          click: () => {
-            mainWindow.webContents.executeJavaScript(`
-              window.location.hash = '/';
-            `);
-          },
+          click: () => navigateRenderer('/'),
         },
         {
           label: 'Explore Careers',
           accelerator: 'CmdOrCtrl+E',
-          click: () => {
-            mainWindow.webContents.executeJavaScript(`
-              window.location.hash = '/careers';
-            `);
-          },
+          click: () => navigateRenderer('/careers'),
         },
         {
           label: 'About',
           accelerator: 'CmdOrCtrl+I',
-          click: () => {
-            mainWindow.webContents.executeJavaScript(`
-              window.location.hash = '/about';
-            `);
-          },
+          click: () => navigateRenderer('/about'),
         },
       ],
     },
@@ -284,15 +293,18 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Security: Prevent new window creation
-app.on('web-contents-created', (event, contents) => {
-  contents.on('new-window', (event, navigationUrl) => {
-    event.preventDefault();
-    if (isSafeExternalUrl(navigationUrl)) {
-      shell.openExternal(navigationUrl);
+// Security: no in-app window creation, ever — safe external URLs go to the
+// system browser. Registered on every webContents (defense-in-depth beyond
+// the main window's handler in createWindow). The old 'new-window' event
+// this replaced was removed from Electron in v22 and had been dead code.
+app.on('web-contents-created', (_event, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url);
     } else {
-      console.warn('Blocked external open of unsafe URL:', navigationUrl);
+      console.warn('Blocked external open of unsafe URL:', url);
     }
+    return { action: 'deny' };
   });
 });
 

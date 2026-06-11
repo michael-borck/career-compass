@@ -1,3 +1,4 @@
+// @ts-check
 // Guard for shell.openExternal. Window-open requests originate from
 // renderer content — including links inside LLM-generated output — so
 // only hand plain web/mail URLs to the OS. Anything else (file://,
@@ -5,6 +6,7 @@
 
 const SAFE_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
+/** @param {string} url */
 function isSafeExternalUrl(url) {
   let parsed;
   try {

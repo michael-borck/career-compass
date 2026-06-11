@@ -1,3 +1,4 @@
+// @ts-check
 // Main-process provider operations: model listing + connection testing per
 // LLM provider. Extracted verbatim from the ipcMain handlers in index.js so
 // the 7-provider HTTP logic becomes a testable seam.
@@ -21,6 +22,13 @@
 // is what previously let OPENROUTER_API_KEY work for chat but not here.
 const { PROVIDERS } = require('../../shared/providers');
 
+/** @typedef {import('../../shared/providers').Provider} Provider */
+/** @typedef {{ apiKey?: string, baseURL?: string }} ProviderConfig */
+
+/**
+ * @param {Provider} provider
+ * @param {ProviderConfig} [config]
+ */
 function resolveApiKey(provider, config) {
   if (config && config.apiKey) return config.apiKey;
   const envVar = PROVIDERS[provider] && PROVIDERS[provider].envVar;
@@ -28,6 +36,10 @@ function resolveApiKey(provider, config) {
 }
 
 // Fetch installed models from a local Ollama server (legacy get-ollama-models).
+/**
+ * @param {string} [baseURL]
+ * @param {typeof fetch} [fetchImpl]
+ */
 async function getOllamaModels(baseURL, fetchImpl = fetch) {
   try {
     const url = baseURL || 'http://localhost:11434';
@@ -35,6 +47,7 @@ async function getOllamaModels(baseURL, fetchImpl = fetch) {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+    /** @type {{ models?: Array<{ name: string, size?: number }> }} */
     const data = await response.json();
     return data.models || [];
   } catch (error) {
@@ -45,6 +58,11 @@ async function getOllamaModels(baseURL, fetchImpl = fetch) {
 
 // List available models for any provider (legacy get-provider-models).
 // Returns Array<{ id, name, size? }>. Throws on unreachable/unauthorized.
+/**
+ * @param {Provider} provider
+ * @param {ProviderConfig} config
+ * @param {typeof fetch} [fetchImpl]
+ */
 async function listModels(provider, config, fetchImpl = fetch) {
   try {
     const apiKey = resolveApiKey(provider, config);
@@ -54,6 +72,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
         const url = (config.baseURL || 'http://localhost:11434').replace(/\/v1\/?$/, '');
         const response = await fetchImpl(`${url}/api/tags`);
         if (!response.ok) throw new Error(`Ollama not reachable`);
+        /** @type {{ models?: Array<{ name: string, size?: number }> }} */
         const data = await response.json();
         return (data.models || []).map((m) => ({ id: m.name, name: m.name, size: m.size }));
       }
@@ -64,6 +83,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
+        /** @type {{ data?: Array<{ id: string }> }} */
         const data = await response.json();
         const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
         return models.map((m) => ({ id: m.id, name: m.id }));
@@ -78,6 +98,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
           },
         });
         if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+        /** @type {{ data?: Array<{ id: string }> }} */
         const data = await response.json();
         const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
         return models.map((m) => ({ id: m.id, name: m.id }));
@@ -89,6 +110,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`Groq error: ${response.status}`);
+        /** @type {{ data?: Array<{ id: string }> }} */
         const data = await response.json();
         const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
         return models.map((m) => ({ id: m.id, name: m.id }));
@@ -100,6 +122,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
           `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
         );
         if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+        /** @type {{ models?: Array<{ name: string }> }} */
         const data = await response.json();
         const models = (data.models || []).sort((a, b) => a.name.localeCompare(b.name));
         return models.map((m) => ({
@@ -114,6 +137,7 @@ async function listModels(provider, config, fetchImpl = fetch) {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`);
+        /** @type {{ data?: Array<{ id: string }> }} */
         const data = await response.json();
         const models = (data.data || []).sort((a, b) => a.id.localeCompare(b.id));
         return models.map((m) => ({ id: m.id, name: m.id }));
@@ -122,10 +146,12 @@ async function listModels(provider, config, fetchImpl = fetch) {
       case 'custom': {
         const baseURL = config.baseURL;
         if (!baseURL) throw new Error('Server address required');
+        /** @type {Record<string, string>} */
         const headers = {};
         if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
         const response = await fetchImpl(`${baseURL}/models`, { headers });
         if (!response.ok) throw new Error(`Custom server error: ${response.status}`);
+        /** @type {{ data?: Array<{ id?: string, name?: string }>, models?: Array<{ id?: string, name?: string }> }} */
         const data = await response.json();
         const models = (data.data || data.models || []).sort((a, b) =>
           (a.id || a.name || '').localeCompare(b.id || b.name || '')
@@ -144,6 +170,11 @@ async function listModels(provider, config, fetchImpl = fetch) {
 
 // Test connectivity + credentials for any provider (legacy test-connection).
 // Returns { success: boolean, error: string | null } — never throws.
+/**
+ * @param {Provider} provider
+ * @param {ProviderConfig} config
+ * @param {typeof fetch} [fetchImpl]
+ */
 async function testConnection(provider, config, fetchImpl = fetch) {
   try {
     const apiKey = resolveApiKey(provider, config);
@@ -259,6 +290,7 @@ async function testConnection(provider, config, fetchImpl = fetch) {
           return { success: false, error: 'Server address is required' };
         }
         try {
+          /** @type {Record<string, string>} */
           const customHeaders = {};
           if (apiKey) customHeaders['Authorization'] = `Bearer ${apiKey}`;
           const customResponse = await fetchImpl(`${customURL}/models`, { headers: customHeaders });
@@ -267,7 +299,10 @@ async function testConnection(provider, config, fetchImpl = fetch) {
             error: customResponse.ok ? null : `Server returned ${customResponse.status}`,
           };
         } catch (e) {
-          return { success: false, error: `Cannot reach ${customURL}: ${e.message}` };
+          return {
+            success: false,
+            error: `Cannot reach ${customURL}: ${e instanceof Error ? e.message : String(e)}`,
+          };
         }
       }
 
@@ -275,7 +310,7 @@ async function testConnection(provider, config, fetchImpl = fetch) {
         return { success: false, error: `Unknown provider: ${provider}` };
     }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 

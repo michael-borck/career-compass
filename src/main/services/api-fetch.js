@@ -1,16 +1,16 @@
+// @ts-check
 // Renderer-callable HTTP fetch via Electron's net module. Bypasses CORS
 // and preflight because main process is Node, not a browser origin.
 // Returns the response body as a UTF-8 string (sufficient for JSON APIs);
 // extend with binary support only when a caller needs it.
 //
 // Timeout: when `timeoutMs` is provided, the call rejects with
-// "Request timed out after <ms>ms" and the underlying request is
-// aborted. Electron's ClientRequest.setTimeout fires the `timeout`
-// event after `ms` of inactivity but does NOT abort by itself, so we
-// abort explicitly in the handler. A backup Node setTimeout is also
-// scheduled to guarantee a hung connection never blocks the renderer
-// for longer than `timeoutMs`, regardless of platform quirks. See
-// https://www.electronjs.org/docs/latest/api/client-request#requestsettimeoutms-callback
+// "Request timed out after <ms>ms" and the underlying request is aborted.
+// The plain Node setTimeout is the mechanism that actually fires: typing
+// this module surfaced that Electron's net.ClientRequest has no setTimeout
+// or 'timeout' event (those are Node http API members). The setTimeout
+// probe + 'timeout' listener stay as zero-cost defense in case a future
+// Electron adds them.
 //
 // Test seam: `_apiFetchWithNet(net, args)` accepts a net module so the
 // unit tests in api-fetch.test.js can supply a fake (Electron's `net`
@@ -28,6 +28,30 @@ const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 // default 'follow' mode would chase them indefinitely.
 const MAX_REDIRECTS = 5;
 
+/**
+ * @typedef {Object} ApiFetchArgs
+ * @property {string} url
+ * @property {string} [method]
+ * @property {Record<string, string>} [headers]
+ * @property {string | object | null} [body]
+ * @property {number} [timeoutMs]
+ */
+
+/**
+ * Electron's ClientRequest plus the Node-style timeout members this code
+ * probes for defensively. They are NOT part of Electron's documented net API
+ * (typing this surfaced that) — which is why the runtime typeof guard exists
+ * and the backup Node timer below is the mechanism that actually fires.
+ * @typedef {import('electron').ClientRequest & {
+ *   setTimeout?: (ms: number) => void,
+ *   on: (event: 'timeout', listener: () => void) => void,
+ * }} TimeoutCapableRequest
+ */
+
+/**
+ * @param {{ request: (options: object) => TimeoutCapableRequest }} net
+ * @param {ApiFetchArgs} args
+ */
 function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeoutMs }) {
   return new Promise((resolve, reject) => {
     // Only plain web schemes. The renderer is trusted code, but this handler
@@ -52,7 +76,7 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
       // below instead of being followed without limit.
       request = net.request({ method, url, redirect: 'manual' });
     } catch (err) {
-      reject(new Error(`Invalid request: ${err.message}`));
+      reject(new Error(`Invalid request: ${err instanceof Error ? err.message : String(err)}`));
       return;
     }
 
@@ -61,6 +85,7 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
     }
 
     let settled = false;
+    /** @type {NodeJS.Timeout | null} */
     let timeoutHandle = null;
 
     const fireTimeout = () => {
@@ -82,15 +107,13 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
     };
 
     if (typeof timeoutMs === 'number' && timeoutMs > 0) {
-      // Primary path: ClientRequest.setTimeout (Electron 14+) emits 'timeout'
-      // after `ms` of inactivity. It does NOT abort the request — that is
-      // our job in the handler.
+      // Defensive probe — see the module header: Electron's ClientRequest
+      // has neither setTimeout nor a 'timeout' event, so in practice the
+      // Node timer below is what fires.
       request.on('timeout', fireTimeout);
       if (typeof request.setTimeout === 'function') {
         request.setTimeout(timeoutMs);
       }
-      // Backup: a plain Node setTimeout in case ClientRequest.setTimeout
-      // isn't honored on this Electron build. Cheap insurance.
       timeoutHandle = setTimeout(fireTimeout, timeoutMs);
     }
 
@@ -112,6 +135,7 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
       request.followRedirect();
     });
 
+    /** @type {Buffer[]} */
     const chunks = [];
     let receivedBytes = 0;
     request.on('response', (response) => {
@@ -172,11 +196,13 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
   });
 }
 
+/** @param {ApiFetchArgs} args */
 function apiFetch(args) {
   // Inside Electron, `require('electron')` returns the API object with
   // `net`. In a plain Node test process it returns the binary path string;
-  // tests should call `_apiFetchWithNet` directly with a fake net.
-  return _apiFetchWithNet(electron.net, args);
+  // tests should call `_apiFetchWithNet` directly with a fake net. The cast
+  // widens Electron's Net to the timeout-probing request shape above.
+  return _apiFetchWithNet(/** @type {any} */ (electron.net), args);
 }
 
 module.exports = { apiFetch, _apiFetchWithNet, MAX_RESPONSE_BYTES, MAX_REDIRECTS };

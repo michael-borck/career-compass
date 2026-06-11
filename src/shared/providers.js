@@ -1,3 +1,4 @@
+// @ts-check
 // Shared provider registry — the single source of truth for the per-provider
 // facts that BOTH the renderer's chat() client (src/renderer/services/llm.ts)
 // and the main process's provider module (src/main/services/providers.js) need.
@@ -16,8 +17,8 @@
 // were drifting between the two (the env-var map drifted on openrouter) live
 // here so they can't diverge again.
 //
-// @typedef {'ollama'|'openai'|'claude'|'groq'|'gemini'|'openrouter'|'custom'} Provider
-// @typedef {{ label: string, envVar: string | null, defaultBaseURL: string | null }} ProviderDescriptor
+/** @typedef {'ollama'|'openai'|'claude'|'groq'|'gemini'|'openrouter'|'custom'} Provider */
+/** @typedef {{ label: string, envVar: string | null, defaultBaseURL: string | null }} ProviderDescriptor */
 
 /** @type {Record<Provider, ProviderDescriptor>} */
 const PROVIDERS = {
