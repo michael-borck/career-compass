@@ -29,15 +29,34 @@ type CardDef = {
   preNavigate?: () => void;
 };
 
-function ActionCard({ def, onClick }: { def: CardDef; onClick: () => void }) {
+function ActionCard({
+  def,
+  onClick,
+  capstone = false,
+}: {
+  def: CardDef;
+  onClick: () => void;
+  capstone?: boolean;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={def.hover}
-      className="border border-border rounded-lg bg-paper p-5 hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer text-left w-full"
+      className={`border rounded-lg bg-paper p-5 transition-colors duration-[250ms] cursor-pointer text-left w-full ${
+        capstone
+          ? 'border-accent/60 hover:border-accent'
+          : 'border-border hover:border-ink-muted'
+      }`}
     >
-      <div className="text-accent mb-3">{def.icon}</div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-accent">{def.icon}</div>
+        {capstone && (
+          <span className="text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-accent">
+            Capstone
+          </span>
+        )}
+      </div>
       <h3 className="text-[var(--text-base)] font-semibold text-ink mb-1">{def.title}</h3>
       <p className="text-[var(--text-sm)] text-ink-muted leading-snug">{def.description}</p>
     </button>
@@ -58,6 +77,14 @@ export default function ActionCards() {
       preNavigate: () => store.setCareers(null),
     },
     {
+      icon: <Factory className="w-5 h-5" />,
+      title: 'Explore an industry',
+      description: 'What it’s like to work in a field.',
+      hover: 'Pick an industry and get key roles, entry points, growth areas, and honest challenges.',
+      path: '/industry',
+      preNavigate: () => store.setIndustryExploration(null),
+    },
+    {
       icon: <Columns3 className="w-5 h-5" />,
       title: 'Compare careers',
       description: 'Side-by-side across seven dimensions.',
@@ -67,21 +94,6 @@ export default function ActionCards() {
         store.setComparePrefill({
           seedTarget: store.jobAdvert.trim() || store.jobTitle.trim(),
         }),
-    },
-    {
-      icon: <Factory className="w-5 h-5" />,
-      title: 'Explore an industry',
-      description: 'What it’s like to work in a field.',
-      hover: 'Pick an industry and get key roles, entry points, growth areas, and honest challenges.',
-      path: '/industry',
-      preNavigate: () => store.setIndustryExploration(null),
-    },
-    {
-      icon: <MessageCircle className="w-5 h-5" />,
-      title: 'Start chatting',
-      description: 'Talk with the career advisor.',
-      hover: 'Open-ended. Good if you are not sure where to begin.',
-      path: '/chat',
     },
   ];
 
@@ -185,6 +197,8 @@ export default function ActionCards() {
     navigate(def.path);
   }
 
+  // The last card in each column is the pillar's capstone — it synthesizes
+  // the activities above it and gets a distinct visual treatment.
   function renderColumn(label: string, cards: CardDef[]) {
     return (
       <div>
@@ -192,8 +206,13 @@ export default function ActionCards() {
           <span>{label}</span>
         </div>
         <div className="flex flex-col gap-3">
-          {cards.map((def) => (
-            <ActionCard key={def.title} def={def} onClick={() => handleClick(def)} />
+          {cards.map((def, i) => (
+            <ActionCard
+              key={def.title}
+              def={def}
+              capstone={i === cards.length - 1}
+              onClick={() => handleClick(def)}
+            />
           ))}
         </div>
       </div>
@@ -201,11 +220,25 @@ export default function ActionCards() {
   }
 
   return (
-    <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-6">
-      {renderColumn('Discover', discover)}
-      {renderColumn('Assess', assess)}
-      {renderColumn('Reflect', reflect)}
-      {renderColumn('Materials', materials)}
+    <div className="w-full max-w-5xl mt-6">
+      <button
+        type="button"
+        onClick={() => navigate('/chat')}
+        title="Open-ended conversation with the career advisor. It can turn the chat into a profile and seed other activities."
+        className="w-full mb-8 border border-border rounded-lg bg-paper px-5 py-4 hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer flex items-center justify-center gap-3 text-left"
+      >
+        <MessageCircle className="w-5 h-5 text-accent shrink-0" />
+        <span className="text-[var(--text-base)] text-ink">
+          <span className="font-semibold">Not sure where to start?</span>{' '}
+          <span className="text-ink-muted">Chat with the career advisor</span>
+        </span>
+      </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {renderColumn('Discover', discover)}
+        {renderColumn('Assess', assess)}
+        {renderColumn('Reflect', reflect)}
+        {renderColumn('Materials', materials)}
+      </div>
     </div>
   );
 }

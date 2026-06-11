@@ -25,17 +25,23 @@ const ROUTES = [
   '/about',
 ];
 
-test('landing renders the hero, footer, and all 16 action cards', async () => {
+test('landing renders the hero, chat banner, and all 15 action cards', async () => {
   const { app, window } = await launchCareerCompass();
   try {
     await expect(window.locator('h1', { hasText: 'Your Career' })).toBeVisible();
     await expect(window.locator('footer', { hasText: 'Buddy suite' })).toBeVisible();
     await expect(window.locator('header').getByText('Career Compass')).toBeVisible();
 
+    // Chat sits above the pillars as its own entry point.
+    await expect(window.getByText('Not sure where to start?')).toBeVisible();
+
     const actionCards = window.locator('button[title]').filter({
       has: window.locator('h3'),
     });
-    await expect(actionCards).toHaveCount(16);
+    await expect(actionCards).toHaveCount(15);
+
+    // One capstone per pillar.
+    await expect(window.getByText('Capstone')).toHaveCount(4);
   } finally {
     await app.close();
   }
