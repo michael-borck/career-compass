@@ -15,6 +15,7 @@ import PitchResultView from '@/components/pitch/PitchResultView';
 import { generatePitch } from '../services/pitch';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function Pitch() {
   const navigate = useNavigate();
@@ -199,7 +200,20 @@ export default function Pitch() {
             </div>
           </div>
         )}
-        {!loading && pitch && <PitchResultView pitch={pitch} />}
+        {!loading && pitch && (
+          <>
+            <PitchResultView pitch={pitch} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Cover letter',
+                  description: 'Expand your pitch into an application letter.',
+                  path: '/cover-letter',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

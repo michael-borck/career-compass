@@ -15,6 +15,7 @@ import GapAnalysisView from '@/components/results/GapAnalysisView';
 import { generateGapAnalysis } from '../services/gapAnalysis';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function GapAnalysis() {
   const navigate = useNavigate();
@@ -205,7 +206,25 @@ export default function GapAnalysis() {
             </div>
           </div>
         )}
-        {!loading && analysis && <GapAnalysisView analysis={analysis} />}
+        {!loading && analysis && (
+          <>
+            <GapAnalysisView analysis={analysis} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Learning path',
+                  description: 'Close the gaps with a step-by-step plan.',
+                  path: '/learning-path',
+                },
+                {
+                  title: 'Practice interview',
+                  description: 'Rehearse for the target role and get feedback.',
+                  path: '/interview',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

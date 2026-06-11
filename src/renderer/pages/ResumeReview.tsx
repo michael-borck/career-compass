@@ -15,6 +15,7 @@ import ResumeReviewResultView from '@/components/resume-review/ResumeReviewResul
 import { generateResumeReview } from '../services/resumeReview';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function ResumeReview() {
   const navigate = useNavigate();
@@ -174,7 +175,25 @@ export default function ResumeReview() {
             </div>
           </div>
         )}
-        {!loading && review && <ResumeReviewResultView review={review} />}
+        {!loading && review && (
+          <>
+            <ResumeReviewResultView review={review} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Cover letter',
+                  description: 'Put the improved resume to work in an application.',
+                  path: '/cover-letter',
+                },
+                {
+                  title: 'Portfolio page',
+                  description: 'Cap off your materials with a personal site.',
+                  path: '/portfolio',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

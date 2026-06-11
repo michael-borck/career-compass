@@ -15,6 +15,7 @@ import CoverLetterResultView from '@/components/cover-letter/CoverLetterResultVi
 import { generateCoverLetter } from '../services/coverLetter';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function CoverLetter() {
   const navigate = useNavigate();
@@ -190,7 +191,25 @@ export default function CoverLetter() {
             </div>
           </div>
         )}
-        {!loading && letter && <CoverLetterResultView letter={letter} />}
+        {!loading && letter && (
+          <>
+            <CoverLetterResultView letter={letter} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Resume review',
+                  description: 'Make sure your resume backs up the letter.',
+                  path: '/resume-review',
+                },
+                {
+                  title: 'Portfolio page',
+                  description: 'Cap off your materials with a personal site.',
+                  path: '/portfolio',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

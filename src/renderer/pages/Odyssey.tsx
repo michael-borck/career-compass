@@ -16,6 +16,7 @@ import { odysseyPlanToMarkdown } from '@/lib/markdown-export';
 import { odysseyPlanToDocx } from '@/components/odyssey/odyssey-docx';
 import { suggestLife, elaborateLife } from '../services/odyssey';
 import { isConfigured as isLLMConfigured } from '../services/llm';
+import NextSteps from '../components/NextSteps';
 
 const TYPES: OdysseyLifeType[] = ['current', 'pivot', 'wildcard'];
 
@@ -96,12 +97,17 @@ export default function Odyssey() {
           <OdysseyCompareView lives={odysseyLives} />
         )}
 
-        <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
-          Ready to see the bigger picture?{' '}
-          <Link to='/career-story' className='underline hover:text-accent'>
-            Build your career story
-          </Link>
-        </p>
+        {canCompare && (
+          <NextSteps
+            steps={[
+              {
+                title: 'Career story',
+                description: 'Pull the bigger picture from your three lives.',
+                path: '/career-story',
+              },
+            ]}
+          />
+        )}
       </div>
       <Toaster />
     </div>
