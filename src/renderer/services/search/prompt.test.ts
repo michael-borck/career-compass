@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatSourcesForFootnote,
-  formatSourcesForInlineCite,
-  type SourceRef,
-} from './prompt';
+import { formatSourcesForFootnote, formatSourcesForInlineCite, type SourceRef } from './prompt';
 
 const sources: SourceRef[] = [
   { title: 'Glassdoor — Data Analyst', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },

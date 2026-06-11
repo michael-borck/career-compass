@@ -40,9 +40,7 @@ export async function callStructured<I, T>(spec: GenSpec<I, T>): Promise<T> {
   const responseFormat = spec.responseFormat ?? { type: 'json_object' };
   const result = await chat({
     messages: spec.buildMessages(spec.input),
-    ...(responseFormat.type === 'json_object'
-      ? { response_format: responseFormat }
-      : {}),
+    ...(responseFormat.type === 'json_object' ? { response_format: responseFormat } : {}),
     ...(spec.temperature !== undefined ? { temperature: spec.temperature } : {}),
   });
   return spec.parse(result.content, spec.input);

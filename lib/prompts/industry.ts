@@ -32,7 +32,9 @@ export function buildIndustryPrompt(input: IndustryInput): string {
   );
 
   if (jobTitle && jobTitle.trim()) {
-    sections.push(`The student is particularly interested in the role of "${jobTitle.trim()}" within this industry. Focus the exploration around that role where relevant.`);
+    sections.push(
+      `The student is particularly interested in the role of "${jobTitle.trim()}" within this industry. Focus the exploration around that role where relevant.`
+    );
   }
 
   sections.push(
@@ -62,8 +64,11 @@ Each Role has the shape:
     const profileParts: string[] = [];
     if (resume && resume.trim()) profileParts.push(`Resume:\n${resume.trim()}`);
     if (aboutYou && aboutYou.trim()) profileParts.push(`About me:\n${aboutYou.trim()}`);
-    if (distilledProfile) profileParts.push(`Distilled profile:\n${formatProfile(distilledProfile)}`);
-    sections.push(`<profile>\n${profileParts.join('\n\n')}\n</profile>\n\nPersonalise the entry points and skills assessment based on this student's background. Mention what they already have that's relevant.`);
+    if (distilledProfile)
+      profileParts.push(`Distilled profile:\n${formatProfile(distilledProfile)}`);
+    sections.push(
+      `<profile>\n${profileParts.join('\n\n')}\n</profile>\n\nPersonalise the entry points and skills assessment based on this student's background. Mention what they already have that's relevant.`
+    );
   }
 
   sections.push('ONLY respond with JSON. No prose, no code fences.');
@@ -89,7 +94,10 @@ export function parseIndustryExploration(raw: string): IndustryExploration {
   }));
 
   return {
-    industry: typeof parsed.industry === 'string' && parsed.industry.trim() ? parsed.industry : 'this industry',
+    industry:
+      typeof parsed.industry === 'string' && parsed.industry.trim()
+        ? parsed.industry
+        : 'this industry',
     overview: parsed.overview,
     keyRoles,
     entryPoints: toStringArray(parsed.entryPoints),

@@ -120,10 +120,7 @@ export default function Compare() {
     setLoading(true);
     try {
       const state = useSessionStore.getState();
-      const targets: { label: string }[] = [
-        { label: target1.trim() },
-        { label: target2.trim() },
-      ];
+      const targets: { label: string }[] = [{ label: target1.trim() }, { label: target2.trim() }];
       if (target3.trim()) targets.push({ label: target3.trim() });
 
       const { comparison: result, trimmed } = await generateComparison({
@@ -222,8 +219,8 @@ export default function Compare() {
             <div className='border-l-2 border-accent p-4 bg-paper-warm mb-6 mt-4'>
               <p className='text-ink-muted text-[var(--text-sm)] leading-relaxed'>
                 Quick compare is vague. It makes assumptions about each role. For a richer
-                comparison, run <strong>Find my careers</strong> first, pick 2 or 3 from the
-                spider graph, and compare from there.
+                comparison, run <strong>Find my careers</strong> first, pick 2 or 3 from the spider
+                graph, and compare from there.
               </p>
             </div>
 
@@ -245,9 +242,7 @@ export default function Compare() {
               </div>
 
               <div>
-                <label className='block text-[var(--text-sm)] text-ink-muted mb-1'>
-                  Target 2
-                </label>
+                <label className='block text-[var(--text-sm)] text-ink-muted mb-1'>Target 2</label>
                 <Textarea
                   value={target2}
                   rows={2}
@@ -332,9 +327,9 @@ export default function Compare() {
             {comparison.mode === 'quick' && (
               <div className='border-l-2 border-accent p-4 bg-paper-warm mt-4 mb-6'>
                 <p className='text-ink-muted text-[var(--text-sm)] leading-relaxed'>
-                  This is a quick compare. The LLM inferred each role&apos;s details. For a
-                  richer comparison based on your generated careers, run{' '}
-                  <strong>Find my careers</strong> from the landing page.
+                  This is a quick compare. The LLM inferred each role&apos;s details. For a richer
+                  comparison based on your generated careers, run <strong>Find my careers</strong>{' '}
+                  from the landing page.
                 </p>
               </div>
             )}

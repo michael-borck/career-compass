@@ -1,6 +1,4 @@
-export type CitationSegment =
-  | { kind: 'text'; value: string }
-  | { kind: 'cite'; index: number };
+export type CitationSegment = { kind: 'text'; value: string } | { kind: 'cite'; index: number };
 
 export function segmentCitations(text: string): CitationSegment[] {
   if (text.length === 0) return [];

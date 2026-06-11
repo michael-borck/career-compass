@@ -20,14 +20,13 @@ import type { SourceRef } from '@/lib/session-store';
 
 const mockChat = chat as unknown as ReturnType<typeof vi.fn>;
 const mockSearch = search as unknown as ReturnType<typeof vi.fn>;
-const mockLoadSearchSettings =
-  loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
-const mockIsSearchConfigured =
-  isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
+const mockLoadSearchSettings = loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
+const mockIsSearchConfigured = isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
 
 const VALID_GAP_JSON = JSON.stringify({
   target: 'Data Analyst',
-  summary: 'You have a strong analytical base. With SQL and a portfolio piece you would be a competitive candidate.',
+  summary:
+    'You have a strong analytical base. With SQL and a portfolio piece you would be a competitive candidate.',
   matches: ['Comfortable with Python', 'Statistics coursework'],
   gaps: [
     {
@@ -50,7 +49,11 @@ const VALID_INPUT = {
 
 const DDG_SOURCES: SourceRef[] = [
   { title: 'Data Analyst Salary Guide', url: 'https://example.com/salary', domain: 'example.com' },
-  { title: 'Top Skills for Data Analysts', url: 'https://example.com/skills', domain: 'example.com' },
+  {
+    title: 'Top Skills for Data Analysts',
+    url: 'https://example.com/skills',
+    domain: 'example.com',
+  },
 ];
 
 function chatReply(content: string) {
@@ -73,23 +76,23 @@ beforeEach(() => {
 
 describe('generateGapAnalysis — validation', () => {
   it('throws when no target is provided', async () => {
-    await expect(
-      generateGapAnalysis({ aboutYou: 'CS student' })
-    ).rejects.toThrow(/target is required/i);
+    await expect(generateGapAnalysis({ aboutYou: 'CS student' })).rejects.toThrow(
+      /target is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('throws when no profile is provided', async () => {
-    await expect(
-      generateGapAnalysis({ jobTitle: 'Data analyst' })
-    ).rejects.toThrow(/profile is required/i);
+    await expect(generateGapAnalysis({ jobTitle: 'Data analyst' })).rejects.toThrow(
+      /profile is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('treats whitespace-only target as missing', async () => {
-    await expect(
-      generateGapAnalysis({ jobTitle: '   ', aboutYou: 'CS student' })
-    ).rejects.toThrow(/target is required/i);
+    await expect(generateGapAnalysis({ jobTitle: '   ', aboutYou: 'CS student' })).rejects.toThrow(
+      /target is required/i
+    );
   });
 
   it('accepts a distilledProfile alone as profile', async () => {
@@ -271,9 +274,7 @@ describe('generateGapAnalysis — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(generateGapAnalysis(VALID_INPUT)).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(generateGapAnalysis(VALID_INPUT)).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 

@@ -28,10 +28,7 @@ describe('buildFeedbackPrompt', () => {
     const out = buildFeedbackPrompt({
       target: 'X',
       difficulty: 'standard',
-      messages: [
-        msg('assistant', 'Tell me about yourself'),
-        msg('user', 'I am a CS student'),
-      ],
+      messages: [msg('assistant', 'Tell me about yourself'), msg('user', 'I am a CS student')],
       reachedPhase: 'wrap-up',
     });
     expect(out).toContain('Tell me about yourself');
@@ -60,7 +57,10 @@ describe('buildFeedbackPrompt', () => {
 
   it('asks for the InterviewFeedback JSON shape', () => {
     const out = buildFeedbackPrompt({
-      target: 'X', difficulty: 'standard', messages: [msg('user', 'x')], reachedPhase: 'wrap-up',
+      target: 'X',
+      difficulty: 'standard',
+      messages: [msg('user', 'x')],
+      reachedPhase: 'wrap-up',
     });
     expect(out).toContain('summary');
     expect(out).toContain('strengths');
@@ -106,11 +106,19 @@ describe('parseFeedback', () => {
 
   it('coerces missing perPhase to empty array', () => {
     const raw = JSON.stringify({
-      target: 'X', difficulty: 'standard',
-      summary: 'y', strengths: [], improvements: [{
-        area: 'a', why: 'b', example: 'c',
-      }],
-      overallRating: 'on-track', nextSteps: [],
+      target: 'X',
+      difficulty: 'standard',
+      summary: 'y',
+      strengths: [],
+      improvements: [
+        {
+          area: 'a',
+          why: 'b',
+          example: 'c',
+        },
+      ],
+      overallRating: 'on-track',
+      nextSteps: [],
     });
     const f = parseFeedback(raw);
     expect(f.perPhase).toEqual([]);
@@ -118,11 +126,19 @@ describe('parseFeedback', () => {
 
   it('coerces invalid overallRating to on-track', () => {
     const raw = JSON.stringify({
-      target: 'X', difficulty: 'standard',
-      summary: 'y', strengths: [], improvements: [{
-        area: 'a', why: 'b', example: 'c',
-      }],
-      overallRating: 'not-a-rating', nextSteps: [],
+      target: 'X',
+      difficulty: 'standard',
+      summary: 'y',
+      strengths: [],
+      improvements: [
+        {
+          area: 'a',
+          why: 'b',
+          example: 'c',
+        },
+      ],
+      overallRating: 'not-a-rating',
+      nextSteps: [],
     });
     const f = parseFeedback(raw);
     expect(f.overallRating).toBe('on-track');
@@ -130,18 +146,25 @@ describe('parseFeedback', () => {
 
   it('throws when summary is missing', () => {
     const raw = JSON.stringify({
-      target: 'X', difficulty: 'standard',
-      strengths: [], improvements: [{ area: 'a', why: 'b', example: 'c' }],
-      overallRating: 'on-track', nextSteps: [],
+      target: 'X',
+      difficulty: 'standard',
+      strengths: [],
+      improvements: [{ area: 'a', why: 'b', example: 'c' }],
+      overallRating: 'on-track',
+      nextSteps: [],
     });
     expect(() => parseFeedback(raw)).toThrow();
   });
 
   it('throws when improvements is empty', () => {
     const raw = JSON.stringify({
-      target: 'X', difficulty: 'standard',
-      summary: 'y', strengths: [], improvements: [],
-      overallRating: 'on-track', nextSteps: [],
+      target: 'X',
+      difficulty: 'standard',
+      summary: 'y',
+      strengths: [],
+      improvements: [],
+      overallRating: 'on-track',
+      nextSteps: [],
     });
     expect(() => parseFeedback(raw)).toThrow();
   });

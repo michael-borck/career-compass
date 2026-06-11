@@ -25,8 +25,7 @@ export type GenerateSkillsMappingResult = {
 
 const RESUME_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You are a career skills analyst that ONLY responds in JSON.';
+const SYSTEM = 'You are a career skills analyst that ONLY responds in JSON.';
 
 function trimResume(input: SkillsMappingInput): SkillsMappingInput {
   return {
@@ -53,9 +52,7 @@ export async function generateSkillsMapping(
     input.distilledProfile
   );
   if (!hasProfile) {
-    throw new Error(
-      'A profile is required (upload a resume or write something in About you).'
-    );
+    throw new Error('A profile is required (upload a resume or write something in About you).');
   }
 
   const { result: mapping, trimmed } = await generate(

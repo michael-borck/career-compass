@@ -10,9 +10,13 @@ import { setPassword, getPassword, deletePassword } from './secure-storage.js';
 function makeStore(initial = {}) {
   const data = { ...initial };
   return {
-    get: vi.fn((k, def) => (k in data ? data[k] : def ?? undefined)),
-    set: vi.fn((k, v) => { data[k] = v; }),
-    delete: vi.fn((k) => { delete data[k]; }),
+    get: vi.fn((k, def) => (k in data ? data[k] : (def ?? undefined))),
+    set: vi.fn((k, v) => {
+      data[k] = v;
+    }),
+    delete: vi.fn((k) => {
+      delete data[k];
+    }),
     _data: data,
   };
 }
@@ -45,7 +49,9 @@ describe('setPassword', () => {
   it('rethrows if encryption throws', () => {
     const store = makeStore();
     const ss = makeSafeStorage({ available: true });
-    ss.encryptString.mockImplementation(() => { throw new Error('crypto boom'); });
+    ss.encryptString.mockImplementation(() => {
+      throw new Error('crypto boom');
+    });
     expect(() => setPassword(store, ss, 's', 'p')).toThrow('crypto boom');
   });
 });
@@ -71,7 +77,10 @@ describe('getPassword', () => {
   });
 
   it('falls back to insecure storage when encryption is unavailable', () => {
-    const store = makeStore({ 'secure-llm-openai': Buffer.from('enc:x'), 'insecure-llm-openai': 'plain' });
+    const store = makeStore({
+      'secure-llm-openai': Buffer.from('enc:x'),
+      'insecure-llm-openai': 'plain',
+    });
     const ss = makeSafeStorage({ available: false });
     expect(getPassword(store, ss, 'llm-openai')).toBe('plain');
   });
@@ -79,7 +88,9 @@ describe('getPassword', () => {
   it('returns null (never throws) when decryption fails', () => {
     const store = makeStore({ 'secure-llm-openai': Buffer.from('enc:x') });
     const ss = makeSafeStorage({ available: true });
-    ss.decryptString.mockImplementation(() => { throw new Error('bad key'); });
+    ss.decryptString.mockImplementation(() => {
+      throw new Error('bad key');
+    });
     expect(getPassword(store, ss, 'llm-openai')).toBeNull();
   });
 });

@@ -69,9 +69,7 @@ function trimResume(input: OdysseyElaborateInput): OdysseyElaborateInput {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function suggestLife(
-  input: SeedSuggestionInput
-): Promise<SeedSuggestion> {
+export async function suggestLife(input: SeedSuggestionInput): Promise<SeedSuggestion> {
   if (!input.type || !VALID_TYPES.includes(input.type)) {
     throw new Error('A valid life type is required.');
   }
@@ -97,9 +95,7 @@ export async function suggestLife(
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function elaborateLife(
-  input: OdysseyElaborateInput
-): Promise<ElaborateLifeResult> {
+export async function elaborateLife(input: OdysseyElaborateInput): Promise<ElaborateLifeResult> {
   if (!input.type || !VALID_TYPES.includes(input.type)) {
     throw new Error('A valid life type is required.');
   }
@@ -121,8 +117,7 @@ export async function elaborateLife(
     },
     {
       steps: [trimAdvert, trimResume],
-      tooLongMessage:
-        'This life seed is too long to elaborate. Try a shorter description.',
+      tooLongMessage: 'This life seed is too long to elaborate. Try a shorter description.',
     }
   );
 

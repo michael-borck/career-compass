@@ -11,9 +11,12 @@ export type InterviewPromptInput = {
 };
 
 const DIFFICULTY_TONE: Record<InterviewDifficulty, string> = {
-  friendly: 'Be encouraging and warm. Use gentle follow-ups. Treat this as a coaching conversation. If the student gives a weak answer, ask a follow-up that helps them improve, not one that exposes the weakness.',
-  standard: 'Be neutral and professional, like a real first-round phone screen. Expect clear answers. If an answer is vague, probe briefly with one follow-up. Move on if the answer is good enough.',
-  tough: 'Be pointed and direct, like a second-round panel interview. Expect specific answers grounded in the student\'s actual experience. If an answer is vague or generic, push back: "That\'s a general answer — what specifically did YOU do?" Do not be hostile, but do not let weak answers slide.',
+  friendly:
+    'Be encouraging and warm. Use gentle follow-ups. Treat this as a coaching conversation. If the student gives a weak answer, ask a follow-up that helps them improve, not one that exposes the weakness.',
+  standard:
+    'Be neutral and professional, like a real first-round phone screen. Expect clear answers. If an answer is vague, probe briefly with one follow-up. Move on if the answer is good enough.',
+  tough:
+    'Be pointed and direct, like a second-round panel interview. Expect specific answers grounded in the student\'s actual experience. If an answer is vague or generic, push back: "That\'s a general answer — what specifically did YOU do?" Do not be hostile, but do not let weak answers slide.',
 };
 
 export function buildInterviewSystemPrompt(input: InterviewPromptInput): string {

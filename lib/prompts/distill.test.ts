@@ -70,7 +70,8 @@ describe('parseDistilledProfile', () => {
   });
 
   it('strips markdown code fences', () => {
-    const raw = '```json\n{"background":"B","interests":[],"skills":[],"constraints":[],"goals":[]}\n```';
+    const raw =
+      '```json\n{"background":"B","interests":[],"skills":[],"constraints":[],"goals":[]}\n```';
     const p = parseDistilledProfile(raw);
     expect(p.background).toBe('B');
   });

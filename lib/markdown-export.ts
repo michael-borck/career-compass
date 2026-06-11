@@ -1,4 +1,20 @@
-import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef, OdysseyLife, OdysseyLifeType, BoardReview, Comparison, ElevatorPitch, CoverLetter, ResumeReview, CareerStory, SkillsMapping, IndustryExploration, ValuesCompass } from './session-store';
+import type {
+  GapAnalysis,
+  LearningPath,
+  InterviewFeedback,
+  SourceRef,
+  OdysseyLife,
+  OdysseyLifeType,
+  BoardReview,
+  Comparison,
+  ElevatorPitch,
+  CoverLetter,
+  ResumeReview,
+  CareerStory,
+  SkillsMapping,
+  IndustryExploration,
+  ValuesCompass,
+} from './session-store';
 import { toMarkdown } from './export/to-markdown';
 import { coverLetterToExportDoc } from './export/features/cover-letter';
 import { pitchToExportDoc } from './export/features/pitch';

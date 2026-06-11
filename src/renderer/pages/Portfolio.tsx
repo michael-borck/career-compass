@@ -20,7 +20,11 @@ export default function Portfolio() {
   const hasFreeText = !!store.freeText.trim();
   const canRun = hasResume || hasFreeText || !!store.distilledProfile;
 
-  const { loading, run: runPortfolio, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runPortfolio,
+    resetAutoRun,
+  } = useGeneration({
     generate: () => {
       const state = useSessionStore.getState();
       return generatePortfolio({
@@ -37,7 +41,9 @@ export default function Portfolio() {
     // Auto-run when the user arrives with profile signal but no portfolio yet.
     autoRun: () => {
       const state = useSessionStore.getState();
-      return !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) && !state.portfolio;
+      return (
+        !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) && !state.portfolio
+      );
     },
   });
 
@@ -124,7 +130,8 @@ export default function Portfolio() {
                 Your personal portfolio
               </h2>
               <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                The more profile detail you provide, the richer the page. Add a target role to tailor it for a specific career.
+                The more profile detail you provide, the richer the page. Add a target role to
+                tailor it for a specific career.
               </p>
 
               <div className='space-y-4'>
@@ -156,7 +163,10 @@ export default function Portfolio() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job title <span className='normal-case tracking-normal font-normal text-ink-muted'>(optional)</span>
+                    Job title{' '}
+                    <span className='normal-case tracking-normal font-normal text-ink-muted'>
+                      (optional)
+                    </span>
                   </label>
                   <Input
                     value={store.jobTitle}
@@ -167,7 +177,10 @@ export default function Portfolio() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job advert <span className='normal-case tracking-normal font-normal text-ink-muted'>(optional)</span>
+                    Job advert{' '}
+                    <span className='normal-case tracking-normal font-normal text-ink-muted'>
+                      (optional)
+                    </span>
                   </label>
                   <Textarea
                     value={store.jobAdvert}
@@ -181,9 +194,13 @@ export default function Portfolio() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runPortfolio} disabled={!canRun || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Generating…</>
+                      <>
+                        <LoadingDots color='white' /> Generating…
+                      </>
                     ) : (
-                      <><Globe className='w-4 h-4 mr-2' /> Generate portfolio page</>
+                      <>
+                        <Globe className='w-4 h-4 mr-2' /> Generate portfolio page
+                      </>
                     )}
                   </Button>
                 </div>

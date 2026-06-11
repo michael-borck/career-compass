@@ -45,8 +45,7 @@ export type GenerateLearningPathResult = {
 
 const ADVERT_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You are a career learning-path designer that ONLY responds in JSON.';
+const SYSTEM = 'You are a career learning-path designer that ONLY responds in JSON.';
 
 function trimAdvert(input: LearningPathInput): LearningPathInput {
   if (input.jobAdvert && input.jobAdvert.length > ADVERT_TRIM_CHARS) {
@@ -75,9 +74,7 @@ export async function generateLearningPath(
   const { grounded, ...rest } = input;
 
   if (!hasTarget(rest)) {
-    throw new Error(
-      'A target is required (paste a job advert or enter a job title).'
-    );
+    throw new Error('A target is required (paste a job advert or enter a job title).');
   }
 
   // ---- Grounding ----
@@ -89,8 +86,7 @@ export async function generateLearningPath(
       if (isSearchConfigured(searchSettings)) {
         const targetForSearch =
           (rest.jobTitle && rest.jobTitle.trim()) ||
-          (rest.jobAdvert &&
-            rest.jobAdvert.trim().split('\n')[0].slice(0, 100)) ||
+          (rest.jobAdvert && rest.jobAdvert.trim().split('\n')[0].slice(0, 100)) ||
           'this role';
         const topGaps = rest.gapAnalysis
           ? rest.gapAnalysis.gaps

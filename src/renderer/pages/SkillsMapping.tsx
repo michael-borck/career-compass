@@ -108,8 +108,9 @@ export default function SkillsMapping() {
                 Map your skills to professional frameworks
               </h2>
               <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                Translate your skills into the language employers use. Maps to SFIA, O*NET, ESCO, and AQF.
-                Needs a profile (resume or about you). Add a job title to focus on the most relevant skills.
+                Translate your skills into the language employers use. Maps to SFIA, O*NET, ESCO,
+                and AQF. Needs a profile (resume or about you). Add a job title to focus on the most
+                relevant skills.
               </p>
 
               <div className='space-y-4'>
@@ -141,7 +142,8 @@ export default function SkillsMapping() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Target role <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Target role{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Input
                     value={store.jobTitle}
@@ -154,9 +156,13 @@ export default function SkillsMapping() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!hasProfile || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Mapping…</>
+                      <>
+                        <LoadingDots color='white' /> Mapping…
+                      </>
                     ) : (
-                      <><Grid3X3 className='w-4 h-4 mr-2' /> Map my skills</>
+                      <>
+                        <Grid3X3 className='w-4 h-4 mr-2' /> Map my skills
+                      </>
                     )}
                   </Button>
                 </div>

@@ -68,8 +68,7 @@ export async function generateResumeReview(
     },
     {
       steps: [trimAdvert, trimResume],
-      tooLongMessage:
-        'Input is too long for the model. Try trimming your resume or job advert.',
+      tooLongMessage: 'Input is too long for the model. Try trimming your resume or job advert.',
     }
   );
 

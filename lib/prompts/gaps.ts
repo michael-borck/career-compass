@@ -36,21 +36,21 @@ export function buildGapAnalysisPrompt(input: GapAnalysisInput): string {
   const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, skillsMapping, sources } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
-  const hasProfile =
-    (resume && resume.trim()) ||
-    (aboutYou && aboutYou.trim()) ||
-    distilledProfile;
+  const hasProfile = (resume && resume.trim()) || (aboutYou && aboutYou.trim()) || distilledProfile;
 
   if (!hasTarget) {
     throw new Error('buildGapAnalysisPrompt: a target (jobAdvert or jobTitle) is required');
   }
   if (!hasProfile) {
-    throw new Error('buildGapAnalysisPrompt: a profile (resume, aboutYou, or distilledProfile) is required');
+    throw new Error(
+      'buildGapAnalysisPrompt: a profile (resume, aboutYou, or distilledProfile) is required'
+    );
   }
 
-  const targetSection = jobAdvert && jobAdvert.trim()
-    ? `<target type="jobAdvert">\n${jobAdvert.trim()}\n</target>`
-    : `<target type="jobTitle">\n${(jobTitle || '').trim()}\n</target>`;
+  const targetSection =
+    jobAdvert && jobAdvert.trim()
+      ? `<target type="jobAdvert">\n${jobAdvert.trim()}\n</target>`
+      : `<target type="jobTitle">\n${(jobTitle || '').trim()}\n</target>`;
 
   const profileParts: string[] = [];
   if (resume && resume.trim()) {
@@ -91,7 +91,9 @@ Each Gap has the shape:
   ];
 
   if (skillsMapping) {
-    sections.push(`<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's existing framework levels when describing currentLevel and targetLevel in gaps. Reference SFIA or O*NET levels where relevant.`);
+    sections.push(
+      `<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's existing framework levels when describing currentLevel and targetLevel in gaps. Reference SFIA or O*NET levels where relevant.`
+    );
   }
 
   if (sources && sources.length > 0) {
@@ -139,8 +141,9 @@ export function parseGapAnalysis(raw: string): GapAnalysis {
     summary: parsed.summary,
     matches: toStringArray(parsed.matches),
     gaps,
-    realisticTimeline: typeof parsed.realisticTimeline === 'string'
-      ? parsed.realisticTimeline
-      : 'Hard to say — depends on your situation',
+    realisticTimeline:
+      typeof parsed.realisticTimeline === 'string'
+        ? parsed.realisticTimeline
+        : 'Hard to say — depends on your situation',
   };
 }

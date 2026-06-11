@@ -88,9 +88,7 @@ export default function ProfileReviewModal({
     <div className='fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4'>
       <div className='bg-paper border border-border rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
         <div className='flex justify-between items-center mb-4'>
-          <h2 className='text-[var(--text-xl)] font-semibold text-ink'>
-            Review your profile
-          </h2>
+          <h2 className='text-[var(--text-xl)] font-semibold text-ink'>Review your profile</h2>
           <button onClick={onCancel} className='text-ink-quiet hover:text-ink'>
             <X className='w-5 h-5' />
           </button>
@@ -98,8 +96,8 @@ export default function ProfileReviewModal({
 
         {trimmed && (
           <div className='mb-4 p-3 border border-accent/30 bg-accent-soft rounded text-[var(--text-sm)] text-ink'>
-            Your chat was long, so the profile was built from the most recent
-            portion. Edit below to add anything important from earlier.
+            Your chat was long, so the profile was built from the most recent portion. Edit below to
+            add anything important from earlier.
           </div>
         )}
 
@@ -148,7 +146,9 @@ export default function ProfileReviewModal({
         </div>
 
         <div className='flex justify-end gap-2 mt-6'>
-          <Button variant='outline' onClick={onCancel}>Cancel</Button>
+          <Button variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
           <Button
             variant='outline'
             disabled={!guidance.trim()}

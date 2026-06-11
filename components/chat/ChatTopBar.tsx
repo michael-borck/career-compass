@@ -34,9 +34,7 @@ export default function ChatTopBar({ onGenerateCareers, canGenerate }: Props) {
 
   return (
     <div className='border-b border-border px-6 py-4 flex items-center gap-4'>
-      <h1 className='text-[var(--text-lg)] font-semibold text-ink'>
-        Career Advisor
-      </h1>
+      <h1 className='text-[var(--text-lg)] font-semibold text-ink'>Career Advisor</h1>
       {currentFocus && (
         <span className='inline-flex items-center gap-2 border border-accent/30 bg-accent-soft text-ink text-[var(--text-sm)] px-3 py-1 rounded-full'>
           Focused on: {currentFocus}
@@ -50,10 +48,7 @@ export default function ChatTopBar({ onGenerateCareers, canGenerate }: Props) {
         </span>
       )}
       <div className='flex-1' />
-      <Button
-        onClick={onGenerateCareers}
-        disabled={!canGenerate}
-      >
+      <Button onClick={onGenerateCareers} disabled={!canGenerate}>
         Generate careers from this chat →
       </Button>
       <Button variant='outline' onClick={startOver}>

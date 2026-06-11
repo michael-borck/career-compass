@@ -15,11 +15,7 @@ function formatTranscript(messages: ChatMessage[]): string {
     .filter((m) => m.kind === 'message' || m.kind === 'attachment-summary')
     .map((m) => {
       const speaker =
-        m.kind === 'attachment-summary'
-          ? 'ATTACHMENT'
-          : m.role === 'user'
-          ? 'STUDENT'
-          : 'ADVISOR';
+        m.kind === 'attachment-summary' ? 'ATTACHMENT' : m.role === 'user' ? 'STUDENT' : 'ADVISOR';
       return `${speaker}: ${m.content}`;
     })
     .join('\n\n');

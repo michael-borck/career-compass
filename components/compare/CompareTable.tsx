@@ -29,14 +29,14 @@ type Props = {
 export default function CompareTable({ comparison }: Props) {
   const { roles } = comparison;
   const colsClass =
-    roles.length === 2
-      ? 'md:grid-cols-[auto_1fr_1fr]'
-      : 'md:grid-cols-[auto_1fr_1fr_1fr]';
+    roles.length === 2 ? 'md:grid-cols-[auto_1fr_1fr]' : 'md:grid-cols-[auto_1fr_1fr_1fr]';
 
   return (
     <div className='mt-6'>
       {/* Desktop grid */}
-      <div className={`hidden md:grid ${colsClass} border border-border rounded-lg overflow-hidden bg-paper`}>
+      <div
+        className={`hidden md:grid ${colsClass} border border-border rounded-lg overflow-hidden bg-paper`}
+      >
         <div className='border-b border-border bg-paper-warm p-4'></div>
         {roles.map((role) => (
           <div

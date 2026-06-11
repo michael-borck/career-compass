@@ -4,10 +4,7 @@ import type { finalCareerInfo } from '@/lib/types';
 
 const baseQuick: CompareInput = {
   mode: 'quick',
-  targets: [
-    { label: 'Data analyst' },
-    { label: 'UX researcher' },
-  ],
+  targets: [{ label: 'Data analyst' }, { label: 'UX researcher' }],
 };
 
 const richCareer: finalCareerInfo = {
@@ -31,7 +28,15 @@ describe('buildComparePrompt', () => {
 
   it('asks for the seven-dimension cells shape', () => {
     const out = buildComparePrompt(baseQuick);
-    for (const dim of ['typicalDay', 'coreSkills', 'trainingNeeded', 'salaryRange', 'workSetting', 'whoItSuits', 'mainChallenge']) {
+    for (const dim of [
+      'typicalDay',
+      'coreSkills',
+      'trainingNeeded',
+      'salaryRange',
+      'workSetting',
+      'whoItSuits',
+      'mainChallenge',
+    ]) {
       expect(out).toContain(`"${dim}"`);
     }
   });
@@ -53,7 +58,10 @@ describe('buildComparePrompt', () => {
       mode: 'rich',
       targets: [
         { label: 'Data analyst', context: richCareer },
-        { label: 'UX researcher', context: { ...richCareer, jobTitle: 'UX researcher', jobDescription: 'Studies users.' } },
+        {
+          label: 'UX researcher',
+          context: { ...richCareer, jobTitle: 'UX researcher', jobDescription: 'Studies users.' },
+        },
       ],
     });
     expect(out).toContain('Existing career data');
@@ -153,7 +161,18 @@ describe('parseComparison', () => {
   it('throws when role count does not match input target count', () => {
     const single = JSON.stringify({
       roles: [
-        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        {
+          label: 'A',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
       ],
     });
     expect(() => parseComparison(single, baseQuick)).toThrow(/2/);
@@ -162,8 +181,30 @@ describe('parseComparison', () => {
   it('throws when a role has empty label', () => {
     const broken = JSON.stringify({
       roles: [
-        { label: '', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
-        { label: 'B', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        {
+          label: '',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
+        {
+          label: 'B',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
       ],
     });
     expect(() => parseComparison(broken, baseQuick)).toThrow(/label/i);
@@ -172,7 +213,17 @@ describe('parseComparison', () => {
   it('coerces missing cells to em-dash', () => {
     const missing = JSON.stringify({
       roles: [
-        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x' } },
+        {
+          label: 'A',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+          },
+        },
         { label: 'B', cells: {} },
       ],
     });

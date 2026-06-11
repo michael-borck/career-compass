@@ -1,11 +1,5 @@
 // Settings store for desktop persistence using electron-store
-export type SearchEngine =
-  | 'disabled'
-  | 'duckduckgo'
-  | 'brave'
-  | 'bing'
-  | 'serper'
-  | 'searxng';
+export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'bing' | 'serper' | 'searxng';
 
 export interface SettingsConfig {
   provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
@@ -81,7 +75,7 @@ class ElectronSettingsStore implements SettingsStore {
 
   async get(): Promise<SettingsConfig> {
     if (!this.store) return DEFAULT_SETTINGS;
-    
+
     try {
       const settings = await this.store.get('settings', DEFAULT_SETTINGS);
       console.log('ElectronSettingsStore loaded:', settings);
@@ -119,7 +113,7 @@ function createSettingsStore(): SettingsStore {
   if (typeof window !== 'undefined' && (window as any).electronAPI) {
     return new ElectronSettingsStore();
   }
-  
+
   // Fallback to web storage
   return new WebSettingsStore();
 }

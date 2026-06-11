@@ -45,7 +45,8 @@ describe('buildSeedSuggestionPrompt', () => {
 
 describe('parseSeedSuggestion', () => {
   it('parses valid JSON', () => {
-    const raw = '{"label":"Health data analyst","description":"I work for a small health nonprofit."}';
+    const raw =
+      '{"label":"Health data analyst","description":"I work for a small health nonprofit."}';
     expect(parseSeedSuggestion(raw)).toEqual({
       label: 'Health data analyst',
       description: 'I work for a small health nonprofit.',

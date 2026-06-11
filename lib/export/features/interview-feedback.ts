@@ -1,6 +1,17 @@
 // Interview Feedback -> ExportDoc. Takes optional grounding sources.
 import type { InterviewFeedback, InterviewPhase, SourceRef } from '@/lib/session-store';
-import { type ExportDoc, type Block, b, h2, h3, p, bullets, note, sources, disclaimer } from '../doc';
+import {
+  type ExportDoc,
+  type Block,
+  b,
+  h2,
+  h3,
+  p,
+  bullets,
+  note,
+  sources,
+  disclaimer,
+} from '../doc';
 
 const RATING_LABEL: Record<InterviewFeedback['overallRating'], string> = {
   developing: 'Developing',
@@ -20,10 +31,7 @@ const DIFFICULTY_LABEL: Record<'friendly' | 'standard' | 'tough', string> = {
   tough: 'Tough',
 };
 
-export function interviewFeedbackToExportDoc(
-  f: InterviewFeedback,
-  srcs?: SourceRef[]
-): ExportDoc {
+export function interviewFeedbackToExportDoc(f: InterviewFeedback, srcs?: SourceRef[]): ExportDoc {
   const blocks: Block[] = [
     p(b('Difficulty:'), ` ${DIFFICULTY_LABEL[f.difficulty]}`),
     p(b('Overall rating:'), ` ${RATING_LABEL[f.overallRating]}`),

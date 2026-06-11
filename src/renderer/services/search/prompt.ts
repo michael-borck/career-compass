@@ -10,7 +10,4 @@ export type SourceRef = {
 // the framework-agnostic prompt builders in lib/prompts/*). Re-exported here so
 // the renderer search module keeps a single import surface and there's one
 // source of truth for the <sources> prompt block.
-export {
-  formatSourcesForFootnote,
-  formatSourcesForInlineCite,
-} from '@/lib/search-prompt';
+export { formatSourcesForFootnote, formatSourcesForInlineCite } from '@/lib/search-prompt';

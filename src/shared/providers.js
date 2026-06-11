@@ -22,11 +22,19 @@
 /** @type {Record<Provider, ProviderDescriptor>} */
 const PROVIDERS = {
   ollama: { label: 'Ollama', envVar: null, defaultBaseURL: 'http://localhost:11434/v1' },
-  openai: { label: 'OpenAI', envVar: 'OPENAI_API_KEY', defaultBaseURL: 'https://api.openai.com/v1' },
+  openai: {
+    label: 'OpenAI',
+    envVar: 'OPENAI_API_KEY',
+    defaultBaseURL: 'https://api.openai.com/v1',
+  },
   claude: { label: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultBaseURL: null },
   groq: { label: 'Groq', envVar: 'GROQ_API_KEY', defaultBaseURL: 'https://api.groq.com/openai/v1' },
   gemini: { label: 'Gemini', envVar: 'GOOGLE_API_KEY', defaultBaseURL: null },
-  openrouter: { label: 'OpenRouter', envVar: 'OPENROUTER_API_KEY', defaultBaseURL: 'https://openrouter.ai/api/v1' },
+  openrouter: {
+    label: 'OpenRouter',
+    envVar: 'OPENROUTER_API_KEY',
+    defaultBaseURL: 'https://openrouter.ai/api/v1',
+  },
   custom: { label: 'Custom', envVar: null, defaultBaseURL: null },
 };
 

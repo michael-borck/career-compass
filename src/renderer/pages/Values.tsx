@@ -118,7 +118,8 @@ export default function Values() {
               <div className='space-y-4'>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    What matters to you? <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    What matters to you?{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={valuesSeed}
@@ -130,7 +131,8 @@ export default function Values() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Resume <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Resume{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <LocalFileUpload
                     onFileSelect={handleResumeSelect}
@@ -144,7 +146,8 @@ export default function Values() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    About you <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    About you{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.freeText}
@@ -158,9 +161,13 @@ export default function Values() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Reflecting…</>
+                      <>
+                        <LoadingDots color='white' /> Reflecting…
+                      </>
                     ) : (
-                      <><Heart className='w-4 h-4 mr-2' /> Find my values</>
+                      <>
+                        <Heart className='w-4 h-4 mr-2' /> Find my values
+                      </>
                     )}
                   </Button>
                 </div>

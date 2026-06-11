@@ -28,8 +28,6 @@ export function boardReviewToExportDoc(r: BoardReview): ExportDoc {
     r.synthesis.topPriorities.forEach((pr, i) => blocks.push(p(`${i + 1}. ${pr}`)));
   }
 
-  blocks.push(
-    disclaimer('Four AI-generated perspectives. Disagreement is part of the exercise.')
-  );
+  blocks.push(disclaimer('Four AI-generated perspectives. Disagreement is part of the exercise.'));
   return { title: 'Board of Advisors Review', blocks };
 }

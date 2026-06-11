@@ -27,8 +27,7 @@ export type GenerateCoverLetterResult = {
 const ADVERT_TRIM_CHARS = 4000;
 const RESUME_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You write professional cover letters for students. You ONLY respond in JSON.';
+const SYSTEM = 'You write professional cover letters for students. You ONLY respond in JSON.';
 
 function trimAdvert(input: CoverLetterInput): CoverLetterInput {
   if (input.jobAdvert && input.jobAdvert.length > ADVERT_TRIM_CHARS) {
@@ -62,9 +61,7 @@ export async function generateCoverLetter(
   input: CoverLetterInput
 ): Promise<GenerateCoverLetterResult> {
   if (!hasTarget(input)) {
-    throw new Error(
-      'Please provide at least a job title or job advert to write a cover letter.'
-    );
+    throw new Error('Please provide at least a job title or job advert to write a cover letter.');
   }
 
   const { result: parsed, trimmed } = await generate(
@@ -78,8 +75,7 @@ export async function generateCoverLetter(
     },
     {
       steps: [trimAdvert, trimResume],
-      tooLongMessage:
-        'Input is too long for the model. Try trimming your resume or job advert.',
+      tooLongMessage: 'Input is too long for the model. Try trimming your resume or job advert.',
     }
   );
 

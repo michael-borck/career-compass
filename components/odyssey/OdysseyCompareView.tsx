@@ -23,9 +23,7 @@ export default function OdysseyCompareView({ lives }: Props) {
         const isElaborated = !!life.headline;
         return (
           <div key={type} className='border border-border rounded-lg bg-paper p-5'>
-            <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-1'>
-              {TITLES[type]}
-            </h2>
+            <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-1'>{TITLES[type]}</h2>
             {life.label.trim() && (
               <p className='text-[var(--text-sm)] text-ink-muted mb-3'>{life.label}</p>
             )}

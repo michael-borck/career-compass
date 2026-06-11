@@ -27,11 +27,18 @@ export default function LearningPath() {
   const hasTarget = hasJobTitle || hasJobAdvert;
   const canRun = hasTarget;
 
-  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runGeneration,
+    resetAutoRun,
+  } = useGeneration({
     generate: async () => {
       const state = useSessionStore.getState();
       // Mirror the legacy flow: any non-disabled engine counts as opt-in.
-      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>('settings', {});
+      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>(
+        'settings',
+        {}
+      );
       const grounded = (settings?.searchEngine ?? 'duckduckgo') !== 'disabled';
       return generateLearningPath({
         jobAdvert: state.jobAdvert || undefined,
@@ -187,9 +194,13 @@ export default function LearningPath() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!canRun || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Building…</>
+                      <>
+                        <LoadingDots color='white' /> Building…
+                      </>
                     ) : (
-                      <><RouteIcon className='w-4 h-4 mr-2' /> Build learning path</>
+                      <>
+                        <RouteIcon className='w-4 h-4 mr-2' /> Build learning path
+                      </>
                     )}
                   </Button>
                 </div>

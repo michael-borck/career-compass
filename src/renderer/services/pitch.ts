@@ -9,11 +9,7 @@
 // resume, then surrender with a helpful error.
 
 import { generate } from './generate';
-import {
-  buildPitchPrompt,
-  parsePitch,
-  type PitchInput,
-} from '@/lib/prompts/pitch';
+import { buildPitchPrompt, parsePitch, type PitchInput } from '@/lib/prompts/pitch';
 import type { ElevatorPitch } from '@/lib/session-store';
 
 export type { PitchInput };
@@ -26,8 +22,7 @@ export type GeneratePitchResult = {
 const ADVERT_TRIM_CHARS = 4000;
 const RESUME_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You write elevator pitches for students. You ONLY respond in JSON.';
+const SYSTEM = 'You write elevator pitches for students. You ONLY respond in JSON.';
 
 function trimAdvert(input: PitchInput): PitchInput {
   if (input.jobAdvert && input.jobAdvert.length > ADVERT_TRIM_CHARS) {
@@ -59,9 +54,7 @@ function hasAnyInput(input: PitchInput): boolean {
  * Throws on validation failure (no input) or after all retries are exhausted.
  * The thrown error's `.message` is safe to surface to the user via toast.
  */
-export async function generatePitch(
-  input: PitchInput
-): Promise<GeneratePitchResult> {
+export async function generatePitch(input: PitchInput): Promise<GeneratePitchResult> {
   if (!hasAnyInput(input)) {
     throw new Error(
       'Please provide at least one input field (resume, about you, job title, job advert, or profile).'
@@ -79,8 +72,7 @@ export async function generatePitch(
     },
     {
       steps: [trimAdvert, trimResume],
-      tooLongMessage:
-        'Input is too long for the model. Try trimming your resume or job advert.',
+      tooLongMessage: 'Input is too long for the model. Try trimming your resume or job advert.',
     }
   );
 

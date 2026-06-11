@@ -58,9 +58,9 @@ beforeEach(() => {
 
 describe('generateBoardReview — input handling', () => {
   it('rejects when no profile material is provided', async () => {
-    await expect(
-      generateBoardReview({ framing: 'help', focusRole: null })
-    ).rejects.toThrow(/needs at least a resume/i);
+    await expect(generateBoardReview({ framing: 'help', focusRole: null })).rejects.toThrow(
+      /needs at least a resume/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 

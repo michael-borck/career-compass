@@ -52,14 +52,19 @@ export default function Odyssey() {
             Back to landing
           </Link>
           <div className='flex items-center gap-3'>
-            <SaveDocxButton getBlob={() => odysseyPlanToDocx(odysseyLives)} filename='odyssey-plan.docx' />
+            <SaveDocxButton
+              getBlob={() => odysseyPlanToDocx(odysseyLives)}
+              filename='odyssey-plan.docx'
+            />
             <CopyMarkdownButton getMarkdown={() => markdown} label='Copy as text' />
             {view === 'cards' ? (
               <Button
                 variant='outline'
                 onClick={() => setView('compare')}
                 disabled={!canCompare}
-                title={canCompare ? 'Compare all three lives' : 'Elaborate at least two lives first'}
+                title={
+                  canCompare ? 'Compare all three lives' : 'Elaborate at least two lives first'
+                }
               >
                 <Columns3 className='w-4 h-4 mr-2' />
                 Compare all three
@@ -83,8 +88,8 @@ export default function Odyssey() {
           Imagine three lives
         </h1>
         <p className='text-[var(--text-base)] text-ink-muted text-center max-w-2xl mx-auto mb-8'>
-          Three alternative five-year futures. Brainstorm each seed, let the AI flesh it out,
-          then rate how each one feels. There are no wrong answers.
+          Three alternative five-year futures. Brainstorm each seed, let the AI flesh it out, then
+          rate how each one feels. There are no wrong answers.
         </p>
 
         {view === 'cards' ? (
@@ -163,9 +168,7 @@ function LifeCard({ type }: { type: OdysseyLifeType }) {
       }
     } catch (err) {
       console.error(err);
-      toast.error(
-        err instanceof Error ? err.message : 'Could not elaborate this life. Try again.'
-      );
+      toast.error(err instanceof Error ? err.message : 'Could not elaborate this life. Try again.');
     } finally {
       setElaborating(false);
     }
@@ -266,10 +269,7 @@ function LifeCard({ type }: { type: OdysseyLifeType }) {
 
       {!isElaborated && (
         <div className='flex gap-3 mt-4'>
-          <Button
-            onClick={runElaborate}
-            disabled={!life.seed.trim() || elaborating || suggesting}
-          >
+          <Button onClick={runElaborate} disabled={!life.seed.trim() || elaborating || suggesting}>
             {elaborating ? (
               <>
                 <LoadingDots color='white' /> Elaborating…
@@ -278,11 +278,7 @@ function LifeCard({ type }: { type: OdysseyLifeType }) {
               'Elaborate this life'
             )}
           </Button>
-          <Button
-            variant='outline'
-            onClick={runSuggest}
-            disabled={elaborating || suggesting}
-          >
+          <Button variant='outline' onClick={runSuggest} disabled={elaborating || suggesting}>
             <Sparkles className='w-4 h-4 mr-2' />
             {suggesting ? 'Thinking…' : 'Suggest from profile'}
           </Button>

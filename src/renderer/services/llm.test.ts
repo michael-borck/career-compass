@@ -36,17 +36,16 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
   };
   const secureStore = overrides.secureStorage ?? {};
   const envVars = overrides.envVars ?? {};
-  const apiFetchResponse =
-    overrides.apiFetchResponse ?? {
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      body: JSON.stringify({
-        choices: [{ message: { content: 'hello' } }],
-        usage: { prompt_tokens: 10, completion_tokens: 5 },
-      }),
-    };
+  const apiFetchResponse = overrides.apiFetchResponse ?? {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    body: JSON.stringify({
+      choices: [{ message: { content: 'hello' } }],
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
+    }),
+  };
 
   const api: MockElectronAPI = {
     store: { get: vi.fn(async () => settings) },
@@ -59,7 +58,6 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
     apiFetch: vi.fn(async () => apiFetchResponse),
   };
 
-   
   (globalThis as any).window = { electronAPI: api };
   return api;
 }
@@ -103,9 +101,7 @@ describe('chat — openai', () => {
       secureStorage: { 'career-compass-llm-openai': 'sk-test' },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
-    expect(api.apiFetch.mock.calls[0][0].url).toBe(
-      'https://api.openai.com/v1/chat/completions'
-    );
+    expect(api.apiFetch.mock.calls[0][0].url).toBe('https://api.openai.com/v1/chat/completions');
   });
 
   it('falls back to OPENAI_API_KEY env var when no secureStorage key', async () => {
@@ -301,9 +297,9 @@ describe('chat — error handling', () => {
       mockElectronAPI({
         settings: { provider, baseURL: '', model: 'some-model' },
       });
-      await expect(
-        chat({ messages: [{ role: 'user', content: 'hi' }] })
-      ).rejects.toThrow(/API key not configured/i);
+      await expect(chat({ messages: [{ role: 'user', content: 'hi' }] })).rejects.toThrow(
+        /API key not configured/i
+      );
     }
   );
 });
@@ -427,9 +423,7 @@ describe('chat — baseURL fallback', () => {
       secureStorage: { 'career-compass-llm-openai': 'sk-test' },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
-    expect(api.apiFetch.mock.calls[0][0].url).toBe(
-      'https://api.openai.com/v1/chat/completions'
-    );
+    expect(api.apiFetch.mock.calls[0][0].url).toBe('https://api.openai.com/v1/chat/completions');
   });
 
   it('empty baseURL for ollama falls back to localhost default', async () => {
@@ -437,9 +431,7 @@ describe('chat — baseURL fallback', () => {
       settings: { provider: 'ollama', baseURL: '', model: 'llama3' },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
-    expect(api.apiFetch.mock.calls[0][0].url).toBe(
-      'http://localhost:11434/v1/chat/completions'
-    );
+    expect(api.apiFetch.mock.calls[0][0].url).toBe('http://localhost:11434/v1/chat/completions');
   });
 
   it('explicit baseURL wins over provider default', async () => {
@@ -448,9 +440,7 @@ describe('chat — baseURL fallback', () => {
       secureStorage: { 'career-compass-llm-openai': 'sk-test' },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
-    expect(api.apiFetch.mock.calls[0][0].url).toBe(
-      'https://proxy.example.com/v1/chat/completions'
-    );
+    expect(api.apiFetch.mock.calls[0][0].url).toBe('https://proxy.example.com/v1/chat/completions');
   });
 });
 
@@ -470,8 +460,8 @@ describe('chat — custom provider', () => {
     mockElectronAPI({
       settings: { provider: 'custom', baseURL: '', model: 'custom-model' },
     });
-    await expect(
-      chat({ messages: [{ role: 'user', content: 'hi' }] })
-    ).rejects.toThrow(/server address/i);
+    await expect(chat({ messages: [{ role: 'user', content: 'hi' }] })).rejects.toThrow(
+      /server address/i
+    );
   });
 });

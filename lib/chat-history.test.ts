@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { trimHistory } from './chat-history';
 import type { ChatMessage } from './session-store';
 
-function msg(role: ChatMessage['role'], content: string, kind: ChatMessage['kind'] = 'message'): ChatMessage {
+function msg(
+  role: ChatMessage['role'],
+  content: string,
+  kind: ChatMessage['kind'] = 'message'
+): ChatMessage {
   return { id: Math.random().toString(), role, content, timestamp: Date.now(), kind };
 }
 

@@ -11,10 +11,14 @@ type Props = {
 };
 
 const ROWS: { field: DashboardField; label: string; tooltip: string }[] = [
-  { field: 'resources', label: 'Resources', tooltip: 'Do I have what I\'d need to make this happen?' },
+  {
+    field: 'resources',
+    label: 'Resources',
+    tooltip: "Do I have what I'd need to make this happen?",
+  },
   { field: 'likability', label: 'Likability', tooltip: 'Do I actually like the sound of this?' },
   { field: 'confidence', label: 'Confidence', tooltip: 'Am I confident I could make it work?' },
-  { field: 'coherence', label: 'Coherence', tooltip: 'Does it fit who I\'m becoming?' },
+  { field: 'coherence', label: 'Coherence', tooltip: "Does it fit who I'm becoming?" },
 ];
 
 export default function OdysseyDashboard({ dashboard, onChange, readOnly = false }: Props) {
@@ -52,7 +56,9 @@ export default function OdysseyDashboard({ dashboard, onChange, readOnly = false
                   );
                 })}
               </div>
-              <div className='text-[var(--text-xs)] text-ink-quiet italic flex-1'>{row.tooltip}</div>
+              <div className='text-[var(--text-xs)] text-ink-quiet italic flex-1'>
+                {row.tooltip}
+              </div>
             </div>
           );
         })}

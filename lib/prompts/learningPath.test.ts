@@ -33,10 +33,17 @@ describe('buildLearningPathPrompt', () => {
       target: 'Data Analyst',
       summary: 's',
       matches: [],
-      gaps: [{
-        title: 'SQL', category: 'technical', severity: 'critical',
-        why: 'w', targetLevel: 'tl', currentLevel: null, evidenceIdeas: ['e'],
-      }],
+      gaps: [
+        {
+          title: 'SQL',
+          category: 'technical',
+          severity: 'critical',
+          why: 'w',
+          targetLevel: 'tl',
+          currentLevel: null,
+          evidenceIdeas: ['e'],
+        },
+      ],
       realisticTimeline: '3 months',
     };
     const out = buildLearningPathPrompt({ jobTitle: 'X', gapAnalysis: gap });
@@ -106,9 +113,14 @@ describe('parseLearningPath', () => {
     const raw = JSON.stringify({
       target: 'X',
       summary: 'y',
-      milestones: [{
-        weekRange: 'W1', focus: 'f', activities: ['a'], outcome: 'o',
-      }],
+      milestones: [
+        {
+          weekRange: 'W1',
+          focus: 'f',
+          activities: ['a'],
+          outcome: 'o',
+        },
+      ],
       totalDuration: '4 weeks',
     });
     const p = parseLearningPath(raw);
@@ -119,14 +131,19 @@ describe('parseLearningPath', () => {
 
   it('throws when milestones is missing', () => {
     const raw = JSON.stringify({
-      target: 'X', summary: 'y', totalDuration: '4 weeks',
+      target: 'X',
+      summary: 'y',
+      totalDuration: '4 weeks',
     });
     expect(() => parseLearningPath(raw)).toThrow();
   });
 
   it('throws when milestones is empty', () => {
     const raw = JSON.stringify({
-      target: 'X', summary: 'y', milestones: [], totalDuration: '4 weeks',
+      target: 'X',
+      summary: 'y',
+      milestones: [],
+      totalDuration: '4 weeks',
     });
     expect(() => parseLearningPath(raw)).toThrow();
   });

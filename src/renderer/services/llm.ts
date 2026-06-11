@@ -17,14 +17,7 @@
 
 import { PROVIDERS } from '../../shared/providers';
 
-export type Provider =
-  | 'ollama'
-  | 'openai'
-  | 'claude'
-  | 'groq'
-  | 'gemini'
-  | 'openrouter'
-  | 'custom';
+export type Provider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
 
 export type ChatMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -61,10 +54,7 @@ export class LLMError extends Error {
 // runGeneration and route to /settings if false.
 export async function isConfigured(): Promise<boolean> {
   try {
-    const raw = await window.electronAPI.store.get<Partial<Settings>>(
-      'settings',
-      DEFAULT_SETTINGS
-    );
+    const raw = await window.electronAPI.store.get<Partial<Settings>>('settings', DEFAULT_SETTINGS);
     const merged = { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
     return !!(merged.model && merged.model.trim());
   } catch {
@@ -94,30 +84,19 @@ function resolveBaseURL(provider: Provider, settingsBaseURL: string): string {
 
   if (provider === 'custom') {
     if (!fromSettings) {
-      throw new LLMError(
-        'Custom provider requires a server address in Settings',
-        0,
-        ''
-      );
+      throw new LLMError('Custom provider requires a server address in Settings', 0, '');
     }
     return fromSettings;
   }
   if (fromSettings) return fromSettings;
   if (fromDefault) return fromDefault;
-  throw new LLMError(
-    `${PROVIDERS[provider].label} has no baseURL configured`,
-    0,
-    ''
-  );
+  throw new LLMError(`${PROVIDERS[provider].label} has no baseURL configured`, 0, '');
 }
 
 const DEFAULT_MAX_TOKENS = 4096;
 
 async function loadSettings(): Promise<Settings> {
-  const raw = await window.electronAPI.store.get<Partial<Settings>>(
-    'settings',
-    DEFAULT_SETTINGS
-  );
+  const raw = await window.electronAPI.store.get<Partial<Settings>>('settings', DEFAULT_SETTINGS);
   return { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
 }
 
@@ -129,9 +108,7 @@ async function loadApiKey(provider: Provider): Promise<string | null> {
   if (primary) return primary;
 
   // Migration fallback: older installs stored LLM keys without the namespace.
-  const legacy = await window.electronAPI.secureStorage.getPassword(
-    `career-compass-${provider}`
-  );
+  const legacy = await window.electronAPI.secureStorage.getPassword(`career-compass-${provider}`);
   if (legacy) return legacy;
 
   // Env var fallback (matches electron/main.js test-connection handler).
@@ -146,11 +123,7 @@ async function loadApiKey(provider: Provider): Promise<string | null> {
 
 function requireApiKey(provider: Provider, key: string | null): string {
   if (!key) {
-    throw new LLMError(
-      `${PROVIDERS[provider].label} API key not configured in Settings`,
-      0,
-      ''
-    );
+    throw new LLMError(`${PROVIDERS[provider].label} API key not configured in Settings`, 0, '');
   }
   return key;
 }
@@ -160,10 +133,7 @@ function stripTrailingSlash(url: string): string {
 }
 
 // Build the OpenAI-compatible chat/completions request body.
-function buildOpenAIBody(
-  model: string,
-  options: ChatOptions
-): Record<string, unknown> {
+function buildOpenAIBody(model: string, options: ChatOptions): Record<string, unknown> {
   const body: Record<string, unknown> = {
     model,
     messages: options.messages,
@@ -174,10 +144,7 @@ function buildOpenAIBody(
   return body;
 }
 
-function parseJsonOrThrow(
-  provider: Provider,
-  resp: { status: number; body: string }
-): unknown {
+function parseJsonOrThrow(provider: Provider, resp: { status: number; body: string }): unknown {
   try {
     return JSON.parse(resp.body);
   } catch {
@@ -193,7 +160,6 @@ function parseOpenAIResponse(
   provider: Provider,
   resp: { status: number; body: string }
 ): ChatResult {
-   
   const data = parseJsonOrThrow(provider, resp) as any;
   const content: string = data?.choices?.[0]?.message?.content ?? '';
   const usage = data?.usage
@@ -299,7 +265,7 @@ async function callAnthropic(args: {
       resp.body
     );
   }
-   
+
   const data = parseJsonOrThrow('claude', resp) as any;
   const textBlock = Array.isArray(data?.content)
     ? data.content.find((b: { type?: string }) => b?.type === 'text')
@@ -337,10 +303,8 @@ async function callGemini(args: {
     };
   }
   const generationConfig: Record<string, unknown> = {};
-  if (options.temperature !== undefined)
-    generationConfig.temperature = options.temperature;
-  if (options.maxTokens !== undefined)
-    generationConfig.maxOutputTokens = options.maxTokens;
+  if (options.temperature !== undefined) generationConfig.temperature = options.temperature;
+  if (options.maxTokens !== undefined) generationConfig.maxOutputTokens = options.maxTokens;
   if (options.response_format?.type === 'json_object') {
     generationConfig.responseMimeType = 'application/json';
   }
@@ -375,10 +339,9 @@ async function callGemini(args: {
       resp.body
     );
   }
-   
+
   const data = parseJsonOrThrow('gemini', resp) as any;
-  const parts: Array<{ text?: string }> =
-    data?.candidates?.[0]?.content?.parts ?? [];
+  const parts: Array<{ text?: string }> = data?.candidates?.[0]?.content?.parts ?? [];
   const content = parts.map((p) => p?.text ?? '').join('');
   const usage = data?.usageMetadata
     ? {

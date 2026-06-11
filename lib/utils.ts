@@ -27,7 +27,7 @@ export function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 }
 
@@ -37,6 +37,6 @@ export function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
     const reader = new FileReader();
     reader.readAsArrayBuffer(file);
     reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 }

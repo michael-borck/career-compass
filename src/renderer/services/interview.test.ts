@@ -15,10 +15,7 @@ vi.mock('./search', () => ({
 
 import { chat } from './llm';
 import { search, loadSearchSettings, isSearchConfigured } from './search';
-import {
-  runInterviewTurn,
-  generateInterviewFeedback,
-} from './interview';
+import { runInterviewTurn, generateInterviewFeedback } from './interview';
 import type {
   ChatMessage,
   InterviewDifficulty,
@@ -28,20 +25,14 @@ import type {
 
 const mockChat = chat as unknown as ReturnType<typeof vi.fn>;
 const mockSearch = search as unknown as ReturnType<typeof vi.fn>;
-const mockLoadSearchSettings =
-  loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
-const mockIsSearchConfigured =
-  isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
+const mockLoadSearchSettings = loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
+const mockIsSearchConfigured = isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
 
 function chatReply(content: string) {
   return { content, usage: undefined };
 }
 
-function makeMessage(
-  role: 'user' | 'assistant',
-  content: string,
-  id?: string
-): ChatMessage {
+function makeMessage(role: 'user' | 'assistant', content: string, id?: string): ChatMessage {
   return {
     id: id ?? `${role}-${Math.random().toString(36).slice(2)}`,
     role,
@@ -86,16 +77,16 @@ beforeEach(() => {
 
 describe('runInterviewTurn — validation', () => {
   it('throws when no target is provided', async () => {
-    await expect(
-      runInterviewTurn({ ...TURN_BASE, target: '', messages: [] })
-    ).rejects.toThrow(/target is required/i);
+    await expect(runInterviewTurn({ ...TURN_BASE, target: '', messages: [] })).rejects.toThrow(
+      /target is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('treats whitespace-only target as missing', async () => {
-    await expect(
-      runInterviewTurn({ ...TURN_BASE, target: '   ', messages: [] })
-    ).rejects.toThrow(/target is required/i);
+    await expect(runInterviewTurn({ ...TURN_BASE, target: '   ', messages: [] })).rejects.toThrow(
+      /target is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 });
@@ -136,7 +127,7 @@ describe('runInterviewTurn — opening turn / message shape', () => {
     expect(hasSeed).toBe(false);
     // History content is forwarded.
     const userTexts = sent.filter((m: any) => m.role === 'user').map((m: any) => m.content);
-    expect(userTexts.some((c: string) => c.includes("CS student"))).toBe(true);
+    expect(userTexts.some((c: string) => c.includes('CS student'))).toBe(true);
   });
 
   it('appends a context-block system message when profile inputs are present', async () => {
@@ -370,9 +361,9 @@ describe('runInterviewTurn — token-limit retry chain', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      runInterviewTurn({ ...TURN_BASE, messages: [] })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(runInterviewTurn({ ...TURN_BASE, messages: [] })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 
@@ -381,9 +372,9 @@ describe('runInterviewTurn — token-limit retry chain', () => {
       .mockRejectedValueOnce(new Error('context length exceeded'))
       .mockRejectedValueOnce(new Error('context length exceeded'))
       .mockRejectedValueOnce(new Error('reduce the length'));
-    await expect(
-      runInterviewTurn({ ...TURN_BASE, messages: [] })
-    ).rejects.toThrow(/reduce the length/);
+    await expect(runInterviewTurn({ ...TURN_BASE, messages: [] })).rejects.toThrow(
+      /reduce the length/
+    );
     expect(mockChat).toHaveBeenCalledTimes(3);
   });
 });

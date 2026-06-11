@@ -7,11 +7,7 @@ vi.mock('./llm', () => ({
 }));
 
 import { chat } from './llm';
-import {
-  suggestCareers,
-  elaborateCareer,
-  generateCareers,
-} from './careers';
+import { suggestCareers, elaborateCareer, generateCareers } from './careers';
 import type { CareerBasicInfo, CareersInput } from './careers';
 
 const mockChat = chat as unknown as ReturnType<typeof vi.fn>;
@@ -45,8 +41,7 @@ const SIX_LIST_JSON = JSON.stringify(
 
 const VALID_DETAIL_JSON = JSON.stringify({
   workRequired: '10-20 hrs/week',
-  aboutTheRole:
-    'A UX Designer creates user-centered designs to improve product usability.',
+  aboutTheRole: 'A UX Designer creates user-centered designs to improve product usability.',
   whyItsagoodfit: [
     'Your portfolio shows visual thinking.',
     'You enjoy talking to users.',
@@ -87,9 +82,7 @@ beforeEach(() => {
 
 describe('suggestCareers — input handling', () => {
   it('rejects an empty input with a clear error', async () => {
-    await expect(suggestCareers({})).rejects.toThrow(
-      /resume, job title, or some context/i
-    );
+    await expect(suggestCareers({})).rejects.toThrow(/resume, job title, or some context/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -157,9 +150,7 @@ describe('suggestCareers — output shape', () => {
 
   it('throws when the model returns a JSON object instead of an array', async () => {
     mockChat.mockResolvedValueOnce(chatReply(JSON.stringify({ careers: [] })));
-    await expect(suggestCareers({ jobTitle: 'UX' })).rejects.toThrow(
-      /expected an array/i
-    );
+    await expect(suggestCareers({ jobTitle: 'UX' })).rejects.toThrow(/expected an array/i);
   });
 });
 
@@ -169,16 +160,16 @@ describe('suggestCareers — output shape', () => {
 
 describe('elaborateCareer — input handling', () => {
   it('rejects a missing jobTitle', async () => {
-    await expect(
-      elaborateCareer({ ...BASIC, jobTitle: '' }, INPUT)
-    ).rejects.toThrow(/jobTitle is required/i);
+    await expect(elaborateCareer({ ...BASIC, jobTitle: '' }, INPUT)).rejects.toThrow(
+      /jobTitle is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('rejects a whitespace-only jobTitle', async () => {
-    await expect(
-      elaborateCareer({ ...BASIC, jobTitle: '   ' }, INPUT)
-    ).rejects.toThrow(/jobTitle is required/i);
+    await expect(elaborateCareer({ ...BASIC, jobTitle: '   ' }, INPUT)).rejects.toThrow(
+      /jobTitle is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 });
@@ -230,9 +221,7 @@ describe('elaborateCareer — output shape', () => {
 
   it('rethrows network/chat errors', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(elaborateCareer(BASIC, INPUT)).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(elaborateCareer(BASIC, INPUT)).rejects.toThrow(/API key not configured/);
   });
 });
 
@@ -279,17 +268,13 @@ describe('generateCareers — orchestration', () => {
 
   it('throws if stage 1 fails (the page should not get partial results)', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(generateCareers({ jobTitle: 'UX' })).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(generateCareers({ jobTitle: 'UX' })).rejects.toThrow(/API key not configured/);
     // Only the stage-1 call was attempted.
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 
   it('throws upfront if input is empty (no LLM calls made)', async () => {
-    await expect(generateCareers({})).rejects.toThrow(
-      /resume, job title, or some context/i
-    );
+    await expect(generateCareers({})).rejects.toThrow(/resume, job title, or some context/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 

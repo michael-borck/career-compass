@@ -8,15 +8,11 @@ const sampleResults: SourceRef[] = [
 
 describe('makeKey', () => {
   it('produces the same key for differently-cased queries', () => {
-    expect(makeKey('duckduckgo', 'Data Analyst')).toBe(
-      makeKey('duckduckgo', 'data analyst')
-    );
+    expect(makeKey('duckduckgo', 'Data Analyst')).toBe(makeKey('duckduckgo', 'data analyst'));
   });
 
   it('produces the same key for differently-whitespaced queries', () => {
-    expect(makeKey('duckduckgo', '  data   analyst  ')).toBe(
-      makeKey('duckduckgo', 'data analyst')
-    );
+    expect(makeKey('duckduckgo', '  data   analyst  ')).toBe(makeKey('duckduckgo', 'data analyst'));
   });
 
   it('produces different keys per engine', () => {

@@ -55,9 +55,9 @@ if (Store) {
           provider: 'ollama',
           apiKey: '',
           baseURL: 'http://localhost:11434/v1',
-          model: ''
-        }
-      }
+          model: '',
+        },
+      },
     });
     console.log('Store initialized at:', store.path);
   } catch (error) {
@@ -74,7 +74,7 @@ function createFallbackStore() {
     get: (key, defaultValue) => defaultValue,
     set: () => {},
     delete: () => {},
-    clear: () => {}
+    clear: () => {},
   };
 }
 
@@ -91,7 +91,7 @@ function createWindow() {
       contextIsolation: true,
       enableRemoteModule: false,
       webSecurity: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
     },
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
   });
@@ -100,7 +100,7 @@ function createWindow() {
   const startUrl = isDev
     ? 'http://localhost:5180'
     : `file://${path.join(__dirname, '../../dist/index.html')}`;
-  
+
   mainWindow.loadURL(startUrl);
 
   // Open DevTools in development
@@ -142,10 +142,11 @@ function createMenu() {
               type: 'info',
               title: 'About Career Compass',
               message: 'Career Compass',
-              detail: 'Privacy-first career exploration powered by AI\n\nVersion: ' + app.getVersion(),
-              buttons: ['OK']
+              detail:
+                'Privacy-first career exploration powered by AI\n\nVersion: ' + app.getVersion(),
+              buttons: ['OK'],
             });
-          }
+          },
         },
         { type: 'separator' },
         {
@@ -155,7 +156,7 @@ function createMenu() {
             mainWindow.webContents.executeJavaScript(`
               window.location.hash = '/settings';
             `);
-          }
+          },
         },
         { type: 'separator' },
         {
@@ -163,9 +164,9 @@ function createMenu() {
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {
             app.quit();
-          }
-        }
-      ]
+          },
+        },
+      ],
     },
     {
       label: 'Edit',
@@ -176,8 +177,8 @@ function createMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectall' }
-      ]
+        { role: 'selectall' },
+      ],
     },
     {
       label: 'View',
@@ -190,8 +191,8 @@ function createMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
+        { role: 'togglefullscreen' },
+      ],
     },
     {
       label: 'Navigate',
@@ -203,7 +204,7 @@ function createMenu() {
             mainWindow.webContents.executeJavaScript(`
               window.location.hash = '/';
             `);
-          }
+          },
         },
         {
           label: 'Explore Careers',
@@ -212,7 +213,7 @@ function createMenu() {
             mainWindow.webContents.executeJavaScript(`
               window.location.hash = '/careers';
             `);
-          }
+          },
         },
         {
           label: 'About',
@@ -221,16 +222,13 @@ function createMenu() {
             mainWindow.webContents.executeJavaScript(`
               window.location.hash = '/about';
             `);
-          }
-        }
-      ]
+          },
+        },
+      ],
     },
     {
       label: 'Window',
-      submenu: [
-        { role: 'minimize' },
-        { role: 'close' }
-      ]
+      submenu: [{ role: 'minimize' }, { role: 'close' }],
     },
     {
       label: 'Help',
@@ -239,16 +237,16 @@ function createMenu() {
           label: 'GitHub Repository',
           click: () => {
             shell.openExternal('https://github.com/michael-borck/career-compass');
-          }
+          },
         },
         {
           label: 'Report Issue',
           click: () => {
             shell.openExternal('https://github.com/michael-borck/career-compass/issues');
-          }
-        }
-      ]
-    }
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);
@@ -304,9 +302,9 @@ if (!isDev && autoUpdater) {
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
-    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')';
     console.log(log_message);
   });
 
@@ -356,25 +354,17 @@ ipcMain.handle('secure-set-password', (event, service, password) =>
   setPassword(store, safeStorage, service, password)
 );
 
-ipcMain.handle('secure-get-password', (event, service) =>
-  getPassword(store, safeStorage, service)
-);
+ipcMain.handle('secure-get-password', (event, service) => getPassword(store, safeStorage, service));
 
-ipcMain.handle('secure-delete-password', (event, service) =>
-  deletePassword(store, service)
-);
+ipcMain.handle('secure-delete-password', (event, service) => deletePassword(store, service));
 
 // IPC handlers for model management
 ipcMain.handle('get-ollama-models', (event, baseURL) => getOllamaModels(baseURL));
 
 // Fetch available models from any provider
-ipcMain.handle('get-provider-models', (event, provider, config) =>
-  listModels(provider, config)
-);
+ipcMain.handle('get-provider-models', (event, provider, config) => listModels(provider, config));
 
-ipcMain.handle('test-connection', (event, provider, config) =>
-  testConnection(provider, config)
-);
+ipcMain.handle('test-connection', (event, provider, config) => testConnection(provider, config));
 
 // App info handlers
 ipcMain.handle('get-version', () => {

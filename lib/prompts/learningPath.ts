@@ -1,4 +1,10 @@
-import type { GapAnalysis, LearningPath, StudentProfile, SourceRef, SkillsMapping } from '@/lib/session-store';
+import type {
+  GapAnalysis,
+  LearningPath,
+  StudentProfile,
+  SourceRef,
+  SkillsMapping,
+} from '@/lib/session-store';
 import { parseModelJson, toStringArray } from './model-json';
 import { formatSourcesForFootnote } from '@/lib/search-prompt';
 
@@ -24,8 +30,8 @@ function formatProfile(p: StudentProfile): string {
 }
 
 function formatGapsForPrompt(g: GapAnalysis): string {
-  const lines = g.gaps.map((gap, i) =>
-    `${i + 1}. [${gap.severity.toUpperCase()}] ${gap.title} — ${gap.why}`
+  const lines = g.gaps.map(
+    (gap, i) => `${i + 1}. [${gap.severity.toUpperCase()}] ${gap.title} — ${gap.why}`
   );
   return `Existing gap analysis for this target:\n${g.summary}\n\nGaps to close:\n${lines.join('\n')}`;
 }
@@ -42,16 +48,26 @@ function formatSkillsMapping(m: SkillsMapping): string {
 }
 
 export function buildLearningPathPrompt(input: LearningPathInput): string {
-  const { jobAdvert, jobTitle, resume, aboutYou, distilledProfile, gapAnalysis, skillsMapping, sources } = input;
+  const {
+    jobAdvert,
+    jobTitle,
+    resume,
+    aboutYou,
+    distilledProfile,
+    gapAnalysis,
+    skillsMapping,
+    sources,
+  } = input;
 
   const hasTarget = (jobAdvert && jobAdvert.trim()) || (jobTitle && jobTitle.trim());
   if (!hasTarget) {
     throw new Error('buildLearningPathPrompt: a target (jobAdvert or jobTitle) is required');
   }
 
-  const targetSection = jobAdvert && jobAdvert.trim()
-    ? `<target type="jobAdvert">\n${jobAdvert.trim()}\n</target>`
-    : `<target type="jobTitle">\n${(jobTitle || '').trim()}\n</target>`;
+  const targetSection =
+    jobAdvert && jobAdvert.trim()
+      ? `<target type="jobAdvert">\n${jobAdvert.trim()}\n</target>`
+      : `<target type="jobTitle">\n${(jobTitle || '').trim()}\n</target>`;
 
   const sections: string[] = [];
 
@@ -104,7 +120,9 @@ Each Milestone has the shape:
   }
 
   if (skillsMapping) {
-    sections.push(`<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's framework levels to set milestone targets. Reference the "next level" tips where relevant. Frame outcomes in terms of framework progression (e.g., "reach SFIA Level 3 in Software Development").`);
+    sections.push(
+      `<skillsMapping>\n${formatSkillsMapping(skillsMapping)}\n</skillsMapping>\n\nUse the student's framework levels to set milestone targets. Reference the "next level" tips where relevant. Frame outcomes in terms of framework progression (e.g., "reach SFIA Level 3 in Software Development").`
+    );
   }
 
   if (sources && sources.length > 0) {

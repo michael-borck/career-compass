@@ -29,8 +29,7 @@ import type { finalCareerInfo } from '@/lib/types';
 
 export type { CareersInput, CareerBasicInfo };
 
-const SYSTEM =
-  'You are a helpful career expert that ONLY responds in JSON.';
+const SYSTEM = 'You are a helpful career expert that ONLY responds in JSON.';
 
 function hasAnyInput(input: CareersInput): boolean {
   return !!(
@@ -51,9 +50,7 @@ function hasAnyInput(input: CareersInput): boolean {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function suggestCareers(
-  input: CareersInput
-): Promise<CareerBasicInfo[]> {
+export async function suggestCareers(input: CareersInput): Promise<CareerBasicInfo[]> {
   if (!hasAnyInput(input)) {
     throw new Error('Add a resume, job title, or some context to get started.');
   }
@@ -88,10 +85,7 @@ export async function elaborateCareer(
       { role: 'system', content: SYSTEM },
       {
         role: 'user',
-        content: buildCareerDetailPrompt(
-          { jobTitle: basic.jobTitle, timeline: basic.timeline },
-          i
-        ),
+        content: buildCareerDetailPrompt({ jobTitle: basic.jobTitle, timeline: basic.timeline }, i),
       },
     ],
     parse: (raw) => parseCareerDetail(raw),
@@ -109,9 +103,7 @@ export async function elaborateCareer(
  *
  * Throws only if stage 1 fails.
  */
-export async function generateCareers(
-  input: CareersInput
-): Promise<finalCareerInfo[]> {
+export async function generateCareers(input: CareersInput): Promise<finalCareerInfo[]> {
   const basics = await suggestCareers(input);
   const final = await Promise.all(
     basics.map(async (basic) => {
@@ -119,12 +111,7 @@ export async function generateCareers(
         return await elaborateCareer(basic, input);
       } catch (err) {
         // Match legacy: log and fall back to basic info so the rest survive.
-        console.error(
-          '[generateCareers] detail error for',
-          basic.jobTitle,
-          ':',
-          err
-        );
+        console.error('[generateCareers] detail error for', basic.jobTitle, ':', err);
         return {
           ...basic,
           workRequired: '',

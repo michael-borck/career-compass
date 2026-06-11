@@ -25,7 +25,15 @@ function FrameworkBadge({ label, fw }: { label: string; fw: FrameworkLevel }) {
   );
 }
 
-function SkillCard({ m, expanded, onToggle }: { m: SkillFrameworkMapping; expanded: boolean; onToggle: () => void }) {
+function SkillCard({
+  m,
+  expanded,
+  onToggle,
+}: {
+  m: SkillFrameworkMapping;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const hasFrameworks = m.sfia || m.onet || m.esco || m.aqf;
 
   return (

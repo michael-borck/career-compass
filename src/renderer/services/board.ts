@@ -9,11 +9,7 @@
 // resume, then surrender with a user-facing error.
 
 import { generate } from './generate';
-import {
-  buildBoardPrompt,
-  parseBoardReview,
-  type BoardInput,
-} from '@/lib/prompts/board';
+import { buildBoardPrompt, parseBoardReview, type BoardInput } from '@/lib/prompts/board';
 import type { BoardAdvisorVoice, BoardSynthesis } from '@/lib/session-store';
 
 export type { BoardInput };
@@ -58,9 +54,7 @@ function trimResume(input: BoardInput): BoardInput {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function generateBoardReview(
-  input: BoardInput
-): Promise<GenerateBoardResult> {
+export async function generateBoardReview(input: BoardInput): Promise<GenerateBoardResult> {
   const hasProfile = !!(
     (input.resume && input.resume.trim()) ||
     (input.freeText && input.freeText.trim()) ||

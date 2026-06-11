@@ -73,9 +73,7 @@ function ensureHtml(raw: string): string {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function generatePortfolio(
-  input: PortfolioInput
-): Promise<GeneratePortfolioResult> {
+export async function generatePortfolio(input: PortfolioInput): Promise<GeneratePortfolioResult> {
   if (!hasProfile(input)) {
     throw new Error('Portfolio needs a resume or About you to generate from.');
   }
@@ -92,15 +90,12 @@ export async function generatePortfolio(
     },
     {
       steps: [trimAdvert, trimResume],
-      tooLongMessage:
-        'Profile too long for a portfolio page. Try trimming your resume.',
+      tooLongMessage: 'Profile too long for a portfolio page. Try trimming your resume.',
     }
   );
 
   const target =
-    input.jobTitle?.trim() ||
-    input.jobAdvert?.trim().split('\n')[0].slice(0, 60) ||
-    null;
+    input.jobTitle?.trim() || input.jobAdvert?.trim().split('\n')[0].slice(0, 60) || null;
 
   return { portfolio: { html, target }, trimmed };
 }

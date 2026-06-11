@@ -17,7 +17,16 @@ type Props = {
   boardDisabled?: boolean;
 };
 
-export default function ChatComposer({ onSend, onPaperclip, onLookUp, disabled, onOdyssey, odysseyDisabled, onBoard, boardDisabled }: Props) {
+export default function ChatComposer({
+  onSend,
+  onPaperclip,
+  onLookUp,
+  disabled,
+  onOdyssey,
+  odysseyDisabled,
+  onBoard,
+  boardDisabled,
+}: Props) {
   const [text, setText] = useState('');
 
   function handleSend() {

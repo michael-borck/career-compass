@@ -17,9 +17,14 @@ export default function CareerStoryResultView({ story }: Props) {
       </div>
 
       <div className='prose max-w-none'>
-        {story.narrative.split('\n\n').filter(Boolean).map((p, i) => (
-          <p key={i} className='text-ink leading-relaxed mb-4'>{p}</p>
-        ))}
+        {story.narrative
+          .split('\n\n')
+          .filter(Boolean)
+          .map((p, i) => (
+            <p key={i} className='text-ink leading-relaxed mb-4'>
+              {p}
+            </p>
+          ))}
       </div>
 
       <div className='editorial-rule justify-center my-8'>
@@ -41,7 +46,9 @@ export default function CareerStoryResultView({ story }: Props) {
               </ul>
             )}
             {theme.reflectionQuestion && (
-              <p className='text-ink-quiet italic text-[var(--text-sm)]'>{theme.reflectionQuestion}</p>
+              <p className='text-ink-quiet italic text-[var(--text-sm)]'>
+                {theme.reflectionQuestion}
+              </p>
             )}
           </div>
         ))}

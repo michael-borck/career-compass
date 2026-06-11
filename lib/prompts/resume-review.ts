@@ -18,11 +18,17 @@ export type ResumeReviewOutput = {
 
 export function buildResumeReviewPrompt(input: ResumeReviewInput): string {
   const sections: string[] = [];
-  sections.push('Review the student\'s resume below. Give structured, actionable feedback. Be honest but encouraging. Do not rewrite the entire resume; instead, suggest specific improvements with example rewrites of individual lines or sections.');
-  sections.push('Respond with JSON in EXACTLY this shape (no prose, no code fences):\n\n{\n  "overallImpression": string (2-3 sentences),\n  "strengths": string[] (2-4 things the resume does well),\n  "improvements": [\n    {\n      "section": string (which part, e.g. "Summary", "Work Experience"),\n      "suggestion": string (what to change),\n      "why": string (why this matters),\n      "example": string (a rewritten version of that line or section)\n    }\n  ] (3-6 improvements, ordered by impact),\n  "keywordsToAdd": string[] (keywords to add if a target role is provided, empty if no target),\n  "structuralNotes": string[] (suggestions about section ordering, formatting)\n}');
+  sections.push(
+    "Review the student's resume below. Give structured, actionable feedback. Be honest but encouraging. Do not rewrite the entire resume; instead, suggest specific improvements with example rewrites of individual lines or sections."
+  );
+  sections.push(
+    'Respond with JSON in EXACTLY this shape (no prose, no code fences):\n\n{\n  "overallImpression": string (2-3 sentences),\n  "strengths": string[] (2-4 things the resume does well),\n  "improvements": [\n    {\n      "section": string (which part, e.g. "Summary", "Work Experience"),\n      "suggestion": string (what to change),\n      "why": string (why this matters),\n      "example": string (a rewritten version of that line or section)\n    }\n  ] (3-6 improvements, ordered by impact),\n  "keywordsToAdd": string[] (keywords to add if a target role is provided, empty if no target),\n  "structuralNotes": string[] (suggestions about section ordering, formatting)\n}'
+  );
   sections.push(`<resume>\n${input.resume.trim()}\n</resume>`);
-  if (input.jobTitle?.trim()) sections.push(`<targetRole>\n${input.jobTitle.trim()}\n</targetRole>`);
-  if (input.jobAdvert?.trim()) sections.push(`<jobAdvert>\n${input.jobAdvert.trim()}\n</jobAdvert>`);
+  if (input.jobTitle?.trim())
+    sections.push(`<targetRole>\n${input.jobTitle.trim()}\n</targetRole>`);
+  if (input.jobAdvert?.trim())
+    sections.push(`<jobAdvert>\n${input.jobAdvert.trim()}\n</jobAdvert>`);
   sections.push('ONLY respond with JSON. No prose, no code fences.');
   return sections.join('\n\n');
 }
@@ -30,7 +36,8 @@ export function buildResumeReviewPrompt(input: ResumeReviewInput): string {
 export function parseResumeReview(raw: string): ResumeReviewOutput {
   const parsed = parseModelJson(raw);
   if (!parsed || typeof parsed !== 'object') throw new Error('parseResumeReview: not an object');
-  if (typeof parsed.overallImpression !== 'string' || !parsed.overallImpression.trim()) throw new Error('parseResumeReview: missing overallImpression');
+  if (typeof parsed.overallImpression !== 'string' || !parsed.overallImpression.trim())
+    throw new Error('parseResumeReview: missing overallImpression');
   const improvements: ResumeReviewItem[] = [];
   if (Array.isArray(parsed.improvements)) {
     for (const imp of parsed.improvements) {
@@ -43,7 +50,8 @@ export function parseResumeReview(raw: string): ResumeReviewOutput {
       });
     }
   }
-  if (improvements.length === 0) throw new Error('parseResumeReview: needs at least one improvement');
+  if (improvements.length === 0)
+    throw new Error('parseResumeReview: needs at least one improvement');
   return {
     overallImpression: parsed.overallImpression.trim(),
     strengths: toStringArray(parsed.strengths),

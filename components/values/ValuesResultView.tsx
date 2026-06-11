@@ -16,9 +16,7 @@ export default function ValuesResultView({ compass }: Props) {
         <div className='editorial-rule'>
           <span>Values Compass</span>
         </div>
-        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>
-          What drives you
-        </h1>
+        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>What drives you</h1>
       </div>
 
       <div>
@@ -57,7 +55,8 @@ export default function ValuesResultView({ compass }: Props) {
         <div>
           <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Tensions to explore</h2>
           <p className='text-[var(--text-xs)] text-ink-quiet mb-3'>
-            Values can pull in different directions. That&apos;s normal — the tension itself is worth understanding.
+            Values can pull in different directions. That&apos;s normal — the tension itself is
+            worth understanding.
           </p>
           <ul className='space-y-2'>
             {compass.tensions.map((t, i) => (

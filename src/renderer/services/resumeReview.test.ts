@@ -24,7 +24,8 @@ const VALID_REVIEW_JSON = JSON.stringify({
       section: 'Summary',
       suggestion: 'Lead with a one-line value proposition.',
       why: 'Recruiters scan the top five lines before deciding to read on.',
-      example: 'Final-year CS student with two analytics internships and a focus on Python tooling.',
+      example:
+        'Final-year CS student with two analytics internships and a focus on Python tooling.',
     },
     {
       section: 'Work Experience',
@@ -53,16 +54,14 @@ beforeEach(() => {
 
 describe('generateResumeReview — validation', () => {
   it('throws when no resume is provided', async () => {
-    await expect(generateResumeReview({ resume: '' })).rejects.toThrow(
-      /resume is required/i
-    );
+    await expect(generateResumeReview({ resume: '' })).rejects.toThrow(/resume is required/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('treats whitespace-only resume as empty', async () => {
-    await expect(
-      generateResumeReview({ resume: '   \n\t  ' })
-    ).rejects.toThrow(/resume is required/i);
+    await expect(generateResumeReview({ resume: '   \n\t  ' })).rejects.toThrow(
+      /resume is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -186,9 +185,7 @@ describe('generateResumeReview — token-limit retry', () => {
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
     const input: ResumeReviewInput = { resume: 'Short resume.' };
-    await expect(generateResumeReview(input)).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(generateResumeReview(input)).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

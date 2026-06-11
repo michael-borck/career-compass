@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { Document } from 'docx';
 import { buildDocument, toDocx } from './to-docx';
-import { type ExportDoc, b, it as italic, h2, h3, p, bullets, note, sources, disclaimer } from './doc';
+import {
+  type ExportDoc,
+  b,
+  it as italic,
+  h2,
+  h3,
+  p,
+  bullets,
+  note,
+  sources,
+  disclaimer,
+} from './doc';
 
 // A doc exercising every block type, so the renderer is smoke-tested across
 // all of them. docx output is binary, so we assert on the structure

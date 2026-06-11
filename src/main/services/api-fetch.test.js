@@ -164,10 +164,7 @@ describe('apiFetch — race conditions', () => {
     });
     await expect(promise).rejects.toThrow(/Request timed out/);
     // Simulate a late response — must be ignored without crashing.
-    state.lastRequest.emit(
-      'response',
-      fakeResponse({ statusCode: 200, body: 'late' })
-    );
+    state.lastRequest.emit('response', fakeResponse({ statusCode: 200, body: 'late' }));
     await tick();
     // Test passes if no unhandled rejection / double-settle error.
   });
@@ -186,18 +183,16 @@ describe('apiFetch — race conditions', () => {
         throw new Error('bad url');
       }),
     };
-    await expect(
-      _apiFetchWithNet(net, { url: 'https://example.com/x' })
-    ).rejects.toThrow(/Invalid request: bad url/);
+    await expect(_apiFetchWithNet(net, { url: 'https://example.com/x' })).rejects.toThrow(
+      /Invalid request: bad url/
+    );
   });
 });
 
 describe('apiFetch — URL validation', () => {
   it('rejects an unparseable URL without calling net.request', async () => {
     const { net } = makeFakeNet();
-    await expect(_apiFetchWithNet(net, { url: 'http://[::1' })).rejects.toThrow(
-      /Invalid URL/
-    );
+    await expect(_apiFetchWithNet(net, { url: 'http://[::1' })).rejects.toThrow(/Invalid URL/);
     expect(net.request).not.toHaveBeenCalled();
   });
 
@@ -205,9 +200,7 @@ describe('apiFetch — URL validation', () => {
     'rejects %s without calling net.request',
     async (url) => {
       const { net } = makeFakeNet();
-      await expect(_apiFetchWithNet(net, { url })).rejects.toThrow(
-        /URL must be http or https/
-      );
+      await expect(_apiFetchWithNet(net, { url })).rejects.toThrow(/URL must be http or https/);
       expect(net.request).not.toHaveBeenCalled();
     }
   );

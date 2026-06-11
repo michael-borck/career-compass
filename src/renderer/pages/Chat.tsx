@@ -40,11 +40,7 @@ import { Input } from '@/components/ui/input';
 import ChatMessageList from '@/components/chat/ChatMessageList';
 import ChatComposer from '@/components/chat/ChatComposer';
 import ProfileReviewModal from '@/components/chat/ProfileReviewModal';
-import {
-  useSessionStore,
-  type StudentProfile,
-  type SourceRef,
-} from '@/lib/session-store';
+import { useSessionStore, type StudentProfile, type SourceRef } from '@/lib/session-store';
 import { runChatTurn, runChatSearch, distillProfile } from '../services/chat';
 import { isConfigured as isLLMConfigured } from '../services/llm';
 import { extractTextFromFile, isSupportedFile } from '../services/file-upload';
@@ -62,9 +58,7 @@ export default function Chat() {
   const [reviewTrimmed, setReviewTrimmed] = useState(false);
   const [distilling, setDistilling] = useState(false);
 
-  const userMessageCount = messages.filter(
-    (m) => m.role === 'user' && m.kind === 'message'
-  ).length;
+  const userMessageCount = messages.filter((m) => m.role === 'user' && m.kind === 'message').length;
   const canGenerate = userMessageCount >= 1 && !distilling;
 
   function clearFocus() {
@@ -114,8 +108,7 @@ export default function Chat() {
       toast.error(err instanceof Error ? err.message : 'Chat failed');
       store.addChatMessage({
         role: 'assistant',
-        content:
-          "The advisor couldn't respond. Check your provider settings and try again.",
+        content: "The advisor couldn't respond. Check your provider settings and try again.",
       });
     } finally {
       setSending(false);
@@ -129,13 +122,9 @@ export default function Chat() {
 
       if (results.length > 0) {
         const latestMessages = useSessionStore.getState().chatMessages;
-        const lastAssistant = [...latestMessages]
-          .reverse()
-          .find((m) => m.role === 'assistant');
+        const lastAssistant = [...latestMessages].reverse().find((m) => m.role === 'assistant');
         if (lastAssistant) {
-          useSessionStore
-            .getState()
-            .setChatSourcesForMessage(lastAssistant.id, results);
+          useSessionStore.getState().setChatSourcesForMessage(lastAssistant.id, results);
         }
       }
     } catch (err) {
@@ -189,9 +178,7 @@ export default function Chat() {
     } catch (err) {
       console.error(err);
       toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Could not set up Odyssey plan from this chat.'
+        err instanceof Error ? err.message : 'Could not set up Odyssey plan from this chat.'
       );
     } finally {
       setDistilling(false);
@@ -220,9 +207,7 @@ export default function Chat() {
     } catch (err) {
       console.error(err);
       toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Could not set up board review from this chat.'
+        err instanceof Error ? err.message : 'Could not set up board review from this chat.'
       );
     } finally {
       setDistilling(false);
@@ -237,37 +222,32 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className='h-full flex flex-col'>
       {/* Top bar (was ChatTopBar — inlined so we can drop the next/navigation
           shim dependency and embed the focus pill / generate / start-over
           buttons in one place.) */}
-      <div className="border-b border-border px-6 py-4 flex items-center gap-4">
-        <Link
-          to="/"
-          className="text-ink-quiet hover:text-ink underline text-[var(--text-sm)]"
-        >
+      <div className='border-b border-border px-6 py-4 flex items-center gap-4'>
+        <Link to='/' className='text-ink-quiet hover:text-ink underline text-[var(--text-sm)]'>
           ← Back to landing
         </Link>
-        <h1 className="text-[var(--text-lg)] font-semibold text-ink">
-          Career Advisor
-        </h1>
+        <h1 className='text-[var(--text-lg)] font-semibold text-ink'>Career Advisor</h1>
         {currentFocus && (
-          <span className="inline-flex items-center gap-2 border border-accent/30 bg-accent-soft text-ink text-[var(--text-sm)] px-3 py-1 rounded-full">
+          <span className='inline-flex items-center gap-2 border border-accent/30 bg-accent-soft text-ink text-[var(--text-sm)] px-3 py-1 rounded-full'>
             Focused on: {currentFocus}
             <button
               onClick={clearFocus}
-              className="text-ink-quiet hover:text-ink"
-              aria-label="Clear focus"
+              className='text-ink-quiet hover:text-ink'
+              aria-label='Clear focus'
             >
-              <X className="w-3 h-3" />
+              <X className='w-3 h-3' />
             </button>
           </span>
         )}
-        <div className="flex-1" />
+        <div className='flex-1' />
         <Button onClick={() => runDistillation()} disabled={!canGenerate}>
           Generate careers from this chat →
         </Button>
-        <Button variant="outline" onClick={startOver}>
+        <Button variant='outline' onClick={startOver}>
           Start over
         </Button>
       </div>
@@ -345,9 +325,7 @@ function PaperclipMenu({ open, onClose }: { open: boolean; onClose: () => void }
         close();
       } catch (err) {
         console.error(err);
-        toast.error(
-          err instanceof Error ? err.message : 'Could not parse that file.'
-        );
+        toast.error(err instanceof Error ? err.message : 'Could not parse that file.');
       }
     };
     input.click();
@@ -373,53 +351,39 @@ function PaperclipMenu({ open, onClose }: { open: boolean; onClose: () => void }
   }
 
   return (
-    <div className="fixed inset-0 bg-ink/40 flex items-end md:items-center justify-center z-50">
-      <div className="bg-paper border border-border rounded-lg p-6 w-full max-w-md m-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-[var(--text-lg)] font-semibold text-ink">
-            Add context
-          </h2>
-          <button onClick={close} className="text-ink-quiet hover:text-ink">
-            <X className="w-5 h-5" />
+    <div className='fixed inset-0 bg-ink/40 flex items-end md:items-center justify-center z-50'>
+      <div className='bg-paper border border-border rounded-lg p-6 w-full max-w-md m-4'>
+        <div className='flex justify-between items-center mb-4'>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink'>Add context</h2>
+          <button onClick={close} className='text-ink-quiet hover:text-ink'>
+            <X className='w-5 h-5' />
           </button>
         </div>
 
         {mode === 'menu' && (
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              onClick={handleResume}
-              className="justify-start"
-            >
-              <FileText className="w-4 h-4 mr-2" /> Attach resume file
+          <div className='flex flex-col gap-2'>
+            <Button variant='outline' onClick={handleResume} className='justify-start'>
+              <FileText className='w-4 h-4 mr-2' /> Attach resume file
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setMode('text')}
-              className="justify-start"
-            >
-              <Type className="w-4 h-4 mr-2" /> Paste text
+            <Button variant='outline' onClick={() => setMode('text')} className='justify-start'>
+              <Type className='w-4 h-4 mr-2' /> Paste text
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setMode('title')}
-              className="justify-start"
-            >
-              <Briefcase className="w-4 h-4 mr-2" /> Add job title
+            <Button variant='outline' onClick={() => setMode('title')} className='justify-start'>
+              <Briefcase className='w-4 h-4 mr-2' /> Add job title
             </Button>
           </div>
         )}
 
         {mode === 'text' && (
-          <div className="flex flex-col gap-3">
+          <div className='flex flex-col gap-3'>
             <Textarea
               rows={5}
               value={textValue}
               onChange={(e) => setTextValue(e.target.value)}
-              placeholder="Paste anything: a description, a transcript, notes…"
+              placeholder='Paste anything: a description, a transcript, notes…'
             />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setMode('menu')}>
+            <div className='flex justify-end gap-2'>
+              <Button variant='outline' onClick={() => setMode('menu')}>
                 Back
               </Button>
               <Button onClick={submitText} disabled={!textValue.trim()}>
@@ -430,14 +394,14 @@ function PaperclipMenu({ open, onClose }: { open: boolean; onClose: () => void }
         )}
 
         {mode === 'title' && (
-          <div className="flex flex-col gap-3">
+          <div className='flex flex-col gap-3'>
             <Input
               value={titleValue}
               onChange={(e) => setTitleValue(e.target.value)}
-              placeholder="e.g., Data Analyst"
+              placeholder='e.g., Data Analyst'
             />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setMode('menu')}>
+            <div className='flex justify-end gap-2'>
+              <Button variant='outline' onClick={() => setMode('menu')}>
                 Back
               </Button>
               <Button onClick={submitTitle} disabled={!titleValue.trim()}>

@@ -94,26 +94,56 @@ describe('session store actions', () => {
     s.addChatMessage({ role: 'user', content: 'f' });
     s.setFocus('g');
     s.setDistilledProfile({
-      background: 'h', interests: [], skills: [], constraints: [], goals: [],
+      background: 'h',
+      interests: [],
+      skills: [],
+      constraints: [],
+      goals: [],
     });
     s.setGapAnalysis({
-      target: 'X', summary: 'Y', matches: [], gaps: [{
-        title: 't', category: 'technical', severity: 'critical',
-        why: 'w', targetLevel: 'tl', currentLevel: null, evidenceIdeas: ['e'],
-      }], realisticTimeline: 'Z',
+      target: 'X',
+      summary: 'Y',
+      matches: [],
+      gaps: [
+        {
+          title: 't',
+          category: 'technical',
+          severity: 'critical',
+          why: 'w',
+          targetLevel: 'tl',
+          currentLevel: null,
+          evidenceIdeas: ['e'],
+        },
+      ],
+      realisticTimeline: 'Z',
     });
     s.setLearningPath({
-      target: 'X', summary: 'Y', prerequisites: [], milestones: [{
-        weekRange: 'W1', focus: 'f', activities: ['a'], outcome: 'o',
-      }],
-      portfolioProject: 'P', totalDuration: 'D', caveats: [],
+      target: 'X',
+      summary: 'Y',
+      prerequisites: [],
+      milestones: [
+        {
+          weekRange: 'W1',
+          focus: 'f',
+          activities: ['a'],
+          outcome: 'o',
+        },
+      ],
+      portfolioProject: 'P',
+      totalDuration: 'D',
+      caveats: [],
     });
     s.setInterviewSession('Z', 'friendly');
     s.addInterviewMessage({ role: 'user', content: 'm' });
     s.setInterviewFeedback({
-      target: 'Z', difficulty: 'friendly',
-      summary: 's', strengths: [], improvements: [],
-      perPhase: [], overallRating: 'developing', nextSteps: [],
+      target: 'Z',
+      difficulty: 'friendly',
+      summary: 's',
+      strengths: [],
+      improvements: [],
+      perPhase: [],
+      overallRating: 'developing',
+      nextSteps: [],
     });
     s.setUrlInput('http://x');
     s.setUrlFetchedTitle('T');
@@ -156,10 +186,17 @@ describe('session store actions', () => {
       target: 'Data Analyst',
       summary: 's',
       matches: ['m'],
-      gaps: [{
-        title: 'SQL', category: 'technical' as const, severity: 'critical' as const,
-        why: 'w', targetLevel: 't', currentLevel: null, evidenceIdeas: ['e'],
-      }],
+      gaps: [
+        {
+          title: 'SQL',
+          category: 'technical' as const,
+          severity: 'critical' as const,
+          why: 'w',
+          targetLevel: 't',
+          currentLevel: null,
+          evidenceIdeas: ['e'],
+        },
+      ],
       realisticTimeline: '3 months',
     };
     useSessionStore.getState().setGapAnalysis(g);
@@ -253,9 +290,11 @@ describe('session store actions', () => {
   });
 
   it('setGapAnalysisSources writes the field', () => {
-    useSessionStore.getState().setGapAnalysisSources([
-      { title: 'Glassdoor', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
-    ]);
+    useSessionStore
+      .getState()
+      .setGapAnalysisSources([
+        { title: 'Glassdoor', url: 'https://glassdoor.com/x', domain: 'glassdoor.com' },
+      ]);
     expect(useSessionStore.getState().gapAnalysisSources).toHaveLength(1);
   });
 
@@ -271,20 +310,16 @@ describe('session store actions', () => {
     ]);
     const sources = useSessionStore.getState().interviewSources;
     expect(sources).toHaveLength(3);
-    expect(sources.map((x) => x.url)).toEqual([
-      'https://a.com',
-      'https://b.com',
-      'https://c.com',
-    ]);
+    expect(sources.map((x) => x.url)).toEqual(['https://a.com', 'https://b.com', 'https://c.com']);
   });
 
   it('setChatSourcesForMessage stores sources under the message id', () => {
-    useSessionStore.getState().setChatSourcesForMessage('msg-1', [
-      { title: 'A', url: 'https://a.com', domain: 'a.com' },
-    ]);
-    useSessionStore.getState().setChatSourcesForMessage('msg-2', [
-      { title: 'B', url: 'https://b.com', domain: 'b.com' },
-    ]);
+    useSessionStore
+      .getState()
+      .setChatSourcesForMessage('msg-1', [{ title: 'A', url: 'https://a.com', domain: 'a.com' }]);
+    useSessionStore
+      .getState()
+      .setChatSourcesForMessage('msg-2', [{ title: 'B', url: 'https://b.com', domain: 'b.com' }]);
     const cs = useSessionStore.getState().chatSources;
     expect(cs['msg-1']).toHaveLength(1);
     expect(cs['msg-2']).toHaveLength(1);
@@ -328,7 +363,9 @@ describe('odyssey lives', () => {
   });
 
   it('setOdysseySeed writes label and seed for a specific slot', () => {
-    useSessionStore.getState().setOdysseySeed('pivot', 'Teacher', 'I become a high school teacher.');
+    useSessionStore
+      .getState()
+      .setOdysseySeed('pivot', 'Teacher', 'I become a high school teacher.');
     const life = useSessionStore.getState().odysseyLives.pivot;
     expect(life.label).toBe('Teacher');
     expect(life.seed).toBe('I become a high school teacher.');
@@ -464,15 +501,25 @@ describe('comparison', () => {
         {
           label: 'Data analyst',
           cells: {
-            typicalDay: 'a', coreSkills: 'b', trainingNeeded: 'c',
-            salaryRange: 'd', workSetting: 'e', whoItSuits: 'f', mainChallenge: 'g',
+            typicalDay: 'a',
+            coreSkills: 'b',
+            trainingNeeded: 'c',
+            salaryRange: 'd',
+            workSetting: 'e',
+            whoItSuits: 'f',
+            mainChallenge: 'g',
           },
         },
         {
           label: 'UX researcher',
           cells: {
-            typicalDay: 'h', coreSkills: 'i', trainingNeeded: 'j',
-            salaryRange: 'k', workSetting: 'l', whoItSuits: 'm', mainChallenge: 'n',
+            typicalDay: 'h',
+            coreSkills: 'i',
+            trainingNeeded: 'j',
+            salaryRange: 'k',
+            workSetting: 'l',
+            whoItSuits: 'm',
+            mainChallenge: 'n',
           },
         },
       ],
@@ -522,8 +569,30 @@ describe('comparison', () => {
     useSessionStore.getState().setComparison({
       mode: 'quick',
       roles: [
-        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
-        { label: 'B', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        {
+          label: 'A',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
+        {
+          label: 'B',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
       ],
     });
     useSessionStore.getState().setComparePrefill({ seedTarget: 'X' });
@@ -563,25 +632,49 @@ describe('resetOutputs', () => {
 
   it('clears all output fields', () => {
     useSessionStore.getState().setJobTitle('Analyst');
-    useSessionStore.getState().setCareers([{
-      jobTitle: 'Test', jobDescription: 'd', timeline: 't', salary: 's',
-      difficulty: 'd', workRequired: 'w', aboutTheRole: 'a',
-      whyItsagoodfit: [], roadmap: [],
-    }]);
+    useSessionStore.getState().setCareers([
+      {
+        jobTitle: 'Test',
+        jobDescription: 'd',
+        timeline: 't',
+        salary: 's',
+        difficulty: 'd',
+        workRequired: 'w',
+        aboutTheRole: 'a',
+        whyItsagoodfit: [],
+        roadmap: [],
+      },
+    ]);
     useSessionStore.getState().addChatMessage({ role: 'user', content: 'hi' });
     useSessionStore.getState().setGapAnalysis({
-      target: 't', summary: 's', matches: [], gaps: [], realisticTimeline: 'r',
+      target: 't',
+      summary: 's',
+      matches: [],
+      gaps: [],
+      realisticTimeline: 'r',
     });
     useSessionStore.getState().setLearningPath({
-      target: 't', summary: 's', prerequisites: [], milestones: [],
-      portfolioProject: '', totalDuration: '', caveats: [],
+      target: 't',
+      summary: 's',
+      prerequisites: [],
+      milestones: [],
+      portfolioProject: '',
+      totalDuration: '',
+      caveats: [],
     });
     useSessionStore.getState().setInterviewFeedback({
-      target: 't', difficulty: 'standard', summary: 's', strengths: [],
-      improvements: [], perPhase: [], overallRating: 'on-track', nextSteps: [],
+      target: 't',
+      difficulty: 'standard',
+      summary: 's',
+      strengths: [],
+      improvements: [],
+      perPhase: [],
+      overallRating: 'on-track',
+      nextSteps: [],
     });
     useSessionStore.getState().setBoardReview({
-      framing: 'f', focusRole: null,
+      framing: 'f',
+      focusRole: null,
       voices: [
         { role: 'recruiter', name: 'R', response: 'r' },
         { role: 'hr', name: 'H', response: 'h' },
@@ -593,13 +686,39 @@ describe('resetOutputs', () => {
     useSessionStore.getState().setComparison({
       mode: 'quick',
       roles: [
-        { label: 'A', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
-        { label: 'B', cells: { typicalDay: 'x', coreSkills: 'x', trainingNeeded: 'x', salaryRange: 'x', workSetting: 'x', whoItSuits: 'x', mainChallenge: 'x' } },
+        {
+          label: 'A',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
+        {
+          label: 'B',
+          cells: {
+            typicalDay: 'x',
+            coreSkills: 'x',
+            trainingNeeded: 'x',
+            salaryRange: 'x',
+            workSetting: 'x',
+            whoItSuits: 'x',
+            mainChallenge: 'x',
+          },
+        },
       ],
     });
     useSessionStore.getState().setOdysseySeed('current', 'L', 'seed');
     useSessionStore.getState().setDistilledProfile({
-      background: 'b', interests: [], skills: [], constraints: [], goals: [],
+      background: 'b',
+      interests: [],
+      skills: [],
+      constraints: [],
+      goals: [],
     });
     useSessionStore.getState().toggleComparing('A');
     useSessionStore.getState().setBoardPrefill({ framing: 'f' });
@@ -654,7 +773,12 @@ describe('career materials', () => {
   });
 
   it('setCoverLetter writes and clears', () => {
-    const letter = { target: 'Analyst', greeting: 'Dear Hiring Manager,', body: 'I am writing...', closing: 'Sincerely, Student' };
+    const letter = {
+      target: 'Analyst',
+      greeting: 'Dear Hiring Manager,',
+      body: 'I am writing...',
+      closing: 'Sincerely, Student',
+    };
     useSessionStore.getState().setCoverLetter(letter);
     expect(useSessionStore.getState().coverLetter).toEqual(letter);
     useSessionStore.getState().setCoverLetter(null);
@@ -663,10 +787,19 @@ describe('career materials', () => {
 
   it('setResumeReview writes and clears', () => {
     const review = {
-      target: 'Analyst', overallImpression: 'Solid foundation.',
+      target: 'Analyst',
+      overallImpression: 'Solid foundation.',
       strengths: ['Clear structure'],
-      improvements: [{ section: 'Summary', suggestion: 'Add a target', why: 'Focus', example: 'Aspiring data analyst...' }],
-      keywordsToAdd: ['SQL'], structuralNotes: ['Move projects above education'],
+      improvements: [
+        {
+          section: 'Summary',
+          suggestion: 'Add a target',
+          why: 'Focus',
+          example: 'Aspiring data analyst...',
+        },
+      ],
+      keywordsToAdd: ['SQL'],
+      structuralNotes: ['Move projects above education'],
     };
     useSessionStore.getState().setResumeReview(review);
     expect(useSessionStore.getState().resumeReview).toEqual(review);
@@ -675,11 +808,19 @@ describe('career materials', () => {
   });
 
   it('reset() clears all three materials', () => {
-    useSessionStore.getState().setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
-    useSessionStore.getState().setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
+    useSessionStore
+      .getState()
+      .setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
+    useSessionStore
+      .getState()
+      .setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
     useSessionStore.getState().setResumeReview({
-      target: null, overallImpression: 'o', strengths: [], improvements: [],
-      keywordsToAdd: [], structuralNotes: [],
+      target: null,
+      overallImpression: 'o',
+      strengths: [],
+      improvements: [],
+      keywordsToAdd: [],
+      structuralNotes: [],
     });
     useSessionStore.getState().reset();
     const s = useSessionStore.getState();
@@ -689,11 +830,19 @@ describe('career materials', () => {
   });
 
   it('resetOutputs() clears all three materials but preserves inputs', () => {
-    useSessionStore.getState().setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
-    useSessionStore.getState().setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
+    useSessionStore
+      .getState()
+      .setElevatorPitch({ target: null, hook: 'h', body: 'b', close: 'c', fullScript: 'f' });
+    useSessionStore
+      .getState()
+      .setCoverLetter({ target: 't', greeting: 'g', body: 'b', closing: 'c' });
     useSessionStore.getState().setResumeReview({
-      target: null, overallImpression: 'o', strengths: [], improvements: [],
-      keywordsToAdd: [], structuralNotes: [],
+      target: null,
+      overallImpression: 'o',
+      strengths: [],
+      improvements: [],
+      keywordsToAdd: [],
+      structuralNotes: [],
     });
     useSessionStore.getState().setResume('r', 'r.pdf');
     useSessionStore.getState().resetOutputs();
@@ -753,7 +902,13 @@ describe('career story', () => {
 
   it('setCareerStory writes and clears', () => {
     const story = {
-      themes: [{ name: 'Data-driven', evidence: ['Resume shows SQL'], reflectionQuestion: 'Is this your core?' }],
+      themes: [
+        {
+          name: 'Data-driven',
+          evidence: ['Resume shows SQL'],
+          reflectionQuestion: 'Is this your core?',
+        },
+      ],
       narrative: 'I have always been drawn to data.',
     };
     useSessionStore.getState().setCareerStory(story);

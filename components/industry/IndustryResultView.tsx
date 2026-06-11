@@ -16,16 +16,19 @@ export default function IndustryResultView({ exploration }: Props) {
         <div className='editorial-rule'>
           <span>Industry Exploration</span>
         </div>
-        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>
-          {exploration.industry}
-        </h1>
+        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>{exploration.industry}</h1>
       </div>
 
       <div>
         <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Overview</h2>
-        {exploration.overview.split('\n\n').filter(Boolean).map((p, i) => (
-          <p key={i} className='text-ink-muted leading-relaxed mb-3'>{p}</p>
-        ))}
+        {exploration.overview
+          .split('\n\n')
+          .filter(Boolean)
+          .map((p, i) => (
+            <p key={i} className='text-ink-muted leading-relaxed mb-3'>
+              {p}
+            </p>
+          ))}
       </div>
 
       <div>
@@ -87,7 +90,10 @@ export default function IndustryResultView({ exploration }: Props) {
           <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Skills in demand</h2>
           <div className='flex flex-wrap gap-2'>
             {exploration.skillsInDemand.map((s, i) => (
-              <span key={i} className='text-[var(--text-sm)] border border-border rounded-full px-3 py-1 text-ink-muted'>
+              <span
+                key={i}
+                className='text-[var(--text-sm)] border border-border rounded-full px-3 py-1 text-ink-muted'
+              >
                 {s}
               </span>
             ))}
@@ -97,7 +103,9 @@ export default function IndustryResultView({ exploration }: Props) {
 
       {exploration.challenges.length > 0 && (
         <div>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Challenges to know about</h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
+            Challenges to know about
+          </h2>
           <ul className='space-y-1'>
             {exploration.challenges.map((c, i) => (
               <li key={i} className='flex items-start gap-2 text-ink-muted'>

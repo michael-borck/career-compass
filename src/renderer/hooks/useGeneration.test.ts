@@ -26,7 +26,9 @@ beforeEach(() => {
   isConfigured.mockReset();
 });
 
-function setup<T>(opts: Partial<Parameters<typeof useGeneration<T>>[0]> & { generate: () => Promise<T> }) {
+function setup<T>(
+  opts: Partial<Parameters<typeof useGeneration<T>>[0]> & { generate: () => Promise<T> }
+) {
   const persist = vi.fn();
   const out = renderHook(() => useGeneration<T>({ persist, ...opts }));
   return { ...out, persist };
@@ -37,7 +39,9 @@ describe('useGeneration.run', () => {
     isConfigured.mockResolvedValue(false);
     const generate = vi.fn().mockResolvedValue({});
     const { result } = setup({ generate });
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
     expect(toastFn.error).toHaveBeenCalledWith('Set up an LLM provider first.');
     expect(navigate).toHaveBeenCalledWith('/settings');
     expect(generate).not.toHaveBeenCalled();
@@ -47,7 +51,9 @@ describe('useGeneration.run', () => {
     isConfigured.mockResolvedValue(true);
     const generate = vi.fn().mockResolvedValue({ value: 42 });
     const { result, persist } = setup({ generate });
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
     expect(persist).toHaveBeenCalledWith({ value: 42 });
     expect(result.current.loading).toBe(false);
   });
@@ -58,14 +64,18 @@ describe('useGeneration.run', () => {
       generate: () => Promise.resolve({ trimmed: true }),
       trimmed: (r: { trimmed: boolean }) => r.trimmed,
     });
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
     expect(toastFn).toHaveBeenCalledWith('Input was trimmed to fit the model.', { icon: 'ℹ️' });
   });
 
   it('on error: toasts the error message and resets loading', async () => {
     isConfigured.mockResolvedValue(true);
     const { result } = setup({ generate: () => Promise.reject(new Error('boom')) });
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
     expect(toastFn.error).toHaveBeenCalledWith('boom');
     expect(result.current.loading).toBe(false);
   });
@@ -76,7 +86,9 @@ describe('useGeneration.run', () => {
       generate: () => Promise.reject('weird'),
       errorFallback: 'Generation failed',
     });
-    await act(async () => { await result.current.run(); });
+    await act(async () => {
+      await result.current.run();
+    });
     expect(toastFn.error).toHaveBeenCalledWith('Generation failed');
   });
 });
@@ -94,7 +106,9 @@ describe('useGeneration auto-run', () => {
     const generate = vi.fn().mockResolvedValue({});
     setup({ generate, autoRun: () => false });
     // give any stray effect a tick
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(generate).not.toHaveBeenCalled();
   });
 });

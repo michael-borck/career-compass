@@ -51,9 +51,7 @@ function ImprovementCard({
               <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
                 Example
               </div>
-              <p className='text-ink-muted leading-relaxed italic'>
-                &ldquo;{item.example}&rdquo;
-              </p>
+              <p className='text-ink-muted leading-relaxed italic'>&ldquo;{item.example}&rdquo;</p>
             </div>
           )}
         </div>
@@ -80,8 +78,7 @@ export default function ResumeReviewResultView({ review }: Props) {
   }
 
   const allExpanded =
-    review.improvements.length > 0 &&
-    review.improvements.every((_, i) => expanded[i]);
+    review.improvements.length > 0 && review.improvements.every((_, i) => expanded[i]);
 
   return (
     <div className='space-y-8'>
@@ -95,17 +92,13 @@ export default function ResumeReviewResultView({ review }: Props) {
       </div>
 
       <div>
-        <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
-          Overall impression
-        </h2>
+        <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Overall impression</h2>
         <p className='text-ink-muted leading-relaxed'>{review.overallImpression}</p>
       </div>
 
       {review.strengths.length > 0 && (
         <div>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
-            What&apos;s working
-          </h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>What&apos;s working</h2>
           <ul className='space-y-1'>
             {review.strengths.map((s, i) => (
               <li key={i} className='flex items-start gap-2 text-ink-muted'>
@@ -120,9 +113,7 @@ export default function ResumeReviewResultView({ review }: Props) {
       {review.improvements.length > 0 && (
         <div>
           <div className='flex items-center justify-between mb-3'>
-            <h2 className='text-[var(--text-lg)] font-semibold text-ink'>
-              Suggested improvements
-            </h2>
+            <h2 className='text-[var(--text-lg)] font-semibold text-ink'>Suggested improvements</h2>
             <button
               type='button'
               onClick={allExpanded ? hideAll : showAll}
@@ -146,9 +137,7 @@ export default function ResumeReviewResultView({ review }: Props) {
 
       {review.keywordsToAdd.length > 0 && (
         <div>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
-            Keywords to add
-          </h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Keywords to add</h2>
           <ul className='space-y-1'>
             {review.keywordsToAdd.map((k, i) => (
               <li key={i} className='flex items-start gap-2 text-ink-muted'>
@@ -162,9 +151,7 @@ export default function ResumeReviewResultView({ review }: Props) {
 
       {review.structuralNotes.length > 0 && (
         <div>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
-            Structural notes
-          </h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Structural notes</h2>
           <ul className='space-y-1'>
             {review.structuralNotes.map((n, i) => (
               <li key={i} className='flex items-start gap-2 text-ink-muted'>

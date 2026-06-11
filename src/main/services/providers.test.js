@@ -6,12 +6,7 @@
 // the _apiFetchWithNet(net, ...) pattern in api-fetch.test.js.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  getOllamaModels,
-  listModels,
-  testConnection,
-  resolveApiKey,
-} from './providers.js';
+import { getOllamaModels, listModels, testConnection, resolveApiKey } from './providers.js';
 
 // The dev machine may have provider keys exported in its real environment
 // (the app supports env-var fallback). Start every test from a clean slate so
@@ -58,7 +53,9 @@ describe('getOllamaModels', () => {
   });
 
   it('throws on a non-ok response', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(resp({ ok: false, status: 500, statusText: 'err' }));
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(resp({ ok: false, status: 500, statusText: 'err' }));
     await expect(getOllamaModels('http://x', fetchImpl)).rejects.toThrow('HTTP 500');
   });
 });
@@ -78,7 +75,10 @@ describe('listModels', () => {
   it('openai: sends a bearer header and maps + sorts ids', async () => {
     const fetchImpl = fetchOk({ data: [{ id: 'b' }, { id: 'a' }] });
     const models = await listModels('openai', { apiKey: 'k' }, fetchImpl);
-    expect(models).toEqual([{ id: 'a', name: 'a' }, { id: 'b', name: 'b' }]);
+    expect(models).toEqual([
+      { id: 'a', name: 'a' },
+      { id: 'b', name: 'b' },
+    ]);
     expect(fetchImpl).toHaveBeenCalledWith('https://api.openai.com/v1/models', {
       headers: { Authorization: 'Bearer k' },
     });
@@ -86,7 +86,9 @@ describe('listModels', () => {
 
   it('openai: throws on a non-ok response', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp({ ok: false, status: 401 }));
-    await expect(listModels('openai', { apiKey: 'k' }, fetchImpl)).rejects.toThrow('OpenAI error: 401');
+    await expect(listModels('openai', { apiKey: 'k' }, fetchImpl)).rejects.toThrow(
+      'OpenAI error: 401'
+    );
   });
 
   it('claude: sends x-api-key and anthropic-version headers', async () => {
@@ -148,7 +150,10 @@ describe('testConnection', () => {
 
   it('openai: success when ok', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp({ ok: true }));
-    expect(await testConnection('openai', { apiKey: 'k' }, fetchImpl)).toEqual({ success: true, error: null });
+    expect(await testConnection('openai', { apiKey: 'k' }, fetchImpl)).toEqual({
+      success: true,
+      error: null,
+    });
   });
 
   it('openai: surfaces the status and body on a non-ok response', async () => {

@@ -9,7 +9,7 @@ type Props = {
 
 const PHASE_LABEL: Record<InterviewPhase, string> = {
   'warm-up': 'Warm-up',
-  'behavioural': 'Behavioural',
+  behavioural: 'Behavioural',
   'role-specific': 'Role-specific',
   'your-questions': 'Your questions',
   'wrap-up': 'Wrap-up',

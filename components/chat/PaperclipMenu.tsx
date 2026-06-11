@@ -85,9 +85,7 @@ export default function PaperclipMenu({ open, onClose }: Props) {
     <div className='fixed inset-0 bg-ink/40 flex items-end md:items-center justify-center z-50'>
       <div className='bg-paper border border-border rounded-lg p-6 w-full max-w-md m-4'>
         <div className='flex justify-between items-center mb-4'>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink'>
-            Add context
-          </h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink'>Add context</h2>
           <button onClick={close} className='text-ink-quiet hover:text-ink'>
             <X className='w-5 h-5' />
           </button>
@@ -116,8 +114,12 @@ export default function PaperclipMenu({ open, onClose }: Props) {
               placeholder='Paste anything: a description, a transcript, notes…'
             />
             <div className='flex justify-end gap-2'>
-              <Button variant='outline' onClick={() => setMode('menu')}>Back</Button>
-              <Button onClick={submitText} disabled={!textValue.trim()}>Add</Button>
+              <Button variant='outline' onClick={() => setMode('menu')}>
+                Back
+              </Button>
+              <Button onClick={submitText} disabled={!textValue.trim()}>
+                Add
+              </Button>
             </div>
           </div>
         )}
@@ -130,8 +132,12 @@ export default function PaperclipMenu({ open, onClose }: Props) {
               placeholder='e.g., Data Analyst'
             />
             <div className='flex justify-end gap-2'>
-              <Button variant='outline' onClick={() => setMode('menu')}>Back</Button>
-              <Button onClick={submitTitle} disabled={!titleValue.trim()}>Add</Button>
+              <Button variant='outline' onClick={() => setMode('menu')}>
+                Back
+              </Button>
+              <Button onClick={submitTitle} disabled={!titleValue.trim()}>
+                Add
+              </Button>
             </div>
           </div>
         )}

@@ -26,8 +26,7 @@ export type GenerateIndustryResult = {
 
 const RESUME_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You are a career exploration advisor that ONLY responds in JSON.';
+const SYSTEM = 'You are a career exploration advisor that ONLY responds in JSON.';
 
 function trimResume(input: IndustryInput): IndustryInput {
   return {

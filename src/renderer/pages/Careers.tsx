@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import ReactFlow, {
-  Controls,
-  addEdge,
-  useEdgesState,
-  useNodesState,
-} from 'reactflow';
+import ReactFlow, { Controls, addEdge, useEdgesState, useNodesState } from 'reactflow';
 import 'reactflow/dist/style.css';
 import type { Node, NodeTypes } from 'reactflow';
 import { ArrowLeft, Columns3, Compass, X } from 'lucide-react';
@@ -218,7 +213,8 @@ export default function Careers() {
                   Generate 6 personalised career paths
                 </h2>
                 <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                  Fill in any field to get started. The more you provide, the more personalised the results.
+                  Fill in any field to get started. The more you provide, the more personalised the
+                  results.
                 </p>
 
                 <div className='space-y-4'>
@@ -275,9 +271,13 @@ export default function Careers() {
                   <div className='flex justify-center pt-2'>
                     <Button onClick={runGeneration} disabled={!hasAny || loading}>
                       {loading ? (
-                        <><LoadingDots color='white' /> Generating…</>
+                        <>
+                          <LoadingDots color='white' /> Generating…
+                        </>
                       ) : (
-                        <><Compass className='w-4 h-4 mr-2' /> Find my careers</>
+                        <>
+                          <Compass className='w-4 h-4 mr-2' /> Find my careers
+                        </>
                       )}
                     </Button>
                   </div>
@@ -321,11 +321,7 @@ export default function Careers() {
               {comparing.length < 3 ? 'click one more (optional)' : 'maximum reached'}
             </span>
           </div>
-          <Button
-            size='sm'
-            onClick={handleCompareLaunch}
-            disabled={comparing.length < 2}
-          >
+          <Button size='sm' onClick={handleCompareLaunch} disabled={comparing.length < 2}>
             <Columns3 className='w-3 h-3 mr-1' />
             Compare {comparing.length}
           </Button>

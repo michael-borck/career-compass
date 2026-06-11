@@ -77,7 +77,13 @@ ONLY respond with JSON. No prose, no code fences.`;
 }
 
 const VALID_RATINGS = new Set(['developing', 'on-track', 'strong']);
-const VALID_PHASES = new Set(['warm-up', 'behavioural', 'role-specific', 'your-questions', 'wrap-up']);
+const VALID_PHASES = new Set([
+  'warm-up',
+  'behavioural',
+  'role-specific',
+  'your-questions',
+  'wrap-up',
+]);
 
 export function parseFeedback(raw: string): InterviewFeedback {
   const parsed = parseModelJson(raw);
@@ -91,18 +97,16 @@ export function parseFeedback(raw: string): InterviewFeedback {
     throw new Error('parseFeedback: improvements must be a non-empty array');
   }
 
-  const improvements: InterviewImprovement[] = parsed.improvements.map(
-    (i: any, idx: number) => {
-      if (typeof i.area !== 'string' || !i.area.trim()) {
-        throw new Error(`parseFeedback: improvement ${idx} missing area`);
-      }
-      return {
-        area: i.area,
-        why: typeof i.why === 'string' ? i.why : '',
-        example: typeof i.example === 'string' ? i.example : '',
-      };
+  const improvements: InterviewImprovement[] = parsed.improvements.map((i: any, idx: number) => {
+    if (typeof i.area !== 'string' || !i.area.trim()) {
+      throw new Error(`parseFeedback: improvement ${idx} missing area`);
     }
-  );
+    return {
+      area: i.area,
+      why: typeof i.why === 'string' ? i.why : '',
+      example: typeof i.example === 'string' ? i.example : '',
+    };
+  });
 
   const perPhase = Array.isArray(parsed.perPhase)
     ? parsed.perPhase

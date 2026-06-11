@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  extractTextFromFile,
-  isSupportedFile,
-  getSupportedExtensions,
-} from './file-upload';
+import { extractTextFromFile, isSupportedFile, getSupportedExtensions } from './file-upload';
 
 beforeEach(() => {
-   
   (globalThis as any).window = {
     electronAPI: {
       parsePdf: vi.fn(async () => 'pdf text'),
@@ -45,14 +40,7 @@ describe('isSupportedFile', () => {
 
 describe('getSupportedExtensions', () => {
   it('exposes the canonical extension list', () => {
-    expect(getSupportedExtensions()).toEqual([
-      '.pdf',
-      '.docx',
-      '.doc',
-      '.md',
-      '.markdown',
-      '.txt',
-    ]);
+    expect(getSupportedExtensions()).toEqual(['.pdf', '.docx', '.doc', '.md', '.markdown', '.txt']);
   });
 });
 
@@ -61,7 +49,7 @@ describe('extractTextFromFile', () => {
     const result = await extractTextFromFile(fakeFile('resume.pdf'));
     expect(result.text).toBe('pdf text');
     expect(result.filename).toBe('resume.pdf');
-     
+
     const api = (window as any).electronAPI;
     expect(api.parsePdf).toHaveBeenCalledTimes(1);
     // arg should be a Uint8Array
@@ -73,7 +61,7 @@ describe('extractTextFromFile', () => {
     const r2 = await extractTextFromFile(fakeFile('resume.doc'));
     expect(r1.text).toBe('docx text');
     expect(r2.text).toBe('docx text');
-     
+
     expect((window as any).electronAPI.parseDocx).toHaveBeenCalledTimes(2);
   });
 
@@ -81,11 +69,9 @@ describe('extractTextFromFile', () => {
     // normalizeText collapses any run of whitespace (including newlines) to a
     // single space, then trims. Matches the behavior of the main-process
     // file-processors helper.
-    const result = await extractTextFromFile(
-      fakeFile('notes.md', '  hello\n\n\nworld  ')
-    );
+    const result = await extractTextFromFile(fakeFile('notes.md', '  hello\n\n\nworld  '));
     expect(result.text).toBe('hello world');
-     
+
     const api = (window as any).electronAPI;
     expect(api.parsePdf).not.toHaveBeenCalled();
     expect(api.parseDocx).not.toHaveBeenCalled();
@@ -107,14 +93,10 @@ describe('extractTextFromFile', () => {
   });
 
   it('throws on unsupported extension', async () => {
-    await expect(extractTextFromFile(fakeFile('a.zip'))).rejects.toThrow(
-      /Unsupported file type/
-    );
+    await expect(extractTextFromFile(fakeFile('a.zip'))).rejects.toThrow(/Unsupported file type/);
   });
 
   it('throws on missing extension', async () => {
-    await expect(extractTextFromFile(fakeFile('noext'))).rejects.toThrow(
-      /Unsupported file type/
-    );
+    await expect(extractTextFromFile(fakeFile('noext'))).rejects.toThrow(/Unsupported file type/);
   });
 });

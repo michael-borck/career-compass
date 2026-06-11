@@ -28,7 +28,8 @@ describe('parsePitch', () => {
     hook: 'Did you know data drives every decision?',
     body: 'I bring three years of analytical experience.',
     close: 'I am looking for an entry-level analyst role.',
-    fullScript: 'Did you know data drives every decision? I bring three years of analytical experience. I am looking for an entry-level analyst role.',
+    fullScript:
+      'Did you know data drives every decision? I bring three years of analytical experience. I am looking for an entry-level analyst role.',
   });
   it('parses happy path', () => {
     const out = parsePitch(happy);
@@ -39,12 +40,18 @@ describe('parsePitch', () => {
     expect(parsePitch('```json\n' + happy + '\n```').hook).toContain('data');
   });
   it('throws on missing hook', () => {
-    expect(() => parsePitch(JSON.stringify({ body: 'b', close: 'c', fullScript: 'f' }))).toThrow(/hook/i);
+    expect(() => parsePitch(JSON.stringify({ body: 'b', close: 'c', fullScript: 'f' }))).toThrow(
+      /hook/i
+    );
   });
   it('throws on missing body', () => {
-    expect(() => parsePitch(JSON.stringify({ hook: 'h', close: 'c', fullScript: 'f' }))).toThrow(/body/i);
+    expect(() => parsePitch(JSON.stringify({ hook: 'h', close: 'c', fullScript: 'f' }))).toThrow(
+      /body/i
+    );
   });
   it('throws on missing fullScript', () => {
-    expect(() => parsePitch(JSON.stringify({ hook: 'h', body: 'b', close: 'c' }))).toThrow(/fullScript/i);
+    expect(() => parsePitch(JSON.stringify({ hook: 'h', body: 'b', close: 'c' }))).toThrow(
+      /fullScript/i
+    );
   });
 });

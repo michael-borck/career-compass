@@ -11,14 +11,7 @@ import {
 import { search, type SearchSettings } from '../services/search';
 import toast, { Toaster } from 'react-hot-toast';
 
-type LLMProvider =
-  | 'ollama'
-  | 'openai'
-  | 'claude'
-  | 'groq'
-  | 'gemini'
-  | 'openrouter'
-  | 'custom';
+type LLMProvider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
 
 interface AvailableModel {
   id: string;
@@ -214,10 +207,7 @@ export default function Settings() {
       // fallback to /api/getModels. Removed in P3-T2: we always route through
       // the IPC bridge to the main process, which fetches provider model
       // listings using Electron's net module (no CORS preflight).
-      const models = await window.electronAPI.models.getProviderModels(
-        settings.provider,
-        settings
-      );
+      const models = await window.electronAPI.models.getProviderModels(settings.provider, settings);
 
       setAvailableModels(models);
       if (models.length > 0) {
@@ -227,8 +217,7 @@ export default function Settings() {
       }
     } catch (error) {
       console.error('Failed to load models:', error);
-      const message =
-        error instanceof Error ? error.message : 'Could not fetch models';
+      const message = error instanceof Error ? error.message : 'Could not fetch models';
       toast.error(message);
       setAvailableModels([]);
     } finally {
@@ -243,10 +232,7 @@ export default function Settings() {
         [provider]: { success: false, error: 'Checking...' },
       }));
 
-      const result = await window.electronAPI.models.testConnection(
-        provider,
-        settings
-      );
+      const result = await window.electronAPI.models.testConnection(provider, settings);
       setConnectionStatus((prev) => ({ ...prev, [provider]: result }));
       if (result.success) {
         toast.success(`Connected to ${ProviderInfo[provider].name}`);
@@ -277,10 +263,7 @@ export default function Settings() {
     setTestingSearch(true);
     try {
       if (searchEngine === 'disabled') {
-        toast(
-          'Search is disabled. Pick an engine to test it.',
-          { icon: 'ℹ️' }
-        );
+        toast('Search is disabled. Pick an engine to test it.', { icon: 'ℹ️' });
         return;
       }
 
@@ -298,10 +281,9 @@ export default function Settings() {
       );
 
       if (results.length === 0) {
-        toast(
-          'Search ran but returned no results. Try a different engine or check your API key.',
-          { icon: '⚠️' }
-        );
+        toast('Search ran but returned no results. Try a different engine or check your API key.', {
+          icon: '⚠️',
+        });
       } else {
         toast.success(
           `Search OK — got ${results.length} result${results.length === 1 ? '' : 's'} (e.g., ${results[0].domain})`
@@ -326,10 +308,7 @@ export default function Settings() {
         return;
       }
 
-      if (
-        ProviderInfo[settings.provider].requiresApiKey &&
-        !settings.apiKey.trim()
-      ) {
+      if (ProviderInfo[settings.provider].requiresApiKey && !settings.apiKey.trim()) {
         // Check if an environment variable is set before blocking
         const hasEnvVar = await checkEnvVar(settings.provider);
         if (!hasEnvVar) {
@@ -354,11 +333,7 @@ export default function Settings() {
         await secureStorage.deleteApiKey(settings.provider);
       }
 
-      if (
-        searchEngine === 'brave' ||
-        searchEngine === 'bing' ||
-        searchEngine === 'serper'
-      ) {
+      if (searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') {
         await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
       }
 
@@ -393,9 +368,7 @@ export default function Settings() {
         'openrouter',
         'custom',
       ];
-      await Promise.all(
-        providers.map((provider) => secureStorage.deleteApiKey(provider))
-      );
+      await Promise.all(providers.map((provider) => secureStorage.deleteApiKey(provider)));
 
       toast.success('Settings reset to defaults');
     } catch (error) {
@@ -405,42 +378,33 @@ export default function Settings() {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="container mx-auto p-8 max-w-4xl">
-        <div className="space-y-8">
+    <div className='h-full overflow-y-auto'>
+      <div className='container mx-auto p-8 max-w-4xl'>
+        <div className='space-y-8'>
           {/* Section marker */}
           <div>
-            <div className="editorial-rule">
+            <div className='editorial-rule'>
               <span>Preferences</span>
             </div>
-            <h1 className="text-[var(--text-3xl)] font-semibold text-ink">
-              Settings
-            </h1>
-            <p className="text-ink-muted mt-2 text-[var(--text-lg)]">
+            <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>Settings</h1>
+            <p className='text-ink-muted mt-2 text-[var(--text-lg)]'>
               Choose how Career Compass connects to AI
             </p>
           </div>
 
-          <div className="bg-paper border border-border rounded-lg p-8">
-            <h2 className="text-[var(--text-xl)] font-semibold mb-4 text-ink">
-              AI provider
-            </h2>
+          <div className='bg-paper border border-border rounded-lg p-8'>
+            <h2 className='text-[var(--text-xl)] font-semibold mb-4 text-ink'>AI provider</h2>
 
-            <div className="space-y-6">
+            <div className='space-y-6'>
               <div>
-                <Label
-                  htmlFor="provider"
-                  className="text-base font-medium text-ink"
-                >
+                <Label htmlFor='provider' className='text-base font-medium text-ink'>
                   AI provider
                 </Label>
                 <select
-                  id="provider"
+                  id='provider'
                   value={settings.provider}
-                  onChange={(e) =>
-                    handleProviderChange(e.target.value as LLMProvider)
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-input bg-paper text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-soft focus:border-accent transition-colors duration-[250ms]"
+                  onChange={(e) => handleProviderChange(e.target.value as LLMProvider)}
+                  className='mt-2 w-full px-3 py-2 border border-input bg-paper text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-soft focus:border-accent transition-colors duration-[250ms]'
                 >
                   {Object.entries(ProviderInfo).map(([key, info]) => (
                     <option key={key} value={key}>
@@ -448,22 +412,19 @@ export default function Settings() {
                     </option>
                   ))}
                 </select>
-                <p className="text-[var(--text-sm)] text-ink-muted mt-2">
+                <p className='text-[var(--text-sm)] text-ink-muted mt-2'>
                   {ProviderInfo[settings.provider].description}
                 </p>
               </div>
 
               {ProviderInfo[settings.provider].requiresApiKey && (
                 <div>
-                  <Label
-                    htmlFor="apiKey"
-                    className="text-base font-medium text-ink"
-                  >
+                  <Label htmlFor='apiKey' className='text-base font-medium text-ink'>
                     Secret key
                   </Label>
                   <Input
-                    id="apiKey"
-                    type="password"
+                    id='apiKey'
+                    type='password'
                     value={settings.apiKey}
                     onChange={(e) =>
                       setSettings((prev) => ({
@@ -472,19 +433,19 @@ export default function Settings() {
                       }))
                     }
                     placeholder={getApiKeyPlaceholder(settings.provider)}
-                    className="mt-2"
+                    className='mt-2'
                   />
-                  <div className="mt-2 space-y-1">
-                    <p className="text-[var(--text-sm)] text-ink-muted">
+                  <div className='mt-2 space-y-1'>
+                    <p className='text-[var(--text-sm)] text-ink-muted'>
                       {getApiKeyHelpText(settings.provider)}
                     </p>
-                    <p className="text-[var(--text-sm)] text-ink-muted">
+                    <p className='text-[var(--text-sm)] text-ink-muted'>
                       Get your secret key from{' '}
                       <a
                         href={ProviderInfo[settings.provider].website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent hover:underline"
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-accent hover:underline'
                       >
                         {ProviderInfo[settings.provider].website}
                       </a>
@@ -494,20 +455,17 @@ export default function Settings() {
               )}
 
               <div>
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="model"
-                    className="text-base font-medium text-ink"
-                  >
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='model' className='text-base font-medium text-ink'>
                     AI brain
                   </Label>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={loadModels}
                     disabled={loadingModels}
-                    className="ml-2"
+                    className='ml-2'
                   >
                     {loadingModels ? 'Looking...' : 'Refresh models'}
                   </Button>
@@ -516,16 +474,11 @@ export default function Settings() {
                 {availableModels.length > 0 ? (
                   <select
                     value={settings.model}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, model: e.target.value }))
-                    }
-                    className="mt-2 w-full px-3 py-2 border border-input bg-paper text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-soft focus:border-accent transition-colors duration-[250ms]"
+                    onChange={(e) => setSettings((prev) => ({ ...prev, model: e.target.value }))}
+                    className='mt-2 w-full px-3 py-2 border border-input bg-paper text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-soft focus:border-accent transition-colors duration-[250ms]'
                   >
                     {availableModels.map((model) => (
-                      <option
-                        key={model.id || model.name}
-                        value={model.id || model.name}
-                      >
+                      <option key={model.id || model.name} value={model.id || model.name}>
                         {model.name || model.id}
                         {model.size ? ` (${model.size})` : ''}
                       </option>
@@ -533,29 +486,25 @@ export default function Settings() {
                   </select>
                 ) : (
                   <Input
-                    id="model"
+                    id='model'
                     value={settings.model}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, model: e.target.value }))
-                    }
-                    placeholder="Type a model name, or click Refresh models"
-                    className="mt-2"
+                    onChange={(e) => setSettings((prev) => ({ ...prev, model: e.target.value }))}
+                    placeholder='Type a model name, or click Refresh models'
+                    className='mt-2'
                   />
                 )}
 
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-[var(--text-sm)] text-ink-muted">
-                    {settings.model
-                      ? ''
-                      : 'Click "Refresh models" to see what is available'}
+                <div className='flex items-center justify-between mt-2'>
+                  <p className='text-[var(--text-sm)] text-ink-muted'>
+                    {settings.model ? '' : 'Click "Refresh models" to see what is available'}
                   </p>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    type='button'
+                    variant='outline'
+                    size='sm'
                     onClick={() => testConnection(settings.provider)}
                     disabled={loadingModels}
-                    className="ml-2"
+                    className='ml-2'
                   >
                     Check connection
                   </Button>
@@ -579,17 +528,13 @@ export default function Settings() {
               {(settings.provider === 'ollama' ||
                 settings.provider === 'custom' ||
                 ProviderInfo[settings.provider].requiresBaseURL ||
-                settings.baseURL !==
-                  ProviderInfo[settings.provider].defaultURL) && (
+                settings.baseURL !== ProviderInfo[settings.provider].defaultURL) && (
                 <div>
-                  <Label
-                    htmlFor="baseURL"
-                    className="text-base font-medium text-ink"
-                  >
+                  <Label htmlFor='baseURL' className='text-base font-medium text-ink'>
                     Server address
                   </Label>
                   <Input
-                    id="baseURL"
+                    id='baseURL'
                     value={settings.baseURL}
                     onChange={(e) =>
                       setSettings((prev) => ({
@@ -597,10 +542,10 @@ export default function Settings() {
                         baseURL: e.target.value,
                       }))
                     }
-                    placeholder="Enter address"
-                    className="mt-2"
+                    placeholder='Enter address'
+                    className='mt-2'
                   />
-                  <p className="text-[var(--text-sm)] text-ink-muted mt-2">
+                  <p className='text-[var(--text-sm)] text-ink-muted mt-2'>
                     {settings.provider === 'ollama'
                       ? 'Make sure Ollama is running on your computer at this address'
                       : settings.provider === 'custom'
@@ -612,70 +557,52 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="bg-accent-soft border border-accent/20 rounded-lg p-6">
-            <h3 className="font-medium text-ink mb-2">Your privacy</h3>
-            <p className="text-[var(--text-sm)] text-ink-muted leading-relaxed">
-              Your secret keys are stored safely on your computer and never sent
-              to our servers. For the most private experience, use Ollama to run
-              AI models entirely on your own device.
+          <div className='bg-accent-soft border border-accent/20 rounded-lg p-6'>
+            <h3 className='font-medium text-ink mb-2'>Your privacy</h3>
+            <p className='text-[var(--text-sm)] text-ink-muted leading-relaxed'>
+              Your secret keys are stored safely on your computer and never sent to our servers. For
+              the most private experience, use Ollama to run AI models entirely on your own device.
             </p>
           </div>
 
           <div>
-            <div className="editorial-rule">
+            <div className='editorial-rule'>
               <span>Research & Grounding</span>
             </div>
-            <h2 className="text-[var(--text-2xl)] font-semibold text-ink mb-2">
-              Web search
-            </h2>
-            <p className="text-ink-muted mb-6 text-[var(--text-sm)]">
-              Grounding fetches current web data to back up gap analysis,
-              learning paths, and interview questions. Disable if you prefer
-              fully offline.
+            <h2 className='text-[var(--text-2xl)] font-semibold text-ink mb-2'>Web search</h2>
+            <p className='text-ink-muted mb-6 text-[var(--text-sm)]'>
+              Grounding fetches current web data to back up gap analysis, learning paths, and
+              interview questions. Disable if you prefer fully offline.
             </p>
 
-            <div className="space-y-2">
-              {(
-                [
-                  'disabled',
-                  'duckduckgo',
-                  'brave',
-                  'bing',
-                  'serper',
-                  'searxng',
-                ] as const
-              ).map((eng) => (
-                <label
-                  key={eng}
-                  className="flex items-start gap-3 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="searchEngine"
-                    value={eng}
-                    checked={searchEngine === eng}
-                    onChange={() => setSearchEngine(eng)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <div className="text-ink font-medium">
-                      {SEARCH_ENGINE_LABEL[eng]}
+            <div className='space-y-2'>
+              {(['disabled', 'duckduckgo', 'brave', 'bing', 'serper', 'searxng'] as const).map(
+                (eng) => (
+                  <label key={eng} className='flex items-start gap-3 cursor-pointer'>
+                    <input
+                      type='radio'
+                      name='searchEngine'
+                      value={eng}
+                      checked={searchEngine === eng}
+                      onChange={() => setSearchEngine(eng)}
+                      className='mt-1'
+                    />
+                    <div>
+                      <div className='text-ink font-medium'>{SEARCH_ENGINE_LABEL[eng]}</div>
+                      <div className='text-[var(--text-sm)] text-ink-muted'>
+                        {SEARCH_ENGINE_DESCRIPTION[eng]}
+                      </div>
                     </div>
-                    <div className="text-[var(--text-sm)] text-ink-muted">
-                      {SEARCH_ENGINE_DESCRIPTION[eng]}
-                    </div>
-                  </div>
-                </label>
-              ))}
+                  </label>
+                )
+              )}
             </div>
 
-            {(searchEngine === 'brave' ||
-              searchEngine === 'bing' ||
-              searchEngine === 'serper') && (
-              <div className="mt-4">
+            {(searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') && (
+              <div className='mt-4'>
                 <Label>API key</Label>
                 <Input
-                  type="password"
+                  type='password'
                   value={searchApiKey}
                   onChange={(e) => setSearchApiKey(e.target.value)}
                   placeholder={`Your ${searchEngine} API key`}
@@ -684,41 +611,36 @@ export default function Settings() {
             )}
 
             {searchEngine === 'searxng' && (
-              <div className="mt-4">
+              <div className='mt-4'>
                 <Label>SearXNG URL</Label>
                 <Input
                   value={searchUrl}
                   onChange={(e) => setSearchUrl(e.target.value)}
-                  placeholder="https://your-searxng-instance.example.com"
+                  placeholder='https://your-searxng-instance.example.com'
                 />
               </div>
             )}
 
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                onClick={handleTestSearch}
-                disabled={testingSearch}
-              >
+            <div className='mt-4'>
+              <Button variant='outline' onClick={handleTestSearch} disabled={testingSearch}>
                 {testingSearch ? 'Testing…' : 'Test search'}
               </Button>
             </div>
 
-            <div className="mt-6 p-4 border border-border rounded-lg bg-paper-warm">
-              <p className="text-[var(--text-sm)] text-ink-muted">
-                <strong className="text-ink">Privacy note.</strong> Search
-                queries leave your device. Career Compass never sends your
-                resume or chat content to the search engine — only the derived
-                query (e.g., &ldquo;Data Analyst Perth salary&rdquo;).
+            <div className='mt-6 p-4 border border-border rounded-lg bg-paper-warm'>
+              <p className='text-[var(--text-sm)] text-ink-muted'>
+                <strong className='text-ink'>Privacy note.</strong> Search queries leave your
+                device. Career Compass never sends your resume or chat content to the search engine
+                — only the derived query (e.g., &ldquo;Data Analyst Perth salary&rdquo;).
               </p>
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Button onClick={handleSave} disabled={isLoading} className="px-6">
+          <div className='flex gap-4'>
+            <Button onClick={handleSave} disabled={isLoading} className='px-6'>
               {isLoading ? 'Saving...' : 'Save settings'}
             </Button>
-            <Button onClick={handleReset} variant="outline" className="px-6">
+            <Button onClick={handleReset} variant='outline' className='px-6'>
               Reset to defaults
             </Button>
           </div>

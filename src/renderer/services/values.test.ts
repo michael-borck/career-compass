@@ -160,17 +160,17 @@ describe('generateValuesCompass — token-limit retry', () => {
 
   it('surrenders with a helpful error after two token-limit failures', async () => {
     mockChat.mockRejectedValue(new Error('maximum context length'));
-    await expect(
-      generateValuesCompass({ resume: 'R'.repeat(5000) })
-    ).rejects.toThrow(/too long for the model/i);
+    await expect(generateValuesCompass({ resume: 'R'.repeat(5000) })).rejects.toThrow(
+      /too long for the model/i
+    );
     expect(mockChat).toHaveBeenCalledTimes(2);
   });
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generateValuesCompass({ valuesSeed: 'test' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generateValuesCompass({ valuesSeed: 'test' })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

@@ -44,8 +44,7 @@ export type GenerateGapAnalysisResult = {
 
 const ADVERT_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You are a career gap analyst that ONLY responds in JSON.';
+const SYSTEM = 'You are a career gap analyst that ONLY responds in JSON.';
 
 function trimAdvert(input: GapAnalysisInput): GapAnalysisInput {
   if (input.jobAdvert && input.jobAdvert.length > ADVERT_TRIM_CHARS) {
@@ -82,14 +81,10 @@ export async function generateGapAnalysis(
   const { grounded, ...rest } = input;
 
   if (!hasTarget(rest)) {
-    throw new Error(
-      'A target is required (paste a job advert or enter a job title).'
-    );
+    throw new Error('A target is required (paste a job advert or enter a job title).');
   }
   if (!hasProfile(rest)) {
-    throw new Error(
-      'A profile is required (upload a resume or write something in About you).'
-    );
+    throw new Error('A profile is required (upload a resume or write something in About you).');
   }
 
   // ---- Grounding ----
@@ -101,8 +96,7 @@ export async function generateGapAnalysis(
       if (isSearchConfigured(searchSettings)) {
         const targetForSearch =
           (rest.jobTitle && rest.jobTitle.trim()) ||
-          (rest.jobAdvert &&
-            rest.jobAdvert.trim().split('\n')[0].slice(0, 100)) ||
+          (rest.jobAdvert && rest.jobAdvert.trim().split('\n')[0].slice(0, 100)) ||
           'this role';
         const query = `${targetForSearch} salary skills requirements`;
         sources = await search({ query, intent: 'salary' });

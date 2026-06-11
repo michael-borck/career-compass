@@ -35,7 +35,11 @@ export const it = (text: string): Inline => ({ text, italic: true });
 export const h2 = (text: string): Block => ({ kind: 'heading', level: 2, text });
 export const h3 = (text: string): Block => ({ kind: 'heading', level: 3, text });
 export const p = (...runs: Inline[]): Block => ({ kind: 'paragraph', runs });
-export const bullets = (items: Array<string | Inline[]>, marker?: string): Block => ({ kind: 'bullets', items, marker });
+export const bullets = (items: Array<string | Inline[]>, marker?: string): Block => ({
+  kind: 'bullets',
+  items,
+  marker,
+});
 export const note = (text: string): Block => ({ kind: 'note', text });
 export const sources = (items: SourceItem[]): Block => ({ kind: 'sources', items });
 export const disclaimer = (text: string): Block => ({ kind: 'disclaimer', text });

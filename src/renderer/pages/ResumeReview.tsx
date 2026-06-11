@@ -23,7 +23,11 @@ export default function ResumeReview() {
   const review = store.resumeReview;
   const hasResume = !!store.resumeText;
 
-  const { loading, run: runReview, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runReview,
+    resetAutoRun,
+  } = useGeneration({
     generate: () => {
       const state = useSessionStore.getState();
       return generateResumeReview({
@@ -134,7 +138,8 @@ export default function ResumeReview() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job title <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Job title{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Input
                     value={store.jobTitle}
@@ -145,7 +150,8 @@ export default function ResumeReview() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job advert <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Job advert{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.jobAdvert}
@@ -159,9 +165,13 @@ export default function ResumeReview() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runReview} disabled={!hasResume || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Reviewing…</>
+                      <>
+                        <LoadingDots color='white' /> Reviewing…
+                      </>
                     ) : (
-                      <><ClipboardCheck className='w-4 h-4 mr-2' /> Review my resume</>
+                      <>
+                        <ClipboardCheck className='w-4 h-4 mr-2' /> Review my resume
+                      </>
                     )}
                   </Button>
                 </div>

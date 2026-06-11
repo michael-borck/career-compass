@@ -22,7 +22,8 @@ function buildProfileSection(input: PortfolioInput): string {
   const parts: string[] = [];
   if (input.resume?.trim()) parts.push(`Resume:\n${input.resume.trim()}`);
   if (input.freeText?.trim()) parts.push(`About me:\n${input.freeText.trim()}`);
-  if (input.distilledProfile) parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
+  if (input.distilledProfile)
+    parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
   if (parts.length === 0) return '<profile>\n(Minimal profile provided.)\n</profile>';
   return `<profile>\n${parts.join('\n\n')}\n</profile>`;
 }
@@ -65,7 +66,9 @@ If a target role is provided, frame the entire page toward that role — the tag
   }
 
   sections.push(buildProfileSection(input));
-  sections.push('Respond with ONLY the complete HTML document. No markdown, no code fences, no explanation. Start with <!DOCTYPE html>.');
+  sections.push(
+    'Respond with ONLY the complete HTML document. No markdown, no code fences, no explanation. Start with <!DOCTYPE html>.'
+  );
 
   return sections.join('\n\n');
 }

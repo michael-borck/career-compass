@@ -28,7 +28,11 @@ export default function Pitch() {
   const hasAny =
     hasResume || hasFreeText || hasJobTitle || hasJobAdvert || !!store.distilledProfile;
 
-  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runGeneration,
+    resetAutoRun,
+  } = useGeneration({
     generate: () => {
       const state = useSessionStore.getState();
       return generatePitch({
@@ -133,7 +137,8 @@ export default function Pitch() {
               <div className='space-y-4'>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Resume <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Resume{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <LocalFileUpload
                     onFileSelect={handleResumeSelect}
@@ -147,7 +152,8 @@ export default function Pitch() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    About you <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    About you{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.freeText}
@@ -159,7 +165,8 @@ export default function Pitch() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job title <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Job title{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Input
                     value={store.jobTitle}
@@ -170,7 +177,8 @@ export default function Pitch() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job advert <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Job advert{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.jobAdvert}
@@ -184,9 +192,13 @@ export default function Pitch() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!hasAny || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Writing…</>
+                      <>
+                        <LoadingDots color='white' /> Writing…
+                      </>
                     ) : (
-                      <><Presentation className='w-4 h-4 mr-2' /> Write my pitch</>
+                      <>
+                        <Presentation className='w-4 h-4 mr-2' /> Write my pitch
+                      </>
                     )}
                   </Button>
                 </div>

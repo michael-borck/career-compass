@@ -45,16 +45,14 @@ beforeEach(() => {
 
 describe('generateCareerStory — input handling', () => {
   it('rejects empty input with a clear error message', async () => {
-    await expect(generateCareerStory({})).rejects.toThrow(
-      /resume or About you/i
-    );
+    await expect(generateCareerStory({})).rejects.toThrow(/resume or About you/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('rejects whitespace-only resume + freeText', async () => {
-    await expect(
-      generateCareerStory({ resume: '   ', freeText: '\n\t  ' })
-    ).rejects.toThrow(/resume or About you/i);
+    await expect(generateCareerStory({ resume: '   ', freeText: '\n\t  ' })).rejects.toThrow(
+      /resume or About you/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -160,17 +158,13 @@ describe('generateCareerStory — output shape', () => {
 
   it('throws a clear error when the model returns invalid JSON', async () => {
     mockChat.mockResolvedValueOnce(chatReply('not valid json'));
-    await expect(
-      generateCareerStory({ resume: 'Engineer.' })
-    ).rejects.toThrow();
+    await expect(generateCareerStory({ resume: 'Engineer.' })).rejects.toThrow();
   });
 
   it('throws when the model returns JSON with no themes', async () => {
     const noThemes = JSON.stringify({ themes: [], narrative: 'A story.' });
     mockChat.mockResolvedValueOnce(chatReply(noThemes));
-    await expect(
-      generateCareerStory({ resume: 'Engineer.' })
-    ).rejects.toThrow(/theme/i);
+    await expect(generateCareerStory({ resume: 'Engineer.' })).rejects.toThrow(/theme/i);
   });
 });
 
@@ -229,17 +223,17 @@ describe('generateCareerStory — token-limit retry ladder', () => {
 
   it('surrenders with a helpful error after three token-limit failures', async () => {
     mockChat.mockRejectedValue(new Error('maximum context length'));
-    await expect(
-      generateCareerStory({ resume: 'R'.repeat(5000) })
-    ).rejects.toThrow(/too much session data/i);
+    await expect(generateCareerStory({ resume: 'R'.repeat(5000) })).rejects.toThrow(
+      /too much session data/i
+    );
     expect(mockChat).toHaveBeenCalledTimes(3);
   });
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generateCareerStory({ resume: 'Engineer.' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generateCareerStory({ resume: 'Engineer.' })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 
@@ -247,9 +241,7 @@ describe('generateCareerStory — token-limit retry ladder', () => {
     mockChat
       .mockRejectedValueOnce(new Error('context length exceeded'))
       .mockRejectedValueOnce(new Error('network failed'));
-    await expect(
-      generateCareerStory({ resume: 'Engineer.' })
-    ).rejects.toThrow(/network failed/);
+    await expect(generateCareerStory({ resume: 'Engineer.' })).rejects.toThrow(/network failed/);
     expect(mockChat).toHaveBeenCalledTimes(2);
   });
 });

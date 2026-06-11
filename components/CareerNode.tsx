@@ -18,7 +18,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSessionStore } from '@/lib/session-store';
-import { MessageCircle, SearchCheck, Route as RouteIcon, Mic, Users, Columns3, X, ChevronDown, Presentation, FileText, Globe } from 'lucide-react';
+import {
+  MessageCircle,
+  SearchCheck,
+  Route as RouteIcon,
+  Mic,
+  Users,
+  Columns3,
+  X,
+  ChevronDown,
+  Presentation,
+  FileText,
+  Globe,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type CareerNodeProps = {
@@ -120,30 +132,36 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     difficulty?.toLowerCase() === 'low'
       ? 'text-accent'
       : difficulty?.toLowerCase() === 'high'
-      ? 'text-error'
-      : 'text-ink-muted';
+        ? 'text-error'
+        : 'text-ink-muted';
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className={`border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer ${inComparison ? 'ring-2 ring-accent' : ''}`}>
+        <div
+          className={`border border-border rounded-lg py-4 px-7 max-w-[350px] bg-paper hover:border-ink-muted transition-colors duration-[250ms] cursor-pointer ${inComparison ? 'ring-2 ring-accent' : ''}`}
+        >
           <Handle type='target' position={position} />
           <h1 className='text-[var(--text-xl)] font-semibold mb-2 text-ink'>{jobTitle}</h1>
           <p className='mb-4 text-ink-muted'>{jobDescription}</p>
           <div className='flex flex-col gap-1'>
             <div className='flex justify-between'>
-              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Timeline</div>
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>
+                Timeline
+              </div>
               <div className='font-medium text-ink'>{timeline}</div>
             </div>
             <div className='flex justify-between'>
-              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Salary</div>
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>
+                Salary
+              </div>
               <div className='font-medium text-ink'>{salary}</div>
             </div>
             <div className='flex justify-between'>
-              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>Difficulty</div>
-              <div className={`font-medium ${difficultyColor}`}>
-                {difficulty}
+              <div className='text-[var(--text-xs)] font-medium uppercase tracking-[0.22em] text-ink-quiet'>
+                Difficulty
               </div>
+              <div className={`font-medium ${difficultyColor}`}>{difficulty}</div>
             </div>
           </div>
         </div>
@@ -202,9 +220,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
             <div className='flex flex-col gap-2'>
               {roadmap?.map((step, index) => (
                 <div key={index} className='flex gap-3'>
-                  <div className='text-ink-quiet min-w-28'>
-                    {Object.keys(step)[0]}:
-                  </div>
+                  <div className='text-ink-quiet min-w-28'>{Object.keys(step)[0]}:</div>
                   <div className='text-ink-muted'>{Object.values(step)[0]}</div>
                 </div>
               ))}
@@ -221,7 +237,12 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end' className='w-64'>
               <DropdownMenuLabel>Discover</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => { handleChatAboutThis(); router.push('/chat'); }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleChatAboutThis();
+                  router.push('/chat');
+                }}
+              >
                 <MessageCircle className='w-4 h-4 mr-2' /> Chat about this role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -262,9 +283,13 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
             title={atMaxComparison ? 'Maximum 3 roles. Remove one to add another.' : undefined}
           >
             {inComparison ? (
-              <><X className='w-3 h-3 mr-1' /> Remove from comparison</>
+              <>
+                <X className='w-3 h-3 mr-1' /> Remove from comparison
+              </>
             ) : (
-              <><Columns3 className='w-3 h-3 mr-1' /> Compare this role</>
+              <>
+                <Columns3 className='w-3 h-3 mr-1' /> Compare this role
+              </>
             )}
           </Button>
         </div>

@@ -24,9 +24,7 @@ function renderBlock(block: Block): string {
     case 'note':
       return `*${block.text}*`;
     case 'sources':
-      return block.items
-        .map((s, i) => `${i + 1}. [${s.title}](${s.url}) — ${s.domain}`)
-        .join('\n');
+      return block.items.map((s, i) => `${i + 1}. [${s.title}](${s.url}) — ${s.domain}`).join('\n');
     case 'disclaimer':
       return `---\n\n*${block.text}*`;
   }

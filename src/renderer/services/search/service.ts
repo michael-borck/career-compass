@@ -57,18 +57,11 @@ function extractDomain(url: string): string {
   }
 }
 
-function parseJsonOrThrow(
-  engineLabel: string,
-  resp: { status: number; body: string }
-): unknown {
+function parseJsonOrThrow(engineLabel: string, resp: { status: number; body: string }): unknown {
   try {
     return JSON.parse(resp.body);
   } catch {
-    throw new SearchError(
-      `${engineLabel} returned malformed JSON`,
-      resp.status,
-      resp.body
-    );
+    throw new SearchError(`${engineLabel} returned malformed JSON`, resp.status, resp.body);
   }
 }
 
@@ -156,7 +149,8 @@ async function runDuckDuckGo(query: string): Promise<SourceRef[]> {
 
   const htmlText = response.body;
   const results: SourceRef[] = [];
-  const linkRegex = /<a[^>]+href=["']([^"']+)["'][^>]*class=['"]result-link['"][^>]*>([^<]+)<\/a>/gi;
+  const linkRegex =
+    /<a[^>]+href=["']([^"']+)["'][^>]*class=['"]result-link['"][^>]*>([^<]+)<\/a>/gi;
   const matches = Array.from(htmlText.matchAll(linkRegex));
 
   for (const match of matches) {

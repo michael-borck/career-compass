@@ -53,7 +53,6 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
     apiFetch,
   };
 
-   
   (globalThis as any).window = { electronAPI: api };
   return api;
 }
@@ -110,7 +109,11 @@ describe('search — Brave engine', () => {
     expect(call.method).toBe('GET');
     expect(call.headers['X-Subscription-Token']).toBe('brave-key');
     expect(results).toEqual([
-      { title: 'Glassdoor Data Analyst', url: 'https://www.glassdoor.com/x', domain: 'glassdoor.com' },
+      {
+        title: 'Glassdoor Data Analyst',
+        url: 'https://www.glassdoor.com/x',
+        domain: 'glassdoor.com',
+      },
       { title: 'Levels Data', url: 'https://levels.fyi/x', domain: 'levels.fyi' },
     ]);
   });
@@ -182,9 +185,7 @@ describe('search — Bing engine', () => {
         headers: {},
         body: JSON.stringify({
           webPages: {
-            value: [
-              { name: 'Bing Hit', url: 'https://example.com/bing' },
-            ],
+            value: [{ name: 'Bing Hit', url: 'https://example.com/bing' }],
           },
         }),
       },
@@ -210,9 +211,7 @@ describe('search — Serper engine', () => {
         statusText: 'OK',
         headers: {},
         body: JSON.stringify({
-          organic: [
-            { title: 'A', link: 'https://example.com/a' },
-          ],
+          organic: [{ title: 'A', link: 'https://example.com/a' }],
         }),
       },
     });
@@ -225,9 +224,7 @@ describe('search — Serper engine', () => {
     expect(call.headers['X-API-KEY']).toBe('serper-key');
     const body = JSON.parse(call.body);
     expect(body).toEqual({ q: 'data analyst', num: 9 });
-    expect(results).toEqual([
-      { title: 'A', url: 'https://example.com/a', domain: 'example.com' },
-    ]);
+    expect(results).toEqual([{ title: 'A', url: 'https://example.com/a', domain: 'example.com' }]);
   });
 });
 
@@ -313,7 +310,6 @@ describe('runEngineSearch', () => {
   it('returns [] for an unknown engine via default branch', async () => {
     mockElectronAPI();
     const results = await runEngineSearch(
-       
       { engine: 'no-such-engine' as any, apiKey: '', url: '' },
       'q'
     );
@@ -327,9 +323,7 @@ function ddgHtml(rows: Array<{ href: string; title: string }>): string {
   // Mirrors the shape lite.duckduckgo.com returns: each result is an
   // <a class="result-link" href="...">Title</a>. The DDG regex is permissive
   // about other attributes, so we only need href, class, and inner text.
-  return rows
-    .map((r) => `<a href="${r.href}" class="result-link">${r.title}</a>`)
-    .join('\n');
+  return rows.map((r) => `<a href="${r.href}" class="result-link">${r.title}</a>`).join('\n');
 }
 
 describe('search — DuckDuckGo engine', () => {
@@ -356,8 +350,16 @@ describe('search — DuckDuckGo engine', () => {
     expect(call.method).toBe('GET');
     expect(results).toEqual([
       { title: 'Data analyst career path', url: 'https://example.com/a', domain: 'example.com' },
-      { title: 'How to become a data analyst', url: 'https://example.org/b', domain: 'example.org' },
-      { title: 'Data analyst salary guide 2026', url: 'https://example.net/c', domain: 'example.net' },
+      {
+        title: 'How to become a data analyst',
+        url: 'https://example.org/b',
+        domain: 'example.org',
+      },
+      {
+        title: 'Data analyst salary guide 2026',
+        url: 'https://example.net/c',
+        domain: 'example.net',
+      },
     ]);
   });
 
@@ -469,9 +471,7 @@ describe('search — DuckDuckGo engine', () => {
       },
     });
     const results = await search({ query: 'x' });
-    expect(results.map((r) => r.title)).toEqual([
-      'A real career article result',
-    ]);
+    expect(results.map((r) => r.title)).toEqual(['A real career article result']);
   });
 
   it('drops hrefs that do not start with http (relative or javascript:)', async () => {

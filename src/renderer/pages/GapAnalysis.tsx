@@ -30,11 +30,18 @@ export default function GapAnalysis() {
   const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
   const canRun = hasTarget && hasProfile;
 
-  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runGeneration,
+    resetAutoRun,
+  } = useGeneration({
     generate: async () => {
       const state = useSessionStore.getState();
       // Mirror the legacy flow: any non-disabled engine counts as opt-in.
-      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>('settings', {});
+      const settings = await window.electronAPI.store.get<{ searchEngine?: string }>(
+        'settings',
+        {}
+      );
       const grounded = (settings?.searchEngine ?? 'duckduckgo') !== 'disabled';
       return generateGapAnalysis({
         jobAdvert: state.jobAdvert || undefined,
@@ -133,7 +140,8 @@ export default function GapAnalysis() {
                 What you have vs what you need
               </h2>
               <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                Needs a target (job title or job advert) and a profile (resume or about you). One of each is enough.
+                Needs a target (job title or job advert) and a profile (resume or about you). One of
+                each is enough.
               </p>
 
               <div className='space-y-4'>
@@ -190,16 +198,22 @@ export default function GapAnalysis() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!canRun || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Analysing…</>
+                      <>
+                        <LoadingDots color='white' /> Analysing…
+                      </>
                     ) : (
-                      <><SearchCheck className='w-4 h-4 mr-2' /> Run gap analysis</>
+                      <>
+                        <SearchCheck className='w-4 h-4 mr-2' /> Run gap analysis
+                      </>
                     )}
                   </Button>
                 </div>
 
                 {!canRun && (hasTarget || hasProfile) && (
                   <p className='text-[var(--text-xs)] text-ink-quiet text-center italic'>
-                    {!hasTarget ? 'Add a job title or job advert above.' : 'Add a resume or write something in About you.'}
+                    {!hasTarget
+                      ? 'Add a job title or job advert above.'
+                      : 'Add a resume or write something in About you.'}
                   </p>
                 )}
               </div>

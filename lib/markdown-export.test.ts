@@ -5,7 +5,13 @@ import {
   interviewFeedbackToMarkdown,
   boardReviewToMarkdown,
 } from './markdown-export';
-import type { GapAnalysis, LearningPath, InterviewFeedback, SourceRef, BoardReview } from './session-store';
+import type {
+  GapAnalysis,
+  LearningPath,
+  InterviewFeedback,
+  SourceRef,
+  BoardReview,
+} from './session-store';
 
 const gap: GapAnalysis = {
   target: 'Data Analyst',
@@ -117,7 +123,8 @@ const feedback: InterviewFeedback = {
     {
       area: 'Use STAR structure for behavioural answers',
       why: 'Behavioural questions reward concrete situation/action/result framing.',
-      example: 'Instead of "I worked on a team project" you could say "When NPS dropped 15 points (S), I led customer interviews (TA), and we improved NPS by 22 points (R)."',
+      example:
+        'Instead of "I worked on a team project" you could say "When NPS dropped 15 points (S), I led customer interviews (TA), and we improved NPS by 22 points (R)."',
     },
     {
       area: 'Quantify your impact with numbers',
@@ -257,7 +264,10 @@ describe('odysseyPlanToMarkdown', () => {
 
   it('renders null dashboard values as "— not yet rated"', () => {
     const md = odysseyPlanToMarkdown({
-      current: { ...fullyElaborated('current', 'Current'), dashboard: { resources: null, likability: null, confidence: null, coherence: null } },
+      current: {
+        ...fullyElaborated('current', 'Current'),
+        dashboard: { resources: null, likability: null, confidence: null, coherence: null },
+      },
       pivot: fullyElaborated('pivot', 'Pivot'),
       wildcard: fullyElaborated('wildcard', 'Wildcard'),
     });
@@ -284,7 +294,9 @@ describe('odysseyPlanToMarkdown', () => {
       pivot: makeLife('pivot'),
       wildcard: makeLife('wildcard'),
     });
-    expect(md.trim().endsWith('*AI-generated elaboration. Dashboard ratings are your own reflection.*')).toBe(true);
+    expect(
+      md.trim().endsWith('*AI-generated elaboration. Dashboard ratings are your own reflection.*')
+    ).toBe(true);
   });
 });
 
@@ -382,11 +394,18 @@ describe('boardReviewToMarkdown', () => {
 
   it('ends with the AI-generated footer', () => {
     const md = boardReviewToMarkdown(makeReview());
-    expect(md.trim().endsWith('*Four AI-generated perspectives. Disagreement is part of the exercise.*')).toBe(true);
+    expect(
+      md.trim().endsWith('*Four AI-generated perspectives. Disagreement is part of the exercise.*')
+    ).toBe(true);
   });
 });
 
-import { comparisonToMarkdown, pitchToMarkdown, coverLetterToMarkdown, resumeReviewToMarkdown } from './markdown-export';
+import {
+  comparisonToMarkdown,
+  pitchToMarkdown,
+  coverLetterToMarkdown,
+  resumeReviewToMarkdown,
+} from './markdown-export';
 import type { Comparison, ElevatorPitch, CoverLetter, ResumeReview } from './session-store';
 
 function makeComparison(mode: 'quick' | 'rich', roleCount: 2 | 3): Comparison {
@@ -447,17 +466,24 @@ describe('comparisonToMarkdown', () => {
 
   it('ends with AI-generated footer', () => {
     const md = comparisonToMarkdown(makeComparison('quick', 2));
-    expect(md.trim().endsWith(
-      '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
-    )).toBe(true);
+    expect(
+      md
+        .trim()
+        .endsWith(
+          '*AI-generated comparison. Treat specific salary figures and training timelines as starting points, not guarantees.*'
+        )
+    ).toBe(true);
   });
 });
 
 describe('pitchToMarkdown', () => {
   const pitch: ElevatorPitch = {
-    target: 'Data analyst', hook: 'Did you know data drives every decision?',
-    body: 'I bring analytical experience.', close: 'I am looking for an entry-level role.',
-    fullScript: 'Did you know data drives every decision? I bring analytical experience. I am looking for an entry-level role.',
+    target: 'Data analyst',
+    hook: 'Did you know data drives every decision?',
+    body: 'I bring analytical experience.',
+    close: 'I am looking for an entry-level role.',
+    fullScript:
+      'Did you know data drives every decision? I bring analytical experience. I am looking for an entry-level role.',
   };
   it('renders all sections', () => {
     const md = pitchToMarkdown(pitch);
@@ -478,7 +504,8 @@ describe('pitchToMarkdown', () => {
 
 describe('coverLetterToMarkdown', () => {
   const letter: CoverLetter = {
-    target: 'Data analyst at Acme', greeting: 'Dear Hiring Manager,',
+    target: 'Data analyst at Acme',
+    greeting: 'Dear Hiring Manager,',
     body: 'I am writing to express my interest.\n\nWith my background in statistics...',
     closing: 'Sincerely,\nStudent Name',
   };
@@ -496,10 +523,19 @@ describe('coverLetterToMarkdown', () => {
 
 describe('resumeReviewToMarkdown', () => {
   const review: ResumeReview = {
-    target: 'Data analyst', overallImpression: 'Solid foundation.',
+    target: 'Data analyst',
+    overallImpression: 'Solid foundation.',
     strengths: ['Clear structure'],
-    improvements: [{ section: 'Summary', suggestion: 'Add target', why: 'Focus', example: 'Aspiring data analyst...' }],
-    keywordsToAdd: ['SQL'], structuralNotes: ['Move projects above education'],
+    improvements: [
+      {
+        section: 'Summary',
+        suggestion: 'Add target',
+        why: 'Focus',
+        example: 'Aspiring data analyst...',
+      },
+    ],
+    keywordsToAdd: ['SQL'],
+    structuralNotes: ['Move projects above education'],
   };
   it('renders all sections', () => {
     const md = resumeReviewToMarkdown(review);
@@ -512,7 +548,9 @@ describe('resumeReviewToMarkdown', () => {
     expect(md).toContain('## Structural notes');
   });
   it('renders null target as General review', () => {
-    expect(resumeReviewToMarkdown({ ...review, target: null })).toContain('**Target:** General review');
+    expect(resumeReviewToMarkdown({ ...review, target: null })).toContain(
+      '**Target:** General review'
+    );
   });
   it('skips empty sections', () => {
     const md = resumeReviewToMarkdown({ ...review, keywordsToAdd: [], structuralNotes: [] });
@@ -530,10 +568,19 @@ import type { CareerStory } from './session-store';
 describe('careerStoryToMarkdown', () => {
   const story: CareerStory = {
     themes: [
-      { name: 'Data-driven decisions', evidence: ['Resume: SQL', 'Gap: analytics'], reflectionQuestion: 'Is data your core?' },
-      { name: 'Helping others', evidence: ['About me: mentoring'], reflectionQuestion: 'What does service mean to you?' },
+      {
+        name: 'Data-driven decisions',
+        evidence: ['Resume: SQL', 'Gap: analytics'],
+        reflectionQuestion: 'Is data your core?',
+      },
+      {
+        name: 'Helping others',
+        evidence: ['About me: mentoring'],
+        reflectionQuestion: 'What does service mean to you?',
+      },
     ],
-    narrative: 'I have always been drawn to making sense of data.\n\nWhat started as curiosity became a career direction.',
+    narrative:
+      'I have always been drawn to making sense of data.\n\nWhat started as curiosity became a career direction.',
   };
 
   it('renders narrative and themes', () => {

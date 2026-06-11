@@ -25,7 +25,11 @@ export default function CoverLetter() {
   const hasJobAdvert = !!store.jobAdvert.trim();
   const hasTarget = hasJobTitle || hasJobAdvert;
 
-  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runGeneration,
+    resetAutoRun,
+  } = useGeneration({
     generate: () => {
       const state = useSessionStore.getState();
       return generateCoverLetter({
@@ -118,13 +122,17 @@ export default function CoverLetter() {
                 A professional letter for the role you want
               </h2>
               <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                A job title or advert is required so the letter has a target. Add a resume or a few sentences about yourself for a more tailored draft.
+                A job title or advert is required so the letter has a target. Add a resume or a few
+                sentences about yourself for a more tailored draft.
               </p>
 
               <div className='space-y-4'>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job title <span className='normal-case tracking-normal font-normal'>(or advert below)</span>
+                    Job title{' '}
+                    <span className='normal-case tracking-normal font-normal'>
+                      (or advert below)
+                    </span>
                   </label>
                   <Input
                     value={store.jobTitle}
@@ -135,7 +143,10 @@ export default function CoverLetter() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Job advert <span className='normal-case tracking-normal font-normal'>(or title above)</span>
+                    Job advert{' '}
+                    <span className='normal-case tracking-normal font-normal'>
+                      (or title above)
+                    </span>
                   </label>
                   <Textarea
                     value={store.jobAdvert}
@@ -147,7 +158,8 @@ export default function CoverLetter() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Resume <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Resume{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <LocalFileUpload
                     onFileSelect={handleResumeSelect}
@@ -161,7 +173,8 @@ export default function CoverLetter() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    About you <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    About you{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.freeText}
@@ -175,9 +188,13 @@ export default function CoverLetter() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!hasTarget || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Drafting…</>
+                      <>
+                        <LoadingDots color='white' /> Drafting…
+                      </>
                     ) : (
-                      <><FileText className='w-4 h-4 mr-2' /> Draft my letter</>
+                      <>
+                        <FileText className='w-4 h-4 mr-2' /> Draft my letter
+                      </>
                     )}
                   </Button>
                 </div>

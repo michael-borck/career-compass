@@ -48,9 +48,7 @@ export default function BoardSynthesisPanel({ synthesis }: Props) {
 
         {synthesis.topPriorities.length > 0 && (
           <div>
-            <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>
-              What to work on
-            </h3>
+            <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>What to work on</h3>
             <ol className='space-y-1 text-ink-muted list-decimal list-inside'>
               {synthesis.topPriorities.map((p, i) => (
                 <li key={i}>{p}</li>

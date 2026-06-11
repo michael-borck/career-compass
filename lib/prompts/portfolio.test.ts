@@ -3,19 +3,27 @@ import { buildPortfolioPrompt } from './portfolio';
 
 describe('buildPortfolioPrompt', () => {
   it('includes resume when provided', () => {
-    expect(buildPortfolioPrompt({ resume: 'Three years at Curtin University.' })).toContain('Curtin');
+    expect(buildPortfolioPrompt({ resume: 'Three years at Curtin University.' })).toContain(
+      'Curtin'
+    );
   });
 
   it('includes about-me when provided', () => {
-    expect(buildPortfolioPrompt({ freeText: 'I enjoy working with data.' })).toContain('working with data');
+    expect(buildPortfolioPrompt({ freeText: 'I enjoy working with data.' })).toContain(
+      'working with data'
+    );
   });
 
   it('includes target role when provided', () => {
-    expect(buildPortfolioPrompt({ resume: 'r', jobTitle: 'Data analyst' })).toContain('Data analyst');
+    expect(buildPortfolioPrompt({ resume: 'r', jobTitle: 'Data analyst' })).toContain(
+      'Data analyst'
+    );
   });
 
   it('includes job advert when provided', () => {
-    expect(buildPortfolioPrompt({ resume: 'r', jobAdvert: 'Hiring at Acme Corp.' })).toContain('Acme Corp');
+    expect(buildPortfolioPrompt({ resume: 'r', jobAdvert: 'Hiring at Acme Corp.' })).toContain(
+      'Acme Corp'
+    );
   });
 
   it('asks for standalone HTML with inline CSS', () => {

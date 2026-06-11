@@ -66,9 +66,7 @@ module.exports = {
     // .deb dropped — electron-builder hits a race condition downloading
     // the AppImage runtime when both targets are in the same job. AppImage
     // is more universally compatible anyway.
-    target: [
-      { target: 'AppImage', arch: ['x64'] },
-    ],
+    target: [{ target: 'AppImage', arch: ['x64'] }],
     icon: 'assets/icon.png',
     category: 'Office',
     artifactName: 'Career-Compass-${version}-${arch}.${ext}',

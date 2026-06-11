@@ -6,13 +6,7 @@
 //   - secureStorage key 'career-compass-search-<engine>' holds the API key
 //     for paid engines (brave, bing, serper).
 
-export type SearchEngine =
-  | 'disabled'
-  | 'duckduckgo'
-  | 'brave'
-  | 'bing'
-  | 'serper'
-  | 'searxng';
+export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'bing' | 'serper' | 'searxng';
 
 export type SearchSettings = {
   engine: SearchEngine;
@@ -30,10 +24,7 @@ type StoredSettings = {
  * secure API key storage. Mirrors lib/search-settings.ts.
  */
 export async function loadSearchSettings(): Promise<SearchSettings> {
-  const saved = await window.electronAPI.store.get<StoredSettings>(
-    'settings',
-    {}
-  );
+  const saved = await window.electronAPI.store.get<StoredSettings>('settings', {});
   const engine = (saved?.searchEngine ?? 'duckduckgo') as SearchEngine;
 
   let apiKey = '';

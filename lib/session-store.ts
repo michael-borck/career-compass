@@ -79,11 +79,7 @@ export type StudentProfile = {
   goals: string[];
 };
 
-export type ChatMessageKind =
-  | 'message'
-  | 'focus-marker'
-  | 'attachment-summary'
-  | 'notice';
+export type ChatMessageKind = 'message' | 'focus-marker' | 'attachment-summary' | 'notice';
 
 export type ChatMessage = {
   id: string;
@@ -197,7 +193,7 @@ export type ResumeReview = {
   structuralNotes: string[];
 };
 
-export type Portfolio = { html: string; target: string | null; };
+export type Portfolio = { html: string; target: string | null };
 
 export type FrameworkLevel = { name: string; level: string; description: string } | null;
 
@@ -323,7 +319,10 @@ export type SessionState = {
   clearResume: () => void;
   setFreeText: (text: string) => void;
   setJobTitle: (title: string) => void;
-  addChatMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> & Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>) => void;
+  addChatMessage: (
+    msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> &
+      Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>
+  ) => void;
   replaceChatMessages: (msgs: ChatMessage[]) => void;
   setFocus: (career: string | null) => void;
   setDistilledProfile: (profile: StudentProfile | null) => void;
@@ -332,7 +331,10 @@ export type SessionState = {
   setGapAnalysis: (g: GapAnalysis | null) => void;
   setLearningPath: (l: LearningPath | null) => void;
   setInterviewSession: (target: string, difficulty: InterviewDifficulty) => void;
-  addInterviewMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> & Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>) => void;
+  addInterviewMessage: (
+    msg: Omit<ChatMessage, 'id' | 'timestamp' | 'kind'> &
+      Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>
+  ) => void;
   advanceInterviewPhase: (phase: InterviewPhase | null, turnInPhase: number) => void;
   setInterviewDifficulty: (d: InterviewDifficulty) => void;
   setInterviewTarget: (t: string | null) => void;
@@ -340,7 +342,11 @@ export type SessionState = {
   resetInterview: () => void;
   setOdysseySeed: (type: OdysseyLifeType, label: string, seed: string) => void;
   setOdysseyElaboration: (type: OdysseyLifeType, elaboration: Partial<OdysseyLife>) => void;
-  setOdysseyDashboard: (type: OdysseyLifeType, field: keyof OdysseyDashboard, value: number | null) => void;
+  setOdysseyDashboard: (
+    type: OdysseyLifeType,
+    field: keyof OdysseyDashboard,
+    value: number | null
+  ) => void;
   resetOdysseyLife: (type: OdysseyLifeType) => void;
   setUrlInput: (url: string) => void;
   setUrlFetchedTitle: (title: string | null) => void;
@@ -441,8 +447,7 @@ function makeId() {
 export const useSessionStore = create<SessionState>((set, get) => ({
   ...initialState,
 
-  setResume: (text, filename) =>
-    set({ resumeText: text, resumeFilename: filename }),
+  setResume: (text, filename) => set({ resumeText: text, resumeFilename: filename }),
   clearResume: () => set({ resumeText: null, resumeFilename: null }),
   setFreeText: (text) => set({ freeText: text }),
   setJobTitle: (title) => set({ jobTitle: title }),

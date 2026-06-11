@@ -53,16 +53,16 @@ beforeEach(() => {
 
 describe('generateIndustryExploration — input handling', () => {
   it('rejects an empty industry name with a clear error', async () => {
-    await expect(
-      generateIndustryExploration({ industry: '' })
-    ).rejects.toThrow(/industry name is required/i);
+    await expect(generateIndustryExploration({ industry: '' })).rejects.toThrow(
+      /industry name is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('rejects a whitespace-only industry name', async () => {
-    await expect(
-      generateIndustryExploration({ industry: '   ' })
-    ).rejects.toThrow(/industry name is required/i);
+    await expect(generateIndustryExploration({ industry: '   ' })).rejects.toThrow(
+      /industry name is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -131,9 +131,7 @@ describe('generateIndustryExploration — output shape', () => {
     const titles = result.exploration.keyRoles.map((r) => r.title);
     expect(titles).toContain('Solar installer');
     expect(titles).toContain('Grid integration engineer');
-    const installer = result.exploration.keyRoles.find(
-      (r) => r.title === 'Solar installer'
-    );
+    const installer = result.exploration.keyRoles.find((r) => r.title === 'Solar installer');
     const engineer = result.exploration.keyRoles.find(
       (r) => r.title === 'Grid integration engineer'
     );
@@ -143,9 +141,7 @@ describe('generateIndustryExploration — output shape', () => {
 
   it('throws a clear error when the model returns invalid JSON', async () => {
     mockChat.mockResolvedValueOnce(chatReply('not valid json'));
-    await expect(
-      generateIndustryExploration({ industry: 'Renewable energy' })
-    ).rejects.toThrow();
+    await expect(generateIndustryExploration({ industry: 'Renewable energy' })).rejects.toThrow();
   });
 });
 
@@ -180,9 +176,9 @@ describe('generateIndustryExploration — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generateIndustryExploration({ industry: 'Renewable energy' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generateIndustryExploration({ industry: 'Renewable energy' })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

@@ -20,17 +20,10 @@ import { generate } from './generate';
 import { search } from './search';
 import { buildAdvisorSystemPrompt } from '@/lib/prompts/advisor';
 import { buildContextBlock } from '@/lib/context-block';
-import {
-  buildDistillationPrompt,
-  parseDistilledProfile,
-} from '@/lib/prompts/distill';
+import { buildDistillationPrompt, parseDistilledProfile } from '@/lib/prompts/distill';
 import { trimHistory } from '@/lib/chat-history';
 import { formatSourcesForFootnote } from '@/lib/search-prompt';
-import type {
-  ChatMessage,
-  SourceRef,
-  StudentProfile,
-} from '@/lib/session-store';
+import type { ChatMessage, SourceRef, StudentProfile } from '@/lib/session-store';
 
 const MESSAGE_TRIM_COUNT_TURN = 20;
 const MESSAGE_TRIM_COUNT_DISTILL = 30;
@@ -98,9 +91,7 @@ function toProviderMessages(
  * Throws on terminal LLM failure or after the token-limit retry chain is
  * exhausted. The thrown error's `.message` is safe to surface via toast.
  */
-export async function runChatTurn(
-  input: RunChatTurnInput
-): Promise<RunChatTurnResult> {
+export async function runChatTurn(input: RunChatTurnInput): Promise<RunChatTurnResult> {
   const systemPrompt = buildAdvisorSystemPrompt(input.currentFocus);
   const contextBlock = buildContextBlock(
     input.resumeText,
@@ -118,9 +109,7 @@ export async function runChatTurn(
       responseFormat: { type: 'text' },
     },
     {
-      steps: [
-        (i) => ({ ...i, messages: trimHistory(i.messages, MESSAGE_TRIM_COUNT_TURN) }),
-      ],
+      steps: [(i) => ({ ...i, messages: trimHistory(i.messages, MESSAGE_TRIM_COUNT_TURN) })],
     }
   );
 
@@ -174,9 +163,7 @@ export type DistillProfileResult = {
  * the token-limit retry is exhausted. The thrown error's `.message` is safe
  * to surface via toast.
  */
-export async function distillProfile(
-  input: DistillProfileInput
-): Promise<DistillProfileResult> {
+export async function distillProfile(input: DistillProfileInput): Promise<DistillProfileResult> {
   const { result: profile, trimmed } = await generate(
     {
       input,

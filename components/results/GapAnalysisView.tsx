@@ -69,19 +69,21 @@ export default function GapAnalysisView({ analysis }: Props) {
         <div className='editorial-rule'>
           <span>Gap Analysis</span>
         </div>
-        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>
-          vs {analysis.target}
-        </h1>
+        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>vs {analysis.target}</h1>
       </div>
 
       <div>
         <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Summary</h2>
-        <p className='text-ink-muted leading-relaxed'>{renderWithCitations(analysis.summary, sources)}</p>
+        <p className='text-ink-muted leading-relaxed'>
+          {renderWithCitations(analysis.summary, sources)}
+        </p>
       </div>
 
       {analysis.matches.length > 0 && (
         <div>
-          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>What you already have</h2>
+          <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>
+            What you already have
+          </h2>
           <ul className='space-y-1'>
             {analysis.matches.map((m, i) => (
               <li key={i} className='flex items-start gap-2 text-ink-muted'>
@@ -132,14 +134,13 @@ export default function GapAnalysisView({ analysis }: Props) {
           {(() => {
             const hasMarkers =
               hasAnyCitations(analysis.summary) ||
-              analysis.gaps.some(
-                (g) => hasAnyCitations(g.why) || hasAnyCitations(g.targetLevel)
-              ) ||
+              analysis.gaps.some((g) => hasAnyCitations(g.why) || hasAnyCitations(g.targetLevel)) ||
               hasAnyCitations(analysis.realisticTimeline);
             if (!hasMarkers) {
               return (
                 <div className='mb-4 border border-accent/30 bg-accent-soft rounded-lg px-4 py-3 text-[var(--text-sm)] text-ink'>
-                  The AI didn't tag specific claims with citation markers — the sources used for this analysis are listed below for your reference.
+                  The AI didn't tag specific claims with citation markers — the sources used for
+                  this analysis are listed below for your reference.
                 </div>
               );
             }
@@ -147,8 +148,8 @@ export default function GapAnalysisView({ analysis }: Props) {
           })()}
           <SourcesList sources={sources} />
           <p className='text-[var(--text-xs)] text-ink-quiet italic mt-2'>
-            AI-cited sources. Small or local models may occasionally misattribute a
-            claim — click through to verify anything you plan to act on.
+            AI-cited sources. Small or local models may occasionally misattribute a claim — click
+            through to verify anything you plan to act on.
           </p>
         </div>
       )}
@@ -165,9 +166,7 @@ export default function GapAnalysisView({ analysis }: Props) {
         <Button variant='outline' onClick={handlePracticeInterview}>
           Practice interview for this target →
         </Button>
-        <Button onClick={handleChainToLearningPath}>
-          Turn this into a learning path →
-        </Button>
+        <Button onClick={handleChainToLearningPath}>Turn this into a learning path →</Button>
       </div>
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>

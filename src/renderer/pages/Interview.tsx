@@ -42,10 +42,7 @@ import { interviewFeedbackToMarkdown } from '@/lib/markdown-export';
 import { interviewFeedbackToDocx } from '@/components/interview/interview-feedback-docx';
 import { buildTalkBuddyScenario } from '@/lib/talk-buddy-export';
 import { downloadJsonFile } from '@/lib/download';
-import {
-  runInterviewTurn,
-  generateInterviewFeedback,
-} from '../services/interview';
+import { runInterviewTurn, generateInterviewFeedback } from '../services/interview';
 import { isConfigured as isLLMConfigured } from '../services/llm';
 import NextSteps from '../components/NextSteps';
 
@@ -67,22 +64,22 @@ const DIFFICULTY_LABEL: Record<InterviewDifficulty, string> = {
 
 const PHASE_LABEL: Record<InterviewPhase, string> = {
   'warm-up': 'Warm-up',
-  'behavioural': 'Behavioural',
+  behavioural: 'Behavioural',
   'role-specific': 'Role-specific',
   'your-questions': 'Your questions',
   'wrap-up': 'Wrap-up',
 };
 
 const RATING_LABEL: Record<InterviewFeedback['overallRating'], string> = {
-  'developing': 'Developing',
+  developing: 'Developing',
   'on-track': 'On track',
-  'strong': 'Strong',
+  strong: 'Strong',
 };
 
 const RATING_DOTS: Record<InterviewFeedback['overallRating'], string> = {
-  'developing': '●○○',
+  developing: '●○○',
   'on-track': '●●○',
-  'strong': '●●●',
+  strong: '●●●',
 };
 
 export default function Interview() {
@@ -130,7 +127,10 @@ export default function Interview() {
 // Otherwise fall back to jobTitle, then any prior interviewTarget.
 function deriveInitialTarget(store: ReturnType<typeof useSessionStore.getState>): string {
   if (store.jobAdvert && store.jobAdvert.trim()) {
-    const firstLine = store.jobAdvert.trim().split('\n').find((l) => l.trim());
+    const firstLine = store.jobAdvert
+      .trim()
+      .split('\n')
+      .find((l) => l.trim());
     if (firstLine) return firstLine.slice(0, 100);
   }
   if (store.jobTitle && store.jobTitle.trim()) return store.jobTitle.trim();
@@ -186,19 +186,18 @@ function SetupCard({ initialTarget }: { initialTarget: string }) {
     setStarting(true);
     try {
       const state = useSessionStore.getState();
-      const { reply, nextPhase, nextTurnInPhase, groundingFailed } =
-        await runInterviewTurn({
-          messages: [],
-          target: trimmed,
-          difficulty,
-          phase: 'warm-up',
-          turnInPhase: 0,
-          resumeText: state.resumeText ?? undefined,
-          freeText: state.freeText || undefined,
-          jobTitle: state.jobTitle || undefined,
-          jobAdvert: state.jobAdvert || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-        });
+      const { reply, nextPhase, nextTurnInPhase, groundingFailed } = await runInterviewTurn({
+        messages: [],
+        target: trimmed,
+        difficulty,
+        phase: 'warm-up',
+        turnInPhase: 0,
+        resumeText: state.resumeText ?? undefined,
+        freeText: state.freeText || undefined,
+        jobTitle: state.jobTitle || undefined,
+        jobAdvert: state.jobAdvert || undefined,
+        distilledProfile: state.distilledProfile ?? undefined,
+      });
       store.setInterviewSession(trimmed, difficulty);
       store.addInterviewMessage({ role: 'assistant', content: reply });
       store.advanceInterviewPhase(nextPhase, nextTurnInPhase);
@@ -235,9 +234,7 @@ function SetupCard({ initialTarget }: { initialTarget: string }) {
           <div className='editorial-rule'>
             <span>Practice interview</span>
           </div>
-          <h1 className='text-[var(--text-2xl)] font-semibold text-ink'>
-            Set up your interview
-          </h1>
+          <h1 className='text-[var(--text-2xl)] font-semibold text-ink'>Set up your interview</h1>
         </div>
 
         <div>
@@ -261,10 +258,7 @@ function SetupCard({ initialTarget }: { initialTarget: string }) {
           </div>
           <div className='space-y-2'>
             {DIFFICULTY_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className='flex items-start gap-3 cursor-pointer'
-              >
+              <label key={opt.value} className='flex items-start gap-3 cursor-pointer'>
                 <input
                   type='radio'
                   name='difficulty'
@@ -283,7 +277,8 @@ function SetupCard({ initialTarget }: { initialTarget: string }) {
         </div>
 
         <div className='border-t border-border pt-4 text-[var(--text-sm)] text-ink-muted'>
-          Around 7 questions across 5 phases (warm-up, behavioural, role-specific, your questions, wrap-up). Roughly 10-15 minutes. Your transcript stays on this device.
+          Around 7 questions across 5 phases (warm-up, behavioural, role-specific, your questions,
+          wrap-up). Roughly 10-15 minutes. Your transcript stays on this device.
         </div>
 
         {sessionFields.length > 0 && (
@@ -419,7 +414,11 @@ function Chat() {
         >
           Reconfigure
         </button>
-        <Button variant='outline' onClick={handleEndInterview} disabled={sending || generatingFeedback}>
+        <Button
+          variant='outline'
+          onClick={handleEndInterview}
+          disabled={sending || generatingFeedback}
+        >
           End interview
         </Button>
       </div>
@@ -432,10 +431,7 @@ function Chat() {
         </div>
       )}
 
-      <ChatComposer
-        onSend={handleSend}
-        disabled={sending || generatingFeedback}
-      />
+      <ChatComposer onSend={handleSend} disabled={sending || generatingFeedback} />
     </div>
   );
 }
@@ -493,19 +489,18 @@ function FeedbackView({ feedback }: { feedback: InterviewFeedback }) {
       const difficulty = feedback.difficulty;
       store.resetInterview();
       const state = useSessionStore.getState();
-      const { reply, nextPhase, nextTurnInPhase, groundingFailed } =
-        await runInterviewTurn({
-          messages: [],
-          target,
-          difficulty,
-          phase: 'warm-up',
-          turnInPhase: 0,
-          resumeText: state.resumeText ?? undefined,
-          freeText: state.freeText || undefined,
-          jobTitle: state.jobTitle || undefined,
-          jobAdvert: state.jobAdvert || undefined,
-          distilledProfile: state.distilledProfile ?? undefined,
-        });
+      const { reply, nextPhase, nextTurnInPhase, groundingFailed } = await runInterviewTurn({
+        messages: [],
+        target,
+        difficulty,
+        phase: 'warm-up',
+        turnInPhase: 0,
+        resumeText: state.resumeText ?? undefined,
+        freeText: state.freeText || undefined,
+        jobTitle: state.jobTitle || undefined,
+        jobAdvert: state.jobAdvert || undefined,
+        distilledProfile: state.distilledProfile ?? undefined,
+      });
       store.setInterviewSession(target, difficulty);
       store.addInterviewMessage({ role: 'assistant', content: reply });
       store.advanceInterviewPhase(nextPhase, nextTurnInPhase);
@@ -591,9 +586,7 @@ function FeedbackView({ feedback }: { feedback: InterviewFeedback }) {
           <div className='space-y-2'>
             {feedback.perPhase.map((p, i) => (
               <div key={i} className='flex items-start gap-3'>
-                <span className='text-ink font-medium min-w-[140px]'>
-                  {PHASE_LABEL[p.phase]}
-                </span>
+                <span className='text-ink font-medium min-w-[140px]'>{PHASE_LABEL[p.phase]}</span>
                 <span className='text-ink-muted flex-1'>{p.note}</span>
               </div>
             ))}
@@ -606,17 +599,16 @@ function FeedbackView({ feedback }: { feedback: InterviewFeedback }) {
           <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-2'>Next steps</h2>
           <ol className='list-decimal ml-5 space-y-1'>
             {feedback.nextSteps.map((step, i) => (
-              <li key={i} className='text-ink-muted leading-relaxed'>{step}</li>
+              <li key={i} className='text-ink-muted leading-relaxed'>
+                {step}
+              </li>
             ))}
           </ol>
         </div>
       )}
 
       {interviewSources.length > 0 && (
-        <SourcesList
-          sources={interviewSources}
-          heading='Sources consulted during this interview'
-        />
+        <SourcesList sources={interviewSources} heading='Sources consulted during this interview' />
       )}
 
       <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-6'>

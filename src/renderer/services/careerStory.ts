@@ -82,9 +82,7 @@ export async function generateCareerStory(
   input: CareerStoryInput
 ): Promise<GenerateCareerStoryResult> {
   if (!hasProfile(input)) {
-    throw new Error(
-      'Career story needs a resume or About you to build from.'
-    );
+    throw new Error('Career story needs a resume or About you to build from.');
   }
 
   const { result: story, trimmed } = await generate(
@@ -98,8 +96,7 @@ export async function generateCareerStory(
     },
     {
       steps: [trimSessionOutputs, trimProfileText],
-      tooLongMessage:
-        'Too much session data to process. Try with fewer features completed.',
+      tooLongMessage: 'Too much session data to process. Try with fewer features completed.',
     }
   );
 

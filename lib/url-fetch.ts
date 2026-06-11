@@ -17,7 +17,10 @@ export type UrlFetchErrorCode =
   | 'no-content';
 
 export class UrlFetchError extends Error {
-  constructor(message: string, public code: UrlFetchErrorCode) {
+  constructor(
+    message: string,
+    public code: UrlFetchErrorCode
+  ) {
     super(message);
     this.name = 'UrlFetchError';
   }
@@ -39,10 +42,7 @@ export async function fetchAndExtract(rawUrl: string): Promise<FetchResult> {
   }
 
   // LinkedIn profile pages aggressively block non-logged-in fetches.
-  if (
-    url.hostname.includes('linkedin.com') &&
-    url.pathname.includes('/in/')
-  ) {
+  if (url.hostname.includes('linkedin.com') && url.pathname.includes('/in/')) {
     throw new UrlFetchError(
       'LinkedIn profiles require being logged in. Copy your profile text and paste it into "About you" manually.',
       'linkedin-blocked'
@@ -56,8 +56,7 @@ export async function fetchAndExtract(rawUrl: string): Promise<FetchResult> {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
       },
       signal: AbortSignal.timeout(TIMEOUT_MS),

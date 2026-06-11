@@ -27,7 +27,11 @@ const DIMENSION_ORDER: ComparisonDimension[] = [
 export function comparisonToExportDoc(c: Comparison): ExportDoc {
   const modeRuns =
     c.mode === 'quick'
-      ? [b('Mode:'), ' Quick compare ', it('(LLM-generated from job titles — vague, makes assumptions)')]
+      ? [
+          b('Mode:'),
+          ' Quick compare ',
+          it('(LLM-generated from job titles — vague, makes assumptions)'),
+        ]
       : [b('Mode:'), ' Rich compare ', it('(based on careers from your spider graph)')];
 
   const blocks: Block[] = [p(...modeRuns), h2('Roles compared')];

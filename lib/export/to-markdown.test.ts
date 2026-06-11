@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { toMarkdown } from './to-markdown';
-import { type ExportDoc, b, it as italic, h2, h3, p, bullets, note, sources, disclaimer } from './doc';
+import {
+  type ExportDoc,
+  b,
+  it as italic,
+  h2,
+  h3,
+  p,
+  bullets,
+  note,
+  sources,
+  disclaimer,
+} from './doc';
 
 describe('toMarkdown', () => {
   it('renders the title as an H1', () => {
@@ -32,7 +43,10 @@ describe('toMarkdown', () => {
   });
 
   it('renders sources as a numbered markdown link list', () => {
-    const doc: ExportDoc = { title: 'T', blocks: [sources([{ title: 'A', url: 'http://a', domain: 'a.com' }])] };
+    const doc: ExportDoc = {
+      title: 'T',
+      blocks: [sources([{ title: 'A', url: 'http://a', domain: 'a.com' }])],
+    };
     expect(toMarkdown(doc)).toBe('# T\n\n1. [A](http://a) — a.com\n');
   });
 

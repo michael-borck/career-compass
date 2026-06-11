@@ -160,7 +160,7 @@ describe('runChatTurn — message shape', () => {
     expect(contents).toContain('second ask');
   });
 
-  it('does not call search itself — gating is the caller\'s responsibility', async () => {
+  it("does not call search itself — gating is the caller's responsibility", async () => {
     mockChat.mockResolvedValueOnce(chatReply('ok'));
     await runChatTurn({
       ...TURN_BASE,
@@ -187,9 +187,7 @@ describe('runChatTurn — token-limit retry chain', () => {
     // 25 messages → trim to 20 should be observable.
     const history: ChatMessage[] = [];
     for (let i = 0; i < 25; i++) {
-      history.push(
-        makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`)
-      );
+      history.push(makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`));
     }
     mockChat
       .mockRejectedValueOnce(new Error('context length exceeded'))
@@ -212,17 +210,10 @@ describe('runChatTurn — token-limit retry chain', () => {
     // 25 messages, with an attachment-summary at index 1.
     const history: ChatMessage[] = [
       makeMessage('user', 'opening ask', 'op'),
-      makeMessage(
-        'system',
-        '📎 Attached resume: cv.pdf (1234 chars)',
-        'att',
-        'attachment-summary'
-      ),
+      makeMessage('system', '📎 Attached resume: cv.pdf (1234 chars)', 'att', 'attachment-summary'),
     ];
     for (let i = 0; i < 23; i++) {
-      history.push(
-        makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`)
-      );
+      history.push(makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`));
     }
     mockChat
       .mockRejectedValueOnce(new Error('context length exceeded'))
@@ -312,8 +303,7 @@ describe('runChatSearch', () => {
 // =====================================================================
 
 const VALID_PROFILE_JSON = JSON.stringify({
-  background:
-    'A second-year CS student exploring data and ML roles, with some Python experience.',
+  background: 'A second-year CS student exploring data and ML roles, with some Python experience.',
   interests: ['data analysis', 'machine learning'],
   skills: ['Python', 'SQL basics'],
   constraints: ['student visa', 'limited time during semester'],
@@ -324,7 +314,7 @@ const TRANSCRIPT: ChatMessage[] = [
   makeMessage('assistant', 'Welcome! What are you exploring?'),
   makeMessage('user', "I'm a CS student interested in data and ML."),
   makeMessage('assistant', 'Great. What have you built so far?'),
-  makeMessage('user', "Some Python scripts, a basic SQL course."),
+  makeMessage('user', 'Some Python scripts, a basic SQL course.'),
 ];
 
 describe('distillProfile — prompt construction', () => {
@@ -387,9 +377,7 @@ describe('distillProfile — output shape', () => {
       goals: [],
     });
     mockChat.mockResolvedValueOnce(chatReply(bad));
-    await expect(distillProfile({ messages: TRANSCRIPT })).rejects.toThrow(
-      /missing background/i
-    );
+    await expect(distillProfile({ messages: TRANSCRIPT })).rejects.toThrow(/missing background/i);
   });
 
   it('throws when the LLM returns non-JSON text', async () => {
@@ -402,9 +390,7 @@ describe('distillProfile — token-limit retry', () => {
   it('retries with trimmed transcript and a trimmed=true flag on token-limit error', async () => {
     const long: ChatMessage[] = [];
     for (let i = 0; i < 40; i++) {
-      long.push(
-        makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`)
-      );
+      long.push(makeMessage(i % 2 === 0 ? 'user' : 'assistant', `msg-${i}`, `m-${i}`));
     }
     mockChat
       .mockRejectedValueOnce(new Error('context length exceeded'))
@@ -435,9 +421,7 @@ describe('distillProfile — token-limit retry', () => {
     mockChat
       .mockRejectedValueOnce(new Error('context length exceeded'))
       .mockRejectedValueOnce(new Error('maximum context'));
-    await expect(distillProfile({ messages: TRANSCRIPT })).rejects.toThrow(
-      /maximum context/
-    );
+    await expect(distillProfile({ messages: TRANSCRIPT })).rejects.toThrow(/maximum context/);
     expect(mockChat).toHaveBeenCalledTimes(2);
   });
 });

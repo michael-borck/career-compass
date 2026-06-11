@@ -9,11 +9,7 @@
 // then the resume, then surrender with a user-facing error.
 
 import { generate } from './generate';
-import {
-  buildComparePrompt,
-  parseComparison,
-  type CompareInput,
-} from '@/lib/prompts/compare';
+import { buildComparePrompt, parseComparison, type CompareInput } from '@/lib/prompts/compare';
 import type { Comparison } from '@/lib/session-store';
 
 export type { CompareInput };
@@ -33,9 +29,7 @@ function trimTargets(input: CompareInput): CompareInput {
   return {
     ...input,
     targets: input.targets.map((t) =>
-      t.label.length > TARGET_TRIM_CHARS
-        ? { ...t, label: t.label.slice(0, TARGET_TRIM_CHARS) }
-        : t
+      t.label.length > TARGET_TRIM_CHARS ? { ...t, label: t.label.slice(0, TARGET_TRIM_CHARS) } : t
     ),
   };
 }
@@ -56,9 +50,7 @@ function trimResume(input: CompareInput): CompareInput {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function generateComparison(
-  input: CompareInput
-): Promise<GenerateComparisonResult> {
+export async function generateComparison(input: CompareInput): Promise<GenerateComparisonResult> {
   if (!Array.isArray(input.targets) || input.targets.length < 2 || input.targets.length > 3) {
     throw new Error('Comparison needs 2 or 3 targets.');
   }

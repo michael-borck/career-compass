@@ -7,13 +7,27 @@ describe('buildCareerStoryPrompt', () => {
   });
 
   it('includes about-me when provided', () => {
-    expect(buildCareerStoryPrompt({ resume: 'r', freeText: 'I enjoy data work.' })).toContain('data work');
+    expect(buildCareerStoryPrompt({ resume: 'r', freeText: 'I enjoy data work.' })).toContain(
+      'data work'
+    );
   });
 
   it('includes careers when provided', () => {
     const out = buildCareerStoryPrompt({
       resume: 'r',
-      careers: [{ jobTitle: 'Data analyst', jobDescription: 'd', timeline: 't', salary: 's', difficulty: 'd', workRequired: 'w', aboutTheRole: 'a', whyItsagoodfit: [], roadmap: [] }],
+      careers: [
+        {
+          jobTitle: 'Data analyst',
+          jobDescription: 'd',
+          timeline: 't',
+          salary: 's',
+          difficulty: 'd',
+          workRequired: 'w',
+          aboutTheRole: 'a',
+          whyItsagoodfit: [],
+          roadmap: [],
+        },
+      ],
     });
     expect(out).toContain('Data analyst');
   });
@@ -21,7 +35,13 @@ describe('buildCareerStoryPrompt', () => {
   it('includes gap analysis when provided', () => {
     const out = buildCareerStoryPrompt({
       resume: 'r',
-      gapAnalysis: { target: 'Analyst', summary: 'Strong foundation', matches: ['SQL'], gaps: [], realisticTimeline: '3 months' },
+      gapAnalysis: {
+        target: 'Analyst',
+        summary: 'Strong foundation',
+        matches: ['SQL'],
+        gaps: [],
+        realisticTimeline: '3 months',
+      },
     });
     expect(out).toContain('Strong foundation');
   });
@@ -30,7 +50,8 @@ describe('buildCareerStoryPrompt', () => {
     const out = buildCareerStoryPrompt({
       resume: 'r',
       boardReview: {
-        framing: 'f', focusRole: null,
+        framing: 'f',
+        focusRole: null,
         voices: [
           { role: 'recruiter', name: 'R', response: 'Keywords are strong.' },
           { role: 'hr', name: 'H', response: 'h' },
@@ -46,9 +67,17 @@ describe('buildCareerStoryPrompt', () => {
 
   it('includes odyssey lives when provided', () => {
     const makeLife = (type: 'current' | 'pivot' | 'wildcard', label: string) => ({
-      type, label, seed: 's', headline: `${label} headline`, dayInTheLife: null,
-      typicalWeek: [] as string[], toolsAndSkills: [] as string[], whoYouWorkWith: null, challenges: [] as string[],
-      questionsToExplore: [] as string[], dashboard: { resources: null, likability: null, confidence: null, coherence: null },
+      type,
+      label,
+      seed: 's',
+      headline: `${label} headline`,
+      dayInTheLife: null,
+      typicalWeek: [] as string[],
+      toolsAndSkills: [] as string[],
+      whoYouWorkWith: null,
+      challenges: [] as string[],
+      questionsToExplore: [] as string[],
+      dashboard: { resources: null, likability: null, confidence: null, coherence: null },
     });
     const out = buildCareerStoryPrompt({
       resume: 'r',
@@ -84,10 +113,19 @@ describe('buildCareerStoryPrompt', () => {
 describe('parseCareerStory', () => {
   const happy = JSON.stringify({
     themes: [
-      { name: 'Data-driven decisions', evidence: ['Resume: SQL', 'Gap: analytics'], reflectionQuestion: 'Is data your core?' },
-      { name: 'Helping others', evidence: ['About me: mentoring'], reflectionQuestion: 'What does service mean to you?' },
+      {
+        name: 'Data-driven decisions',
+        evidence: ['Resume: SQL', 'Gap: analytics'],
+        reflectionQuestion: 'Is data your core?',
+      },
+      {
+        name: 'Helping others',
+        evidence: ['About me: mentoring'],
+        reflectionQuestion: 'What does service mean to you?',
+      },
     ],
-    narrative: 'I have always been drawn to making sense of data.\n\nWhat started as curiosity became a career direction.',
+    narrative:
+      'I have always been drawn to making sense of data.\n\nWhat started as curiosity became a career direction.',
   });
 
   it('parses happy path', () => {
@@ -103,27 +141,39 @@ describe('parseCareerStory', () => {
   });
 
   it('throws on missing narrative', () => {
-    expect(() => parseCareerStory(JSON.stringify({
-      themes: [{ name: 'n', evidence: [], reflectionQuestion: 'q' }],
-    }))).toThrow(/narrative/i);
+    expect(() =>
+      parseCareerStory(
+        JSON.stringify({
+          themes: [{ name: 'n', evidence: [], reflectionQuestion: 'q' }],
+        })
+      )
+    ).toThrow(/narrative/i);
   });
 
   it('throws on zero themes', () => {
-    expect(() => parseCareerStory(JSON.stringify({ themes: [], narrative: 'n' }))).toThrow(/theme/i);
+    expect(() => parseCareerStory(JSON.stringify({ themes: [], narrative: 'n' }))).toThrow(
+      /theme/i
+    );
   });
 
   it('coerces missing evidence to empty array', () => {
-    const out = parseCareerStory(JSON.stringify({
-      themes: [{ name: 'n', reflectionQuestion: 'q' }],
-      narrative: 'n',
-    }));
+    const out = parseCareerStory(
+      JSON.stringify({
+        themes: [{ name: 'n', reflectionQuestion: 'q' }],
+        narrative: 'n',
+      })
+    );
     expect(out.themes[0].evidence).toEqual([]);
   });
 
   it('throws on theme with empty name', () => {
-    expect(() => parseCareerStory(JSON.stringify({
-      themes: [{ name: '', evidence: [], reflectionQuestion: 'q' }],
-      narrative: 'n',
-    }))).toThrow(/name/i);
+    expect(() =>
+      parseCareerStory(
+        JSON.stringify({
+          themes: [{ name: '', evidence: [], reflectionQuestion: 'q' }],
+          narrative: 'n',
+        })
+      )
+    ).toThrow(/name/i);
   });
 });

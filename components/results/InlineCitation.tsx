@@ -12,10 +12,7 @@ export default function InlineCitation({ index, sources }: Props) {
 
   if (!source) {
     return (
-      <sup
-        className='text-ink-quiet px-0.5 cursor-help'
-        title='Source not found'
-      >
+      <sup className='text-ink-quiet px-0.5 cursor-help' title='Source not found'>
         [{index}]
       </sup>
     );

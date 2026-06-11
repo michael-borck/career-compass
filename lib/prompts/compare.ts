@@ -1,4 +1,9 @@
-import type { StudentProfile, Comparison, ComparisonRole, ComparisonDimension } from '@/lib/session-store';
+import type {
+  StudentProfile,
+  Comparison,
+  ComparisonRole,
+  ComparisonDimension,
+} from '@/lib/session-store';
 import { parseModelJson, toRecord } from './model-json';
 import type { finalCareerInfo } from '@/lib/types';
 
@@ -41,7 +46,8 @@ function buildProfileSection(input: CompareInput): string | null {
   const parts: string[] = [];
   if (input.resume && input.resume.trim()) parts.push(`Resume:\n${input.resume.trim()}`);
   if (input.freeText && input.freeText.trim()) parts.push(`About me:\n${input.freeText.trim()}`);
-  if (input.distilledProfile) parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
+  if (input.distilledProfile)
+    parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
   if (parts.length === 0) return null;
   return `<profile>\n${parts.join('\n\n')}\n</profile>`;
 }

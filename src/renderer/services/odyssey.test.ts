@@ -29,13 +29,8 @@ const VALID_ELABORATE_JSON = JSON.stringify({
     'A few hours mentoring a junior analyst',
   ],
   toolsAndSkills: ['Python', 'Tableau', 'SQL', 'Plain-English writing'],
-  whoYouWorkWith:
-    'Clinic managers, GPs, and a small team of analysts spread across the state.',
-  challenges: [
-    'Slow procurement cycles',
-    'Patchy data quality',
-    'Travel time eats into deep work',
-  ],
+  whoYouWorkWith: 'Clinic managers, GPs, and a small team of analysts spread across the state.',
+  challenges: ['Slow procurement cycles', 'Patchy data quality', 'Travel time eats into deep work'],
   questionsToExplore: [
     'How do I price contract work for small clinics?',
     'Which adjacent skills compound fastest?',
@@ -117,9 +112,7 @@ describe('suggestLife — output shape', () => {
 describe('suggestLife — no token-limit retry', () => {
   it('does not retry on token-limit errors (prompt is short)', async () => {
     mockChat.mockRejectedValueOnce(new Error('context length exceeded'));
-    await expect(suggestLife({ type: 'current' })).rejects.toThrow(
-      /context length/i
-    );
+    await expect(suggestLife({ type: 'current' })).rejects.toThrow(/context length/i);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });
@@ -152,16 +145,16 @@ describe('elaborateLife — input handling', () => {
   });
 
   it('rejects an empty label with a clear error', async () => {
-    await expect(
-      elaborateLife({ type: 'current', label: '   ', seed: 'y' })
-    ).rejects.toThrow(/label is required/i);
+    await expect(elaborateLife({ type: 'current', label: '   ', seed: 'y' })).rejects.toThrow(
+      /label is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('rejects an empty seed with a clear error', async () => {
-    await expect(
-      elaborateLife({ type: 'current', label: 'x', seed: '   ' })
-    ).rejects.toThrow(/seed is required/i);
+    await expect(elaborateLife({ type: 'current', label: 'x', seed: '   ' })).rejects.toThrow(
+      /seed is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 });
@@ -254,9 +247,7 @@ describe('elaborateLife — token-limit retry chain', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(elaborateLife(baseElaborateInput)).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(elaborateLife(baseElaborateInput)).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

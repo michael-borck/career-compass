@@ -30,9 +30,7 @@ export function resumeReviewToExportDoc(r: ResumeReview): ExportDoc {
     blocks.push(bullets(r.structuralNotes));
   }
 
-  blocks.push(
-    disclaimer('AI-generated feedback. Use as a starting point, not a final verdict.')
-  );
+  blocks.push(disclaimer('AI-generated feedback. Use as a starting point, not a final verdict.'));
 
   return { title: 'Resume Review', blocks };
 }

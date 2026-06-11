@@ -11,9 +11,7 @@ export default function OdysseyElaboration({ life }: Props) {
   return (
     <div className='mt-6 space-y-6 text-ink'>
       {life.headline && (
-        <p className='text-[var(--text-lg)] font-semibold italic text-ink'>
-          {life.headline}
-        </p>
+        <p className='text-[var(--text-lg)] font-semibold italic text-ink'>{life.headline}</p>
       )}
 
       {life.dayInTheLife && (
@@ -39,7 +37,9 @@ export default function OdysseyElaboration({ life }: Props) {
 
       {life.toolsAndSkills.length > 0 && (
         <div>
-          <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>Tools &amp; skills</h3>
+          <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>
+            Tools &amp; skills
+          </h3>
           <ul className='space-y-1 text-ink-muted'>
             {life.toolsAndSkills.map((t, i) => (
               <li key={i} className='flex gap-2'>
@@ -74,7 +74,9 @@ export default function OdysseyElaboration({ life }: Props) {
 
       {life.questionsToExplore.length > 0 && (
         <div>
-          <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>Questions to explore</h3>
+          <h3 className='text-[var(--text-base)] font-semibold text-ink mb-2'>
+            Questions to explore
+          </h3>
           <ul className='space-y-1 text-ink-muted'>
             {life.questionsToExplore.map((q, i) => (
               <li key={i} className='flex gap-2'>

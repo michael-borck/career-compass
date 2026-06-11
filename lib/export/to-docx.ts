@@ -62,7 +62,9 @@ function blockToParagraphs(block: Block): Paragraph[] {
       return block.items.map(
         (s, i) =>
           new Paragraph({
-            children: [new TextRun({ text: `${i + 1}. ${s.title} — ${s.domain}`, size: 24, font: FONT })],
+            children: [
+              new TextRun({ text: `${i + 1}. ${s.title} — ${s.domain}`, size: 24, font: FONT }),
+            ],
             spacing: { after: 50 },
           })
       );

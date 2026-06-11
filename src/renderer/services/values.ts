@@ -9,11 +9,7 @@
 // surrender with a user-facing error.
 
 import { generate } from './generate';
-import {
-  buildValuesPrompt,
-  parseValuesCompass,
-  type ValuesInput,
-} from '@/lib/prompts/values';
+import { buildValuesPrompt, parseValuesCompass, type ValuesInput } from '@/lib/prompts/values';
 import type { ValuesCompass } from '@/lib/session-store';
 
 export type { ValuesInput };
@@ -25,8 +21,7 @@ export type GenerateValuesResult = {
 
 const RESUME_TRIM_CHARS = 4000;
 
-const SYSTEM =
-  'You are a career values coach that ONLY responds in JSON.';
+const SYSTEM = 'You are a career values coach that ONLY responds in JSON.';
 
 function trimResume(input: ValuesInput): ValuesInput {
   return {
@@ -44,9 +39,7 @@ function trimResume(input: ValuesInput): ValuesInput {
  * Throws on terminal failure. The thrown error's `.message` is safe to
  * surface to the user via toast.
  */
-export async function generateValuesCompass(
-  input: ValuesInput
-): Promise<GenerateValuesResult> {
+export async function generateValuesCompass(input: ValuesInput): Promise<GenerateValuesResult> {
   const { result: compass, trimmed } = await generate(
     {
       input,

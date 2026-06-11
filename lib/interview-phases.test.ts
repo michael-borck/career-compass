@@ -30,10 +30,7 @@ describe('PHASE_CONFIG turn counts', () => {
     expect(PHASE_CONFIG['wrap-up'].turnsPerPhase).toBe(1);
   });
   it('totals 7 interviewer turns', () => {
-    const total = PHASE_ORDER.reduce(
-      (n, p) => n + PHASE_CONFIG[p].turnsPerPhase,
-      0
-    );
+    const total = PHASE_ORDER.reduce((n, p) => n + PHASE_CONFIG[p].turnsPerPhase, 0);
     expect(total).toBe(7);
   });
 });

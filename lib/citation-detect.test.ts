@@ -22,9 +22,7 @@ describe('hasAnyCitations', () => {
 
 describe('segmentCitations', () => {
   it('returns a single text segment for plain text', () => {
-    expect(segmentCitations('hello world')).toEqual([
-      { kind: 'text', value: 'hello world' },
-    ]);
+    expect(segmentCitations('hello world')).toEqual([{ kind: 'text', value: 'hello world' }]);
   });
 
   it('splits text with one marker', () => {

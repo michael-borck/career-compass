@@ -28,9 +28,7 @@ beforeEach(() => {
 
 describe('generateCoverLetter — validation', () => {
   it('throws when no jobTitle or jobAdvert is provided', async () => {
-    await expect(generateCoverLetter({})).rejects.toThrow(
-      /job title or job advert/i
-    );
+    await expect(generateCoverLetter({})).rejects.toThrow(/job title or job advert/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -39,9 +37,7 @@ describe('generateCoverLetter — validation', () => {
       resume: 'Worked at Acme Corp.',
       freeText: 'I love testing.',
     };
-    await expect(generateCoverLetter(input)).rejects.toThrow(
-      /job title or job advert/i
-    );
+    await expect(generateCoverLetter(input)).rejects.toThrow(/job title or job advert/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -50,9 +46,7 @@ describe('generateCoverLetter — validation', () => {
       jobTitle: '   ',
       jobAdvert: '\n\t',
     };
-    await expect(generateCoverLetter(input)).rejects.toThrow(
-      /job title or job advert/i
-    );
+    await expect(generateCoverLetter(input)).rejects.toThrow(/job title or job advert/i);
   });
 
   it('accepts a jobTitle alone', async () => {
@@ -183,9 +177,9 @@ describe('generateCoverLetter — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generateCoverLetter({ jobTitle: 'Analyst' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generateCoverLetter({ jobTitle: 'Analyst' })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

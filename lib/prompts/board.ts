@@ -44,9 +44,12 @@ function buildProfileSection(input: BoardInput): string {
   const parts: string[] = [];
   if (input.resume && input.resume.trim()) parts.push(`Resume:\n${input.resume.trim()}`);
   if (input.freeText && input.freeText.trim()) parts.push(`About me:\n${input.freeText.trim()}`);
-  if (input.jobTitle && input.jobTitle.trim()) parts.push(`Current job title:\n${input.jobTitle.trim()}`);
-  if (input.jobAdvert && input.jobAdvert.trim()) parts.push(`Target job advert:\n${input.jobAdvert.trim()}`);
-  if (input.distilledProfile) parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
+  if (input.jobTitle && input.jobTitle.trim())
+    parts.push(`Current job title:\n${input.jobTitle.trim()}`);
+  if (input.jobAdvert && input.jobAdvert.trim())
+    parts.push(`Target job advert:\n${input.jobAdvert.trim()}`);
+  if (input.distilledProfile)
+    parts.push(`Distilled profile:\n${formatProfile(input.distilledProfile)}`);
   if (parts.length === 0) return '<profile>\n(No profile material provided.)\n</profile>';
   return `<profile>\n${parts.join('\n\n')}\n</profile>`;
 }

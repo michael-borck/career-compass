@@ -26,7 +26,11 @@ export default function CareerStory() {
   const hasProfile = hasResume || hasFreeText || !!store.distilledProfile;
   const canRun = hasResume || hasFreeText;
 
-  const { loading, run: runGeneration, resetAutoRun } = useGeneration({
+  const {
+    loading,
+    run: runGeneration,
+    resetAutoRun,
+  } = useGeneration({
     generate: () => {
       const state = useSessionStore.getState();
       return generateCareerStory({
@@ -54,7 +58,10 @@ export default function CareerStory() {
     // Auto-run on mount when there's enough profile in session and no story yet.
     autoRun: () => {
       const state = useSessionStore.getState();
-      return !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) && !state.careerStory;
+      return (
+        !!(state.resumeText || state.freeText?.trim() || state.distilledProfile) &&
+        !state.careerStory
+      );
     },
   });
 
@@ -135,9 +142,8 @@ export default function CareerStory() {
               <div className='border-l-2 border-accent p-4 bg-paper-warm mb-6 mt-4'>
                 <p className='text-ink-muted text-[var(--text-sm)] leading-relaxed'>
                   This works best when you have explored other features first. The career story
-                  draws on everything in your session: your generated careers, gap analysis,
-                  Odyssey lives, board review, and more. The more you have done, the richer the
-                  story.
+                  draws on everything in your session: your generated careers, gap analysis, Odyssey
+                  lives, board review, and more. The more you have done, the richer the story.
                 </p>
               </div>
 

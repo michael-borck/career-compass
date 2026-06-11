@@ -35,9 +35,9 @@ describe('generatePortfolio — validation', () => {
   });
 
   it('treats whitespace-only resume and freeText as empty', async () => {
-    await expect(
-      generatePortfolio({ resume: '   ', freeText: '\n\t  ' })
-    ).rejects.toThrow(/resume or About you/i);
+    await expect(generatePortfolio({ resume: '   ', freeText: '\n\t  ' })).rejects.toThrow(
+      /resume or About you/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 

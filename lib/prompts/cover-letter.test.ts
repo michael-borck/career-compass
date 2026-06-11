@@ -9,7 +9,9 @@ describe('buildCoverLetterPrompt', () => {
     expect(buildCoverLetterPrompt({ jobAdvert: 'Hiring at Acme Corp.' })).toContain('Acme Corp');
   });
   it('includes resume', () => {
-    expect(buildCoverLetterPrompt({ resume: 'Student at Curtin.', jobTitle: 'Analyst' })).toContain('Curtin');
+    expect(buildCoverLetterPrompt({ resume: 'Student at Curtin.', jobTitle: 'Analyst' })).toContain(
+      'Curtin'
+    );
   });
   it('asks for greeting/body/closing JSON', () => {
     const out = buildCoverLetterPrompt({ jobTitle: 'Analyst' });
@@ -35,12 +37,18 @@ describe('parseCoverLetter', () => {
     expect(parseCoverLetter('```json\n' + happy + '\n```').greeting).toContain('Hiring');
   });
   it('throws on missing greeting', () => {
-    expect(() => parseCoverLetter(JSON.stringify({ body: 'b', closing: 'c' }))).toThrow(/greeting/i);
+    expect(() => parseCoverLetter(JSON.stringify({ body: 'b', closing: 'c' }))).toThrow(
+      /greeting/i
+    );
   });
   it('throws on missing body', () => {
-    expect(() => parseCoverLetter(JSON.stringify({ greeting: 'g', closing: 'c' }))).toThrow(/body/i);
+    expect(() => parseCoverLetter(JSON.stringify({ greeting: 'g', closing: 'c' }))).toThrow(
+      /body/i
+    );
   });
   it('throws on missing closing', () => {
-    expect(() => parseCoverLetter(JSON.stringify({ greeting: 'g', body: 'b' }))).toThrow(/closing/i);
+    expect(() => parseCoverLetter(JSON.stringify({ greeting: 'g', body: 'b' }))).toThrow(
+      /closing/i
+    );
   });
 });

@@ -18,12 +18,7 @@ const INTENT_FILTERS: Record<Exclude<SearchIntent, 'general'>, string[]> = {
     'freecodecamp.org',
     'youtube.com',
   ],
-  company: [
-    'linkedin.com/company',
-    'glassdoor.com',
-    'crunchbase.com',
-    'wikipedia.org',
-  ],
+  company: ['linkedin.com/company', 'glassdoor.com', 'crunchbase.com', 'wikipedia.org'],
 };
 
 export function applyIntent(query: string, intent: SearchIntent): string {

@@ -69,16 +69,14 @@ beforeEach(() => {
 
 describe('generateSkillsMapping — input handling', () => {
   it('rejects when no profile signal is supplied', async () => {
-    await expect(
-      generateSkillsMapping({})
-    ).rejects.toThrow(/profile is required/i);
+    await expect(generateSkillsMapping({})).rejects.toThrow(/profile is required/i);
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('rejects when only whitespace-only resume/aboutYou are supplied', async () => {
-    await expect(
-      generateSkillsMapping({ resume: '   ', aboutYou: '  ' })
-    ).rejects.toThrow(/profile is required/i);
+    await expect(generateSkillsMapping({ resume: '   ', aboutYou: '  ' })).rejects.toThrow(
+      /profile is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
@@ -164,9 +162,7 @@ describe('generateSkillsMapping — output shape', () => {
       resume: 'Analyst at Acme.',
     });
     const sql = result.mapping.mappings.find((m) => m.skill === 'SQL data analysis');
-    const comms = result.mapping.mappings.find(
-      (m) => m.skill === 'Stakeholder communication'
-    );
+    const comms = result.mapping.mappings.find((m) => m.skill === 'Stakeholder communication');
     expect(sql?.sfia?.name).toBe('Data analysis');
     expect(sql?.sfia?.level).toBe('3');
     expect(sql?.aqf).toBeNull();
@@ -178,9 +174,7 @@ describe('generateSkillsMapping — output shape', () => {
 
   it('throws a clear error when the model returns invalid JSON', async () => {
     mockChat.mockResolvedValueOnce(chatReply('not valid json'));
-    await expect(
-      generateSkillsMapping({ resume: 'Analyst at Acme.' })
-    ).rejects.toThrow();
+    await expect(generateSkillsMapping({ resume: 'Analyst at Acme.' })).rejects.toThrow();
   });
 });
 
@@ -213,9 +207,9 @@ describe('generateSkillsMapping — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generateSkillsMapping({ resume: 'Analyst at Acme.' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generateSkillsMapping({ resume: 'Analyst at Acme.' })).rejects.toThrow(
+      /API key not configured/
+    );
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

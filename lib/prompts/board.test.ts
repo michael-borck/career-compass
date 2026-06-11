@@ -98,7 +98,10 @@ describe('parseBoardReview', () => {
     synthesis: {
       agreements: ['Strong curiosity signals'],
       disagreements: ['The Recruiter wants more keywords, but The Mentor sees depth'],
-      topPriorities: ['Add concrete project outcomes', 'Reframe academic work in industry language'],
+      topPriorities: [
+        'Add concrete project outcomes',
+        'Reframe academic work in industry language',
+      ],
     },
   });
 

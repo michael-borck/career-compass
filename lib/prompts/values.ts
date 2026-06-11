@@ -53,16 +53,21 @@ Each WorkValue has the shape:
     const profileParts: string[] = [];
     if (resume && resume.trim()) profileParts.push(`Resume:\n${resume.trim()}`);
     if (aboutYou && aboutYou.trim()) profileParts.push(`About me:\n${aboutYou.trim()}`);
-    if (distilledProfile) profileParts.push(`Distilled profile:\n${formatProfile(distilledProfile)}`);
+    if (distilledProfile)
+      profileParts.push(`Distilled profile:\n${formatProfile(distilledProfile)}`);
     sections.push(`<profile>\n${profileParts.join('\n\n')}\n</profile>`);
   }
 
   if (valuesSeed && valuesSeed.trim()) {
-    sections.push(`<valuesSeed>\nThe student wrote this about what matters to them:\n${valuesSeed.trim()}\n</valuesSeed>`);
+    sections.push(
+      `<valuesSeed>\nThe student wrote this about what matters to them:\n${valuesSeed.trim()}\n</valuesSeed>`
+    );
   }
 
   if (!hasProfile && (!valuesSeed || !valuesSeed.trim())) {
-    sections.push('The student provided no profile or seed text. Give a thoughtful general starting point based on common patterns for university students exploring careers. Note in the summary that this is a starting point and they should refine it.');
+    sections.push(
+      'The student provided no profile or seed text. Give a thoughtful general starting point based on common patterns for university students exploring careers. Note in the summary that this is a starting point and they should refine it.'
+    );
   }
 
   sections.push('ONLY respond with JSON. No prose, no code fences.');

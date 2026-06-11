@@ -39,11 +39,8 @@ export default function SessionBanner() {
   const hasGap = !!gapAnalysis;
   const hasPath = !!learningPath;
   const hasInterviewFeedback = !!interviewFeedback;
-  const hasInterviewInProgress =
-    interviewMessages.length > 0 && !hasInterviewFeedback;
-  const hasOdyssey = Object.values(odysseyLives).some(
-    (life) => life.seed.trim() || life.headline
-  );
+  const hasInterviewInProgress = interviewMessages.length > 0 && !hasInterviewFeedback;
+  const hasOdyssey = Object.values(odysseyLives).some((life) => life.seed.trim() || life.headline);
   const hasBoard = !!boardReview;
   const hasComparison = !!comparison;
   const hasPitch = !!elevatorPitch;
@@ -52,39 +49,47 @@ export default function SessionBanner() {
   const hasPortfolio = !!portfolio;
   const hasCareerStory = !!careerStory;
   const hasAnyOutput =
-    hasCareers || hasChat || hasGap || hasPath ||
-    hasInterviewInProgress || hasInterviewFeedback ||
-    hasOdyssey || hasBoard || hasComparison ||
-    hasPitch || hasCoverLetter || hasResumeReview || hasPortfolio || hasCareerStory;
+    hasCareers ||
+    hasChat ||
+    hasGap ||
+    hasPath ||
+    hasInterviewInProgress ||
+    hasInterviewFeedback ||
+    hasOdyssey ||
+    hasBoard ||
+    hasComparison ||
+    hasPitch ||
+    hasCoverLetter ||
+    hasResumeReview ||
+    hasPortfolio ||
+    hasCareerStory;
 
   if (!hasAnyInput && !hasAnyOutput) return null;
 
   function handleStartOver() {
-    if (!confirm('Start over? This clears your results but keeps your uploaded material.'))
-      return;
+    if (!confirm('Start over? This clears your results but keeps your uploaded material.')) return;
     store.resetOutputs();
   }
 
   const pillClass =
     'inline-flex items-center gap-1 bg-paper border border-border rounded px-2 py-0.5 text-[var(--text-xs)] text-ink';
-  const removeClass =
-    'text-ink-quiet hover:text-ink cursor-pointer ml-1';
+  const removeClass = 'text-ink-quiet hover:text-ink cursor-pointer ml-1';
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-8 border border-accent/30 bg-accent-soft rounded-lg px-5 py-3 flex items-center gap-4 flex-wrap">
-      <span className="block w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+    <div className='w-full max-w-5xl mx-auto mt-8 border border-accent/30 bg-accent-soft rounded-lg px-5 py-3 flex items-center gap-4 flex-wrap'>
+      <span className='block w-2 h-2 rounded-full bg-accent flex-shrink-0' />
 
       {hasAnyInput && (
-        <div className="flex flex-wrap gap-x-2 gap-y-1 items-center">
-          <span className="text-[var(--text-xs)] text-ink-quiet">Loaded:</span>
+        <div className='flex flex-wrap gap-x-2 gap-y-1 items-center'>
+          <span className='text-[var(--text-xs)] text-ink-quiet'>Loaded:</span>
           {hasResume && (
             <span className={pillClass}>
               {resumeFilename ?? 'resume'}
               <button
-                type="button"
+                type='button'
                 onClick={() => store.clearResume()}
                 className={removeClass}
-                aria-label="Remove resume"
+                aria-label='Remove resume'
               >
                 ×
               </button>
@@ -94,10 +99,10 @@ export default function SessionBanner() {
             <span className={pillClass}>
               About you
               <button
-                type="button"
+                type='button'
                 onClick={() => store.setFreeText('')}
                 className={removeClass}
-                aria-label="Remove about you"
+                aria-label='Remove about you'
               >
                 ×
               </button>
@@ -108,10 +113,10 @@ export default function SessionBanner() {
               Job title: {jobTitle.trim().slice(0, 30)}
               {jobTitle.trim().length > 30 ? '…' : ''}
               <button
-                type="button"
+                type='button'
                 onClick={() => store.setJobTitle('')}
                 className={removeClass}
-                aria-label="Remove job title"
+                aria-label='Remove job title'
               >
                 ×
               </button>
@@ -121,10 +126,10 @@ export default function SessionBanner() {
             <span className={pillClass}>
               Job advert
               <button
-                type="button"
+                type='button'
                 onClick={() => store.setJobAdvert('')}
                 className={removeClass}
-                aria-label="Remove job advert"
+                aria-label='Remove job advert'
               >
                 ×
               </button>
@@ -133,80 +138,78 @@ export default function SessionBanner() {
         </div>
       )}
 
-      {hasAnyInput && hasAnyOutput && (
-        <span className="text-ink-quiet">·</span>
-      )}
+      {hasAnyInput && hasAnyOutput && <span className='text-ink-quiet'>·</span>}
 
       {hasAnyOutput && (
-        <div className="flex-1 text-[var(--text-xs)] text-ink flex flex-wrap gap-x-3 gap-y-1 items-center">
-          <span className="text-ink-quiet">You have:</span>
+        <div className='flex-1 text-[var(--text-xs)] text-ink flex flex-wrap gap-x-3 gap-y-1 items-center'>
+          <span className='text-ink-quiet'>You have:</span>
           {hasCareers && (
-            <Link to="/careers" className="underline hover:text-accent">
+            <Link to='/careers' className='underline hover:text-accent'>
               {careers!.length} careers
             </Link>
           )}
           {hasChat && (
-            <Link to="/chat" className="underline hover:text-accent">
+            <Link to='/chat' className='underline hover:text-accent'>
               {userMessageCount} chat message{userMessageCount === 1 ? '' : 's'}
             </Link>
           )}
           {hasGap && (
-            <Link to="/gap-analysis" className="underline hover:text-accent">
+            <Link to='/gap-analysis' className='underline hover:text-accent'>
               gap analysis ready
             </Link>
           )}
           {hasPath && (
-            <Link to="/learning-path" className="underline hover:text-accent">
+            <Link to='/learning-path' className='underline hover:text-accent'>
               learning path ready
             </Link>
           )}
           {hasInterviewInProgress && (
-            <Link to="/interview" className="underline hover:text-accent">
+            <Link to='/interview' className='underline hover:text-accent'>
               interview in progress
             </Link>
           )}
           {hasInterviewFeedback && (
-            <Link to="/interview" className="underline hover:text-accent">
+            <Link to='/interview' className='underline hover:text-accent'>
               interview feedback ready
             </Link>
           )}
           {hasOdyssey && (
-            <Link to="/odyssey" className="underline hover:text-accent">
+            <Link to='/odyssey' className='underline hover:text-accent'>
               odyssey plan in progress
             </Link>
           )}
           {hasBoard && (
-            <Link to="/board" className="underline hover:text-accent">
+            <Link to='/board' className='underline hover:text-accent'>
               board review ready
             </Link>
           )}
           {hasComparison && (
-            <Link to="/compare" className="underline hover:text-accent">
+            <Link to='/compare' className='underline hover:text-accent'>
               comparison ready
             </Link>
           )}
           {hasPitch && (
-            <Link to="/pitch" className="underline hover:text-accent">
+            <Link to='/pitch' className='underline hover:text-accent'>
               pitch ready
             </Link>
           )}
           {hasCoverLetter && (
-            <Link to="/cover-letter" className="underline hover:text-accent">
+            <Link to='/cover-letter' className='underline hover:text-accent'>
               cover letter ready
             </Link>
           )}
           {hasResumeReview && (
-            <Link to="/resume-review" className="underline hover:text-accent">
+            <Link to='/resume-review' className='underline hover:text-accent'>
               resume review ready
             </Link>
           )}
           {hasPortfolio && (
-            <Link to="/portfolio" className="underline hover:text-accent">
+            <Link to='/portfolio' className='underline hover:text-accent'>
               portfolio ready{portfolio!.target ? ` (${portfolio!.target})` : ''}
             </Link>
           )}
           {hasCareerStory && (
-            <Link to="/career-story" className="underline hover:text-accent">
+            <Link to='/career-story' className='underline hover:text-accent'>
               career story ready
             </Link>
           )}
@@ -215,9 +218,9 @@ export default function SessionBanner() {
 
       {hasAnyOutput && (
         <button
-          type="button"
+          type='button'
           onClick={handleStartOver}
-          className="text-[var(--text-xs)] text-ink-muted hover:text-ink flex-shrink-0"
+          className='text-[var(--text-xs)] text-ink-muted hover:text-ink flex-shrink-0'
         >
           Start over
         </button>

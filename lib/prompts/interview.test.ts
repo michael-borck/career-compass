@@ -25,10 +25,16 @@ describe('buildInterviewSystemPrompt', () => {
 
   it('different difficulties produce different tone instructions', () => {
     const friendly = buildInterviewSystemPrompt({
-      target: 'X', difficulty: 'friendly', phase: 'warm-up', turnInPhase: 0,
+      target: 'X',
+      difficulty: 'friendly',
+      phase: 'warm-up',
+      turnInPhase: 0,
     });
     const tough = buildInterviewSystemPrompt({
-      target: 'X', difficulty: 'tough', phase: 'warm-up', turnInPhase: 0,
+      target: 'X',
+      difficulty: 'tough',
+      phase: 'warm-up',
+      turnInPhase: 0,
     });
     expect(friendly).toContain('encouraging');
     expect(tough).toContain('pointed');
@@ -68,7 +74,10 @@ describe('buildInterviewSystemPrompt', () => {
 
   it('includes the global rules', () => {
     const out = buildInterviewSystemPrompt({
-      target: 'X', difficulty: 'standard', phase: 'warm-up', turnInPhase: 0,
+      target: 'X',
+      difficulty: 'standard',
+      phase: 'warm-up',
+      turnInPhase: 0,
     });
     expect(out).toContain('exactly ONE question');
     expect(out).toContain('Do not break character');

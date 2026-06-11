@@ -160,21 +160,30 @@ async function testConnection(provider, config, fetchImpl = fetch) {
 
       case 'openai': {
         if (!apiKey) {
-          return { success: false, error: 'API key required (set OPENAI_API_KEY or enter in settings)' };
+          return {
+            success: false,
+            error: 'API key required (set OPENAI_API_KEY or enter in settings)',
+          };
         }
         const openaiResponse = await fetchImpl(`${PROVIDERS.openai.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         if (!openaiResponse.ok) {
           const errorText = await openaiResponse.text();
-          return { success: false, error: `OpenAI API error: ${openaiResponse.status} ${errorText}` };
+          return {
+            success: false,
+            error: `OpenAI API error: ${openaiResponse.status} ${errorText}`,
+          };
         }
         return { success: true, error: null };
       }
 
       case 'claude': {
         if (!apiKey) {
-          return { success: false, error: 'API key required (set ANTHROPIC_API_KEY or enter in settings)' };
+          return {
+            success: false,
+            error: 'API key required (set ANTHROPIC_API_KEY or enter in settings)',
+          };
         }
         // Anthropic has no simple health endpoint; test with a minimal request.
         const claudeResponse = await fetchImpl('https://api.anthropic.com/v1/messages', {
@@ -198,7 +207,10 @@ async function testConnection(provider, config, fetchImpl = fetch) {
 
       case 'groq': {
         if (!apiKey) {
-          return { success: false, error: 'API key required (set GROQ_API_KEY or enter in settings)' };
+          return {
+            success: false,
+            error: 'API key required (set GROQ_API_KEY or enter in settings)',
+          };
         }
         const groqResponse = await fetchImpl(`${PROVIDERS.groq.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },
@@ -211,7 +223,10 @@ async function testConnection(provider, config, fetchImpl = fetch) {
 
       case 'gemini': {
         if (!apiKey) {
-          return { success: false, error: 'Secret key required (set GOOGLE_API_KEY or enter in settings)' };
+          return {
+            success: false,
+            error: 'Secret key required (set GOOGLE_API_KEY or enter in settings)',
+          };
         }
         const geminiResponse = await fetchImpl(
           `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
@@ -224,7 +239,10 @@ async function testConnection(provider, config, fetchImpl = fetch) {
 
       case 'openrouter': {
         if (!apiKey) {
-          return { success: false, error: 'Secret key required (set OPENROUTER_API_KEY or enter in settings)' };
+          return {
+            success: false,
+            error: 'Secret key required (set OPENROUTER_API_KEY or enter in settings)',
+          };
         }
         const orResponse = await fetchImpl(`${PROVIDERS.openrouter.defaultBaseURL}/models`, {
           headers: { Authorization: `Bearer ${apiKey}` },

@@ -36,9 +36,7 @@ export function industryExplorationToExportDoc(e: IndustryExploration): ExportDo
     blocks.push(bullets(e.challenges));
   }
 
-  blocks.push(
-    disclaimer('AI-generated overview. Verify specific claims before making decisions.')
-  );
+  blocks.push(disclaimer('AI-generated overview. Verify specific claims before making decisions.'));
 
   return { title: `Industry Exploration: ${e.industry}`, blocks };
 }

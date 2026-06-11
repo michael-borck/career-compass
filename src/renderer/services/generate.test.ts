@@ -63,10 +63,7 @@ describe('callStructured', () => {
 
 describe('generate', () => {
   const ladder = {
-    steps: [
-      (i: In) => ({ text: `${i.text}-a` }),
-      (i: In) => ({ text: `${i.text}-b` }),
-    ],
+    steps: [(i: In) => ({ text: `${i.text}-a` }), (i: In) => ({ text: `${i.text}-b` })],
     tooLongMessage: 'too long',
   };
 
@@ -113,9 +110,9 @@ describe('generate', () => {
       .mockRejectedValueOnce(tokenErr())
       .mockRejectedValueOnce(tokenErr())
       .mockRejectedValueOnce(tokenErr());
-    await expect(
-      generate(baseSpec(), { steps: ladder.steps })
-    ).rejects.toThrow('context length exceeded');
+    await expect(generate(baseSpec(), { steps: ladder.steps })).rejects.toThrow(
+      'context length exceeded'
+    );
   });
 
   it('rethrows a non-token-limit error immediately without trimming', async () => {
@@ -126,9 +123,9 @@ describe('generate', () => {
 
   it('handles an empty ladder by surrendering on the first token-limit error', async () => {
     mockChat.mockRejectedValueOnce(tokenErr());
-    await expect(
-      generate(baseSpec(), { steps: [], tooLongMessage: 'nope' })
-    ).rejects.toThrow('nope');
+    await expect(generate(baseSpec(), { steps: [], tooLongMessage: 'nope' })).rejects.toThrow(
+      'nope'
+    );
     expect(mockChat).toHaveBeenCalledOnce();
   });
 });

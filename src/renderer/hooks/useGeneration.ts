@@ -59,7 +59,7 @@ export function useGeneration<T>(opts: UseGenerationOptions<T>): UseGenerationRe
       }
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : o.errorFallback ?? 'Generation failed');
+      toast.error(err instanceof Error ? err.message : (o.errorFallback ?? 'Generation failed'));
     } finally {
       setLoading(false);
     }

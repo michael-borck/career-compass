@@ -22,10 +22,7 @@
 import { generate } from './generate';
 import { search, loadSearchSettings, isSearchConfigured } from './search';
 import { buildInterviewSystemPrompt } from '@/lib/prompts/interview';
-import {
-  buildFeedbackPrompt,
-  parseFeedback,
-} from '@/lib/prompts/interview-feedback';
+import { buildFeedbackPrompt, parseFeedback } from '@/lib/prompts/interview-feedback';
 import { buildContextBlock } from '@/lib/context-block';
 import { nextPhase } from '@/lib/interview-phases';
 import type {
@@ -41,8 +38,7 @@ const ADVERT_TRIM_CHARS = 4000;
 const MESSAGE_TRIM_COUNT_TURN = 20;
 const MESSAGE_TRIM_COUNT_FEEDBACK = 30;
 
-const FEEDBACK_SYSTEM =
-  'You are an interview coach that ONLY responds in JSON.';
+const FEEDBACK_SYSTEM = 'You are an interview coach that ONLY responds in JSON.';
 
 // ---- runInterviewTurn ----
 
@@ -252,9 +248,7 @@ export async function generateInterviewFeedback(
     throw new Error('A target is required to generate feedback.');
   }
 
-  const userMessageCount = messages.filter(
-    (m) => m.role === 'user' && m.kind === 'message'
-  ).length;
+  const userMessageCount = messages.filter((m) => m.role === 'user' && m.kind === 'message').length;
   if (userMessageCount === 0) {
     throw new Error('No interview transcript to evaluate.');
   }

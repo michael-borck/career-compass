@@ -28,10 +28,7 @@ export function buildTalkBuddyScenario(
   target: string,
   difficulty: InterviewDifficulty
 ): TalkBuddyExport {
-  const totalTurns = PHASE_ORDER.reduce(
-    (n, p) => n + PHASE_CONFIG[p].turnsPerPhase,
-    0
-  );
+  const totalTurns = PHASE_ORDER.reduce((n, p) => n + PHASE_CONFIG[p].turnsPerPhase, 0);
   const estimatedMinutes = Math.max(8, Math.round(totalTurns * 1.8));
 
   const scenario = {

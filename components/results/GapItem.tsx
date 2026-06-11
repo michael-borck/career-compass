@@ -21,14 +21,14 @@ function renderWithCitations(text: string, sources: SourceRef[]) {
 }
 
 const SEVERITY_LABEL: Record<Gap['severity'], string> = {
-  'critical': 'CRITICAL',
-  'important': 'IMPORTANT',
+  critical: 'CRITICAL',
+  important: 'IMPORTANT',
   'nice-to-have': 'NICE-TO-HAVE',
 };
 
 const SEVERITY_COLOR: Record<Gap['severity'], string> = {
-  'critical': 'text-error',
-  'important': 'text-accent',
+  critical: 'text-error',
+  important: 'text-accent',
   'nice-to-have': 'text-ink-muted',
 };
 
@@ -43,7 +43,9 @@ export default function GapItem({ gap, expanded, onToggle, sources }: Props) {
         aria-expanded={expanded}
       >
         <Chevron className='w-4 h-4 text-ink-quiet flex-shrink-0' />
-        <span className={`text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] ${SEVERITY_COLOR[gap.severity]} flex-shrink-0`}>
+        <span
+          className={`text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] ${SEVERITY_COLOR[gap.severity]} flex-shrink-0`}
+        >
           [{SEVERITY_LABEL[gap.severity]}]
         </span>
         <span className='text-ink font-medium flex-1'>{gap.title}</span>

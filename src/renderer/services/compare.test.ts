@@ -112,12 +112,7 @@ describe('generateComparison — input handling', () => {
     await expect(
       generateComparison({
         mode: 'quick',
-        targets: [
-          { label: 'A' },
-          { label: 'B' },
-          { label: 'C' },
-          { label: 'D' },
-        ],
+        targets: [{ label: 'A' }, { label: 'B' }, { label: 'C' }, { label: 'D' }],
       })
     ).rejects.toThrow(/2 or 3 targets/i);
     expect(mockChat).not.toHaveBeenCalled();
@@ -265,9 +260,7 @@ describe('generateComparison — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(generateComparison(input2())).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(generateComparison(input2())).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

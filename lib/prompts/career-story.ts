@@ -40,9 +40,7 @@ function buildSessionContext(input: CareerStoryInput): string {
   const sections: string[] = [];
 
   if (input.careers) {
-    const careerSummaries = input.careers.map(
-      (c) => `- ${c.jobTitle}: ${c.jobDescription}`
-    );
+    const careerSummaries = input.careers.map((c) => `- ${c.jobTitle}: ${c.jobDescription}`);
     sections.push(`<careers>\n${careerSummaries.join('\n')}\n</careers>`);
   }
 
@@ -107,7 +105,9 @@ function buildSessionContext(input: CareerStoryInput): string {
   }
 
   if (input.coverLetter) {
-    sections.push(`<coverLetter>\nTarget: ${input.coverLetter.target}\n${input.coverLetter.body}\n</coverLetter>`);
+    sections.push(
+      `<coverLetter>\nTarget: ${input.coverLetter.target}\n${input.coverLetter.body}\n</coverLetter>`
+    );
   }
 
   if (input.resumeReview) {
@@ -162,9 +162,12 @@ Return 2-5 themes. Each theme should appear in at least two different sources wh
   // Profile section
   const profileParts: string[] = [];
   if (input.resume && input.resume.trim()) profileParts.push(`Resume:\n${input.resume.trim()}`);
-  if (input.freeText && input.freeText.trim()) profileParts.push(`About me:\n${input.freeText.trim()}`);
-  if (input.jobTitle && input.jobTitle.trim()) profileParts.push(`Current job title:\n${input.jobTitle.trim()}`);
-  if (input.jobAdvert && input.jobAdvert.trim()) profileParts.push(`Target job advert:\n${input.jobAdvert.trim()}`);
+  if (input.freeText && input.freeText.trim())
+    profileParts.push(`About me:\n${input.freeText.trim()}`);
+  if (input.jobTitle && input.jobTitle.trim())
+    profileParts.push(`Current job title:\n${input.jobTitle.trim()}`);
+  if (input.jobAdvert && input.jobAdvert.trim())
+    profileParts.push(`Target job advert:\n${input.jobAdvert.trim()}`);
   if (input.distilledProfile) {
     const p = input.distilledProfile;
     profileParts.push(
@@ -211,7 +214,8 @@ export function parseCareerStory(raw: string): CareerStory {
     const evidence = Array.isArray(t.evidence)
       ? t.evidence.filter((e: unknown): e is string => typeof e === 'string')
       : [];
-    const reflectionQuestion = typeof t.reflectionQuestion === 'string' ? t.reflectionQuestion.trim() : '';
+    const reflectionQuestion =
+      typeof t.reflectionQuestion === 'string' ? t.reflectionQuestion.trim() : '';
     return { name, evidence, reflectionQuestion };
   });
 

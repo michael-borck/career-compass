@@ -61,9 +61,7 @@ export default function LearningPathView({ path }: Props) {
         <div className='editorial-rule'>
           <span>Learning Path</span>
         </div>
-        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>
-          to {path.target}
-        </h1>
+        <h1 className='text-[var(--text-3xl)] font-semibold text-ink'>to {path.target}</h1>
       </div>
 
       <div>
@@ -117,7 +115,12 @@ export default function LearningPathView({ path }: Props) {
         </div>
         <div className='space-y-2'>
           {path.milestones.map((m, i) => (
-            <MilestoneItem key={i} milestone={m} expanded={!!expanded[i]} onToggle={() => toggle(i)} />
+            <MilestoneItem
+              key={i}
+              milestone={m}
+              expanded={!!expanded[i]}
+              onToggle={() => toggle(i)}
+            />
           ))}
         </div>
       </div>

@@ -9,11 +9,7 @@ type Props = {
   heading?: string;
 };
 
-export default function SourcesList({
-  sources,
-  compact = false,
-  heading = 'Sources',
-}: Props) {
+export default function SourcesList({ sources, compact = false, heading = 'Sources' }: Props) {
   if (sources.length === 0) return null;
 
   if (compact) {
@@ -44,19 +40,11 @@ export default function SourcesList({
 
   return (
     <div className='border-t border-border pt-6 mt-6'>
-      <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-3'>
-        {heading}
-      </h2>
+      <h2 className='text-[var(--text-lg)] font-semibold text-ink mb-3'>{heading}</h2>
       <ol className='space-y-2'>
         {sources.map((s, i) => (
-          <li
-            key={`${s.url}-${i}`}
-            id={`source-${i + 1}`}
-            className='flex items-start gap-3'
-          >
-            <span className='text-ink-quiet font-medium min-w-[1.5rem]'>
-              {i + 1}.
-            </span>
+          <li key={`${s.url}-${i}`} id={`source-${i + 1}`} className='flex items-start gap-3'>
+            <span className='text-ink-quiet font-medium min-w-[1.5rem]'>{i + 1}.</span>
             <div className='flex-1 min-w-0'>
               <a
                 href={s.url}
@@ -67,9 +55,7 @@ export default function SourcesList({
                 <span>{s.title}</span>
                 <ExternalLink className='w-3.5 h-3.5 flex-shrink-0' />
               </a>
-              <div className='text-[var(--text-xs)] text-ink-quiet mt-0.5'>
-                {s.domain}
-              </div>
+              <div className='text-[var(--text-xs)] text-ink-quiet mt-0.5'>{s.domain}</div>
             </div>
           </li>
         ))}

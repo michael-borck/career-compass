@@ -18,7 +18,9 @@ export function valuesCompassToExportDoc(c: ValuesCompass): ExportDoc {
   }
 
   blocks.push(
-    disclaimer('AI-inferred values. Treat as a starting point for reflection, not a personality test.')
+    disclaimer(
+      'AI-inferred values. Treat as a starting point for reflection, not a personality test.'
+    )
   );
 
   return { title: 'Values Compass', blocks };

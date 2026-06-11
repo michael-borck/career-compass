@@ -16,7 +16,8 @@ const VALID_PITCH_JSON = JSON.stringify({
   hook: 'I am a curious student of data.',
   body: 'I love finding patterns in messy datasets and turning them into stories anyone can follow.',
   close: 'I am looking for a data-analyst role where I can keep learning.',
-  fullScript: 'I am a curious student of data. I love finding patterns... I am looking for a data-analyst role.',
+  fullScript:
+    'I am a curious student of data. I love finding patterns... I am looking for a data-analyst role.',
 });
 
 function chatReply(content: string) {
@@ -158,8 +159,7 @@ describe('generatePitch — token-limit retry', () => {
   });
 
   it('surrenders with a helpful error after three token-limit failures', async () => {
-    mockChat
-      .mockRejectedValue(new Error('token limit exceeded'));
+    mockChat.mockRejectedValue(new Error('token limit exceeded'));
 
     await expect(
       generatePitch({
@@ -172,9 +172,7 @@ describe('generatePitch — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(
-      generatePitch({ jobTitle: 'Analyst' })
-    ).rejects.toThrow(/API key not configured/);
+    await expect(generatePitch({ jobTitle: 'Analyst' })).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 });

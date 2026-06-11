@@ -25,7 +25,15 @@ describe('buildOdysseyElaboratePrompt', () => {
 
   it('asks for the full elaboration JSON shape', () => {
     const out = buildOdysseyElaboratePrompt(base);
-    for (const key of ['headline', 'dayInTheLife', 'typicalWeek', 'toolsAndSkills', 'whoYouWorkWith', 'challenges', 'questionsToExplore']) {
+    for (const key of [
+      'headline',
+      'dayInTheLife',
+      'typicalWeek',
+      'toolsAndSkills',
+      'whoYouWorkWith',
+      'challenges',
+      'questionsToExplore',
+    ]) {
       expect(out).toContain(`"${key}"`);
     }
   });

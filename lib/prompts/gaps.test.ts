@@ -4,15 +4,11 @@ import type { SourceRef } from '@/lib/session-store';
 
 describe('buildGapAnalysisPrompt', () => {
   it('throws when no target is provided', () => {
-    expect(() =>
-      buildGapAnalysisPrompt({ resume: 'r' })
-    ).toThrow();
+    expect(() => buildGapAnalysisPrompt({ resume: 'r' })).toThrow();
   });
 
   it('throws when no profile is provided', () => {
-    expect(() =>
-      buildGapAnalysisPrompt({ jobTitle: 'Data Analyst' })
-    ).toThrow();
+    expect(() => buildGapAnalysisPrompt({ jobTitle: 'Data Analyst' })).toThrow();
   });
 
   it('builds with job title + resume', () => {
@@ -130,10 +126,16 @@ describe('parseGapAnalysis', () => {
     const raw = JSON.stringify({
       target: 'X',
       summary: 'y',
-      gaps: [{
-        title: 't', category: 'technical', severity: 'critical',
-        why: 'w', targetLevel: 'tl', evidenceIdeas: ['e'],
-      }],
+      gaps: [
+        {
+          title: 't',
+          category: 'technical',
+          severity: 'critical',
+          why: 'w',
+          targetLevel: 'tl',
+          evidenceIdeas: ['e'],
+        },
+      ],
       realisticTimeline: '3 months',
     });
     const g = parseGapAnalysis(raw);
@@ -142,11 +144,19 @@ describe('parseGapAnalysis', () => {
 
   it('allows nullable currentLevel', () => {
     const raw = JSON.stringify({
-      target: 'X', summary: 'y', matches: [],
-      gaps: [{
-        title: 't', category: 'technical', severity: 'critical',
-        why: 'w', targetLevel: 'tl', evidenceIdeas: ['e'],
-      }],
+      target: 'X',
+      summary: 'y',
+      matches: [],
+      gaps: [
+        {
+          title: 't',
+          category: 'technical',
+          severity: 'critical',
+          why: 'w',
+          targetLevel: 'tl',
+          evidenceIdeas: ['e'],
+        },
+      ],
       realisticTimeline: '3 months',
     });
     const g = parseGapAnalysis(raw);
@@ -155,9 +165,18 @@ describe('parseGapAnalysis', () => {
 
   it('throws when summary is missing', () => {
     const raw = JSON.stringify({
-      target: 'X', matches: [],
-      gaps: [{ title: 't', category: 'technical', severity: 'critical',
-        why: 'w', targetLevel: 'tl', evidenceIdeas: ['e'] }],
+      target: 'X',
+      matches: [],
+      gaps: [
+        {
+          title: 't',
+          category: 'technical',
+          severity: 'critical',
+          why: 'w',
+          targetLevel: 'tl',
+          evidenceIdeas: ['e'],
+        },
+      ],
       realisticTimeline: '3 months',
     });
     expect(() => parseGapAnalysis(raw)).toThrow();
@@ -165,7 +184,9 @@ describe('parseGapAnalysis', () => {
 
   it('throws when gaps array is empty', () => {
     const raw = JSON.stringify({
-      target: 'X', summary: 'y', matches: [],
+      target: 'X',
+      summary: 'y',
+      matches: [],
       gaps: [],
       realisticTimeline: '3 months',
     });

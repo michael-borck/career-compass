@@ -94,9 +94,7 @@ export function buildCareersPrompt(input: CareersInput): string {
   }
 
   if (distilledProfile) {
-    sections.push(
-      `<distilledProfile>\n${formatProfile(distilledProfile)}\n</distilledProfile>`
-    );
+    sections.push(`<distilledProfile>\n${formatProfile(distilledProfile)}\n</distilledProfile>`);
   }
 
   sections.push('ONLY respond with JSON, nothing else.');

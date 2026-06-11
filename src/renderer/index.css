@@ -25,22 +25,22 @@
 @layer base {
   :root {
     /* Studio Calm — Career Compass (warm ochre) */
-    --paper:           44 24% 93%;    /* #F4F1EA */
-    --paper-warm:      43 38% 96%;    /* #FBF8F1 */
-    --ink:             48 10% 13%;    /* #252420 */
-    --ink-soft:        44 10% 21%;    /* #3B3830 */
-    --ink-muted:       40 10% 33%;    /* #5C564C */
-    --ink-quiet:       36 8% 50%;     /* #8A8377 */
+    --paper: 44 24% 93%; /* #F4F1EA */
+    --paper-warm: 43 38% 96%; /* #FBF8F1 */
+    --ink: 48 10% 13%; /* #252420 */
+    --ink-soft: 44 10% 21%; /* #3B3830 */
+    --ink-muted: 40 10% 33%; /* #5C564C */
+    --ink-quiet: 36 8% 50%; /* #8A8377 */
 
-    --hairline:        44 10% 13% / 0.10;
-    --hairline-strong: 44 10% 13% / 0.20;
-    --hairline-contrast: 44 10% 13% / 0.40;
+    --hairline: 44 10% 13% / 0.1;
+    --hairline-strong: 44 10% 13% / 0.2;
+    --hairline-contrast: 44 10% 13% / 0.4;
 
-    --accent:          24 44% 47%;    /* #A86B47 warm ochre */
-    --accent-deep:     24 42% 35%;    /* #855030 */
-    --accent-soft:     24 44% 47% / 0.10;
+    --accent: 24 44% 47%; /* #A86B47 warm ochre */
+    --accent-deep: 24 42% 35%; /* #855030 */
+    --accent-soft: 24 44% 47% / 0.1;
 
-    --error:           12 58% 42%;    /* #A8442F muted rust */
+    --error: 12 58% 42%; /* #A8442F muted rust */
 
     /* Mapped to shadcn semantic tokens */
     --background: var(--paper);
@@ -77,49 +77,56 @@
     --font-sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    --text-xs:      0.72rem;
-    --text-sm:      0.82rem;
-    --text-base:    1rem;
-    --text-lg:      1.15rem;
-    --text-xl:      1.35rem;
-    --text-2xl:     1.6rem;
-    --text-3xl:     2rem;
-    --text-4xl:     2.5rem;
+    --text-xs: 0.72rem;
+    --text-sm: 0.82rem;
+    --text-base: 1rem;
+    --text-lg: 1.15rem;
+    --text-xl: 1.35rem;
+    --text-2xl: 1.6rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.5rem;
     --text-display: clamp(2.5rem, 5vw, 4rem);
 
     /* Studio Calm spacing */
-    --space-1: 4px;  --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
-    --space-5: 20px; --space-6: 24px;  --space-8: 32px;  --space-10: 40px;
-    --space-12: 48px; --space-16: 64px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
 
     /* Studio Calm motion */
-    --ease-out:       cubic-bezier(0.2, 0, 0, 1);
-    --ease-out-soft:  cubic-bezier(0.25, 0.1, 0.25, 1);
-    --duration-fast:  150ms;
+    --ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ease-out-soft: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --duration-fast: 150ms;
     --duration-normal: 250ms;
-    --duration-slow:  400ms;
+    --duration-slow: 400ms;
 
     /* Paper grain */
     --grain-opacity: 0.2;
   }
 
   .dark {
-    --paper:           48 8% 10%;     /* #1B1A17 warm near-black */
-    --paper-warm:      46 9% 13%;     /* #24231F */
-    --ink:             40 20% 92%;    /* #F1EEE6 */
-    --ink-soft:        38 12% 82%;    /* #DAD6CC */
-    --ink-muted:       36 6% 59%;     /* #9E9A90 */
-    --ink-quiet:       34 5% 41%;     /* #6F6C63 */
+    --paper: 48 8% 10%; /* #1B1A17 warm near-black */
+    --paper-warm: 46 9% 13%; /* #24231F */
+    --ink: 40 20% 92%; /* #F1EEE6 */
+    --ink-soft: 38 12% 82%; /* #DAD6CC */
+    --ink-muted: 36 6% 59%; /* #9E9A90 */
+    --ink-quiet: 34 5% 41%; /* #6F6C63 */
 
-    --hairline:        40 20% 92% / 0.10;
-    --hairline-strong: 40 20% 92% / 0.20;
-    --hairline-contrast: 40 20% 92% / 0.40;
+    --hairline: 40 20% 92% / 0.1;
+    --hairline-strong: 40 20% 92% / 0.2;
+    --hairline-contrast: 40 20% 92% / 0.4;
 
-    --accent:          24 50% 60%;    /* #D08963 */
-    --accent-deep:     24 56% 69%;    /* #E0A782 */
-    --accent-soft:     24 50% 60% / 0.12;
+    --accent: 24 50% 60%; /* #D08963 */
+    --accent-deep: 24 56% 69%; /* #E0A782 */
+    --accent-soft: 24 50% 60% / 0.12;
 
-    --error:           12 57% 58%;    /* #D66A54 brighter rust */
+    --error: 12 57% 58%; /* #D66A54 brighter rust */
 
     --background: var(--paper);
     --foreground: var(--ink);

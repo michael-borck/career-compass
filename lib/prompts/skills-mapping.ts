@@ -1,4 +1,9 @@
-import type { StudentProfile, SkillsMapping, SkillFrameworkMapping, FrameworkLevel } from '@/lib/session-store';
+import type {
+  StudentProfile,
+  SkillsMapping,
+  SkillFrameworkMapping,
+  FrameworkLevel,
+} from '@/lib/session-store';
 import { parseModelJson } from './model-json';
 
 export type SkillsMappingInput = {
@@ -21,13 +26,12 @@ function formatProfile(p: StudentProfile): string {
 export function buildSkillsMappingPrompt(input: SkillsMappingInput): string {
   const { resume, aboutYou, distilledProfile, jobTitle } = input;
 
-  const hasProfile =
-    (resume && resume.trim()) ||
-    (aboutYou && aboutYou.trim()) ||
-    distilledProfile;
+  const hasProfile = (resume && resume.trim()) || (aboutYou && aboutYou.trim()) || distilledProfile;
 
   if (!hasProfile) {
-    throw new Error('buildSkillsMappingPrompt: a profile (resume, aboutYou, or distilledProfile) is required');
+    throw new Error(
+      'buildSkillsMappingPrompt: a profile (resume, aboutYou, or distilledProfile) is required'
+    );
   }
 
   const profileParts: string[] = [];
@@ -42,9 +46,10 @@ export function buildSkillsMappingPrompt(input: SkillsMappingInput): string {
   }
   const profileSection = `<profile>\n${profileParts.join('\n\n')}\n</profile>`;
 
-  const contextLine = jobTitle && jobTitle.trim()
-    ? `The student is interested in: ${jobTitle.trim()}. Use this to weight which skills are most relevant.`
-    : 'No specific target role — map all identifiable skills.';
+  const contextLine =
+    jobTitle && jobTitle.trim()
+      ? `The student is interested in: ${jobTitle.trim()}. Use this to weight which skills are most relevant.`
+      : 'No specific target role — map all identifiable skills.';
 
   const sections: string[] = [
     `Read the student's profile below and identify their skills. Map each skill to recognised professional frameworks. Be practical: focus on skills that would actually go on a resume or come up in an interview. If a framework doesn't apply to a skill (e.g. SFIA doesn't cover nursing skills), set that framework to null.

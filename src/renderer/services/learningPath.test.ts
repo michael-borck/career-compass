@@ -20,15 +20,12 @@ import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 
 const mockChat = chat as unknown as ReturnType<typeof vi.fn>;
 const mockSearch = search as unknown as ReturnType<typeof vi.fn>;
-const mockLoadSearchSettings =
-  loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
-const mockIsSearchConfigured =
-  isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
+const mockLoadSearchSettings = loadSearchSettings as unknown as ReturnType<typeof vi.fn>;
+const mockIsSearchConfigured = isSearchConfigured as unknown as ReturnType<typeof vi.fn>;
 
 const VALID_PATH_JSON = JSON.stringify({
   target: 'Data Analyst',
-  summary:
-    'A 12-week path that builds SQL fluency, a portfolio piece, and interview readiness.',
+  summary: 'A 12-week path that builds SQL fluency, a portfolio piece, and interview readiness.',
   prerequisites: ['Basic Python', 'Comfort with spreadsheets'],
   milestones: [
     {
@@ -44,8 +41,7 @@ const VALID_PATH_JSON = JSON.stringify({
       outcome: 'Published portfolio piece on GitHub',
     },
   ],
-  portfolioProject:
-    'End-to-end analysis of a public dataset, presented in a short report.',
+  portfolioProject: 'End-to-end analysis of a public dataset, presented in a short report.',
   totalDuration: '12 weeks part-time',
   caveats: [
     'AI cannot recommend specific course URLs — verify before buying.',
@@ -128,16 +124,16 @@ beforeEach(() => {
 
 describe('generateLearningPath — validation', () => {
   it('throws when no target is provided', async () => {
-    await expect(
-      generateLearningPath({ aboutYou: 'CS student' })
-    ).rejects.toThrow(/target is required/i);
+    await expect(generateLearningPath({ aboutYou: 'CS student' })).rejects.toThrow(
+      /target is required/i
+    );
     expect(mockChat).not.toHaveBeenCalled();
   });
 
   it('treats whitespace-only target as missing', async () => {
-    await expect(
-      generateLearningPath({ jobTitle: '   ', aboutYou: 'CS student' })
-    ).rejects.toThrow(/target is required/i);
+    await expect(generateLearningPath({ jobTitle: '   ', aboutYou: 'CS student' })).rejects.toThrow(
+      /target is required/i
+    );
   });
 
   it('accepts a target with no profile (profile is optional for learning path)', async () => {
@@ -317,9 +313,7 @@ describe('generateLearningPath — token-limit retry', () => {
 
   it('rethrows non-token-limit errors immediately without retrying', async () => {
     mockChat.mockRejectedValueOnce(new Error('API key not configured'));
-    await expect(generateLearningPath(VALID_INPUT)).rejects.toThrow(
-      /API key not configured/
-    );
+    await expect(generateLearningPath(VALID_INPUT)).rejects.toThrow(/API key not configured/);
     expect(mockChat).toHaveBeenCalledTimes(1);
   });
 

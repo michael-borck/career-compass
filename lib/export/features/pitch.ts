@@ -2,7 +2,11 @@
 import type { ElevatorPitch } from '@/lib/session-store';
 import { type ExportDoc, type Block, b, h2, p, disclaimer } from '../doc';
 
-const paras = (s: string): Block[] => s.split('\n\n').filter(Boolean).map((t) => p(t));
+const paras = (s: string): Block[] =>
+  s
+    .split('\n\n')
+    .filter(Boolean)
+    .map((t) => p(t));
 
 export function pitchToExportDoc(pitch: ElevatorPitch): ExportDoc {
   return {

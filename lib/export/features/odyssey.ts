@@ -10,7 +10,11 @@ const LIFE_LABELS: Record<OdysseyLifeType, { index: number; fallback: string }> 
 };
 
 const DASHBOARD_ROWS: { field: keyof OdysseyDashboard; label: string; question: string }[] = [
-  { field: 'resources', label: 'Resources', question: "do I have what I'd need to make this happen?" },
+  {
+    field: 'resources',
+    label: 'Resources',
+    question: "do I have what I'd need to make this happen?",
+  },
   { field: 'likability', label: 'Likability', question: 'do I actually like the sound of this?' },
   { field: 'confidence', label: 'Confidence', question: 'am I confident I could make it work?' },
   { field: 'coherence', label: 'Coherence', question: "does it fit who I'm becoming?" },

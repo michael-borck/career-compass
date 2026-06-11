@@ -109,8 +109,9 @@ export default function Industry() {
                 What&apos;s it like to work in this industry?
               </h2>
               <p className='text-ink-muted text-center max-w-lg mx-auto mb-6'>
-                Pick an industry and get an honest overview — key roles, how to break in, what&apos;s growing, and what to watch out for.
-                Add a resume to personalise the entry points.
+                Pick an industry and get an honest overview — key roles, how to break in,
+                what&apos;s growing, and what to watch out for. Add a resume to personalise the
+                entry points.
               </p>
 
               <div className='space-y-4'>
@@ -127,7 +128,8 @@ export default function Industry() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    Resume <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    Resume{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <LocalFileUpload
                     onFileSelect={handleResumeSelect}
@@ -141,7 +143,8 @@ export default function Industry() {
                 </div>
                 <div>
                   <label className='block text-[var(--text-xs)] font-medium uppercase tracking-[0.18em] text-ink-quiet mb-1'>
-                    About you <span className='normal-case tracking-normal font-normal'>(optional)</span>
+                    About you{' '}
+                    <span className='normal-case tracking-normal font-normal'>(optional)</span>
                   </label>
                   <Textarea
                     value={store.freeText}
@@ -155,9 +158,13 @@ export default function Industry() {
                 <div className='flex justify-center pt-2'>
                   <Button onClick={runGeneration} disabled={!industry.trim() || loading}>
                     {loading ? (
-                      <><LoadingDots color='white' /> Exploring…</>
+                      <>
+                        <LoadingDots color='white' /> Exploring…
+                      </>
                     ) : (
-                      <><Factory className='w-4 h-4 mr-2' /> Explore this industry</>
+                      <>
+                        <Factory className='w-4 h-4 mr-2' /> Explore this industry
+                      </>
                     )}
                   </Button>
                 </div>
