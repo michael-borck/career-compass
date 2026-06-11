@@ -15,6 +15,7 @@ import ValuesResultView from '@/components/values/ValuesResultView';
 import { generateValuesCompass } from '../services/values';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function Values() {
   const navigate = useNavigate();
@@ -173,7 +174,25 @@ export default function Values() {
             </div>
           </div>
         )}
-        {!loading && compass && <ValuesResultView compass={compass} />}
+        {!loading && compass && (
+          <>
+            <ValuesResultView compass={compass} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Imagine three lives',
+                  description: 'Explore futures aligned with your values.',
+                  path: '/odyssey',
+                },
+                {
+                  title: 'Career story',
+                  description: 'Weave your values into one narrative.',
+                  path: '/career-story',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

@@ -47,6 +47,7 @@ import {
   generateInterviewFeedback,
 } from '../services/interview';
 import { isConfigured as isLLMConfigured } from '../services/llm';
+import NextSteps from '../components/NextSteps';
 
 const DIFFICULTY_OPTIONS: {
   value: InterviewDifficulty;
@@ -98,7 +99,27 @@ export default function Interview() {
     <div className='h-full overflow-y-auto'>
       {showSetupCard && <SetupCard initialTarget={deriveInitialTarget(store)} />}
       {showChat && <Chat />}
-      {showFeedback && feedback && <FeedbackView feedback={feedback} />}
+      {showFeedback && feedback && (
+        <>
+          <FeedbackView feedback={feedback} />
+          <div className='container mx-auto px-6 pb-10 max-w-4xl'>
+            <NextSteps
+              steps={[
+                {
+                  title: 'Imagine three lives',
+                  description: 'Step back and reflect on where this is heading.',
+                  path: '/odyssey',
+                },
+                {
+                  title: 'Resume review',
+                  description: 'Apply the feedback to your materials.',
+                  path: '/resume-review',
+                },
+              ]}
+            />
+          </div>
+        </>
+      )}
       <Toaster />
     </div>
   );

@@ -15,6 +15,7 @@ import CareerStoryResultView from '@/components/career-story/CareerStoryResultVi
 import { generateCareerStory } from '../services/careerStory';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function CareerStory() {
   const navigate = useNavigate();
@@ -220,7 +221,20 @@ export default function CareerStory() {
             </div>
           </div>
         )}
-        {!loading && careerStory && <CareerStoryResultView story={careerStory} />}
+        {!loading && careerStory && (
+          <>
+            <CareerStoryResultView story={careerStory} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Elevator pitch',
+                  description: 'Turn your story into a 30–60 second pitch.',
+                  path: '/pitch',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

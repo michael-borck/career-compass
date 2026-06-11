@@ -17,6 +17,7 @@ import { boardReviewToDocx } from '@/components/board/board-review-docx';
 import { generateBoardReview } from '../services/board';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function Board() {
   const navigate = useNavigate();
@@ -249,6 +250,15 @@ export default function Board() {
 
             <BoardVoices voices={boardReview.voices} />
             <BoardSynthesisPanel synthesis={boardReview.synthesis} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Career story',
+                  description: 'Pull the advisors’ insights into one narrative.',
+                  path: '/career-story',
+                },
+              ]}
+            />
           </div>
         )}
       </div>

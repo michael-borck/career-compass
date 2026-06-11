@@ -15,6 +15,7 @@ import SkillsMappingResultView from '@/components/skills-mapping/SkillsMappingRe
 import { generateSkillsMapping } from '../services/skillsMapping';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function SkillsMapping() {
   const navigate = useNavigate();
@@ -169,7 +170,25 @@ export default function SkillsMapping() {
             </div>
           </div>
         )}
-        {!loading && mapping && <SkillsMappingResultView mapping={mapping} />}
+        {!loading && mapping && (
+          <>
+            <SkillsMappingResultView mapping={mapping} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Gap analysis',
+                  description: 'Your mapped skills enrich the comparison.',
+                  path: '/gap-analysis',
+                },
+                {
+                  title: 'Learning path',
+                  description: 'Your mapping feeds a sharper plan.',
+                  path: '/learning-path',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

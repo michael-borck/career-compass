@@ -16,6 +16,7 @@ import IndustryResultView from '@/components/industry/IndustryResultView';
 import { generateIndustryExploration } from '../services/industry';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function Industry() {
   const navigate = useNavigate();
@@ -164,7 +165,20 @@ export default function Industry() {
             </div>
           </div>
         )}
-        {!loading && exploration && <IndustryResultView exploration={exploration} />}
+        {!loading && exploration && (
+          <>
+            <IndustryResultView exploration={exploration} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Find my careers',
+                  description: 'Generate personalised paths in this field.',
+                  path: '/careers',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>

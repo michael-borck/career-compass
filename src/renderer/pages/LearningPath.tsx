@@ -15,6 +15,7 @@ import LearningPathView from '@/components/results/LearningPathView';
 import { generateLearningPath } from '../services/learningPath';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
+import NextSteps from '../components/NextSteps';
 
 export default function LearningPath() {
   const navigate = useNavigate();
@@ -202,7 +203,20 @@ export default function LearningPath() {
             </div>
           </div>
         )}
-        {!loading && path && <LearningPathView path={path} />}
+        {!loading && path && (
+          <>
+            <LearningPathView path={path} />
+            <NextSteps
+              steps={[
+                {
+                  title: 'Practice interview',
+                  description: 'Rehearse the role you are working toward.',
+                  path: '/interview',
+                },
+              ]}
+            />
+          </>
+        )}
       </div>
       <Toaster />
     </div>
