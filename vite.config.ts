@@ -3,15 +3,15 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // Defense-in-depth against XSS from rendered LLM output. Everything the
-// packaged app needs is bundled ('self' over file://) except the Google
-// Fonts stylesheet in index.html. Injected at build time only — the dev
-// server needs inline scripts (react-refresh preamble) and the HMR
-// websocket, which a strict CSP would break.
+// packaged app needs is bundled ('self' over file://) — fonts included,
+// via @fontsource. Injected at build time only — the dev server needs
+// inline scripts (react-refresh preamble) and the HMR websocket, which a
+// strict CSP would break.
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",

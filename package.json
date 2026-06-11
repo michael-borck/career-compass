@@ -26,6 +26,7 @@
     "release": "npm run typecheck && npm run lint && npm test && npm version patch && git push --follow-tags"
   },
   "dependencies": {
+    "@fontsource/figtree": "^5.2.10",
     "@mozilla/readability": "^0.6.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
