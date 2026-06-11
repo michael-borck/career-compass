@@ -23,6 +23,9 @@ export default function SessionBanner() {
     resumeReview,
     portfolio,
     careerStory,
+    industryExploration,
+    skillsMapping,
+    valuesCompass,
   } = store;
 
   const hasResume = !!resumeText;
@@ -48,6 +51,9 @@ export default function SessionBanner() {
   const hasResumeReview = !!resumeReview;
   const hasPortfolio = !!portfolio;
   const hasCareerStory = !!careerStory;
+  const hasIndustry = !!industryExploration;
+  const hasSkillsMapping = !!skillsMapping;
+  const hasValues = !!valuesCompass;
   const hasAnyOutput =
     hasCareers ||
     hasChat ||
@@ -65,6 +71,52 @@ export default function SessionBanner() {
     hasCareerStory;
 
   if (!hasAnyInput && !hasAnyOutput) return null;
+
+  // Journey tracker — mirrors the pillar/activity structure of ActionCards.
+  // "Done" means the activity has a result in this session; the suggested
+  // next step is the first incomplete activity in pillar order.
+  const pillars = [
+    {
+      label: 'Discover',
+      steps: [
+        { title: 'Find my careers', path: '/careers', done: hasCareers },
+        { title: 'Explore an industry', path: '/industry', done: hasIndustry },
+        { title: 'Compare careers', path: '/compare', done: hasComparison },
+      ],
+    },
+    {
+      label: 'Assess',
+      steps: [
+        { title: 'Gap analysis', path: '/gap-analysis', done: hasGap },
+        { title: 'Learning path', path: '/learning-path', done: hasPath },
+        { title: 'Map my skills', path: '/skills-mapping', done: hasSkillsMapping },
+        { title: 'Practice interview', path: '/interview', done: hasInterviewFeedback },
+      ],
+    },
+    {
+      label: 'Reflect',
+      steps: [
+        {
+          title: 'Imagine three lives',
+          path: '/odyssey',
+          done: Object.values(odysseyLives).some((life) => !!life.headline),
+        },
+        { title: 'Board of advisors', path: '/board', done: hasBoard },
+        { title: 'Values compass', path: '/values', done: hasValues },
+        { title: 'Career story', path: '/career-story', done: hasCareerStory },
+      ],
+    },
+    {
+      label: 'Materials',
+      steps: [
+        { title: 'Elevator pitch', path: '/pitch', done: hasPitch },
+        { title: 'Cover letter', path: '/cover-letter', done: hasCoverLetter },
+        { title: 'Resume review', path: '/resume-review', done: hasResumeReview },
+        { title: 'Portfolio page', path: '/portfolio', done: hasPortfolio },
+      ],
+    },
+  ];
+  const nextStep = pillars.flatMap((p) => p.steps).find((s) => !s.done) ?? null;
 
   function handleStartOver() {
     if (!confirm('Start over? This clears your results but keeps your uploaded material.')) return;
@@ -225,6 +277,28 @@ export default function SessionBanner() {
           Start over
         </button>
       )}
+
+      <div className='w-full flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--text-xs)] pt-2 border-t border-accent/20'>
+        <span className='text-ink-quiet'>Journey:</span>
+        {pillars.map((pillar) => {
+          const done = pillar.steps.filter((s) => s.done).length;
+          const complete = done === pillar.steps.length;
+          return (
+            <span key={pillar.label} className={complete ? 'text-accent' : 'text-ink'}>
+              {pillar.label} {done}/{pillar.steps.length}
+            </span>
+          );
+        })}
+        {nextStep && (
+          <>
+            <span className='text-ink-quiet'>·</span>
+            <span className='text-ink-quiet'>Next:</span>
+            <Link to={nextStep.path} className='underline hover:text-accent'>
+              {nextStep.title} →
+            </Link>
+          </>
+        )}
+      </div>
     </div>
   );
 }

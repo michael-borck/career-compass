@@ -20,7 +20,7 @@ import Odyssey from './pages/Odyssey';
 import Interview from './pages/Interview';
 import Chat from './pages/Chat';
 import Careers from './pages/Careers';
-import NotMigrated from './pages/NotMigrated';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
@@ -47,7 +47,7 @@ export default function App() {
           <Route path='/interview' element={<Interview />} />
           <Route path='/chat' element={<Chat />} />
           <Route path='/careers' element={<Careers />} />
-          <Route path='*' element={<NotMigrated />} />
+          <Route path='*' element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
