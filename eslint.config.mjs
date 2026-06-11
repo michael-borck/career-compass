@@ -28,13 +28,6 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       // JSON parsing and the lenient coercers use `any` by design.
       '@typescript-eslint/no-explicit-any': 'off',
-      // React-compiler-powered checks flag real issues (setState-in-effect
-      // in 4 components, ref access in useGeneration) but fixing them is
-      // behaviour-touching work scheduled with the UI-test phase — keep
-      // them visible as warnings until then.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/immutability': 'warn',
     },
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },

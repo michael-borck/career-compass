@@ -39,9 +39,13 @@ export function useGeneration<T>(opts: UseGenerationOptions<T>): UseGenerationRe
   const autoRanRef = useRef(false);
 
   // Latest opts in a ref so run() and the mount effect always see current
-  // closures without the hook re-subscribing on every render.
+  // closures without the hook re-subscribing on every render. Written in an
+  // effect (not during render); declared before the auto-run effect so it is
+  // populated first on mount, and always committed before any event fires.
   const optsRef = useRef(opts);
-  optsRef.current = opts;
+  useEffect(() => {
+    optsRef.current = opts;
+  });
 
   async function run() {
     const o = optsRef.current;

@@ -22,25 +22,35 @@ export default function Compare() {
   const { comparison } = store;
   const [loading, setLoading] = useState(false);
 
+  // The landing-page prefill is read during the initial render (a pure
+  // getState read) and consumed (cleared) by the mount effect below. The
+  // quick-compare seed lands straight in the state initializers; the
+  // rich-mode auto-run stays in the effect because it does real work.
+  const [initialPrefill] = useState(() => useSessionStore.getState().comparePrefill);
+  const isRichPrefill = !!(
+    initialPrefill?.richCareerTitles && initialPrefill.richCareerTitles.length >= 2
+  );
+  const seedTarget = (!isRichPrefill && initialPrefill?.seedTarget) || '';
+
   // Quick-compare inputs (inline form)
-  const [target1, setTarget1] = useState('');
+  const [target1, setTarget1] = useState(seedTarget);
   const [target2, setTarget2] = useState('');
   const [target3, setTarget3] = useState('');
-  const [prefillLabel, setPrefillLabel] = useState(false);
+  const [prefillLabel, setPrefillLabel] = useState(!!seedTarget);
   const consumedRef = useRef(false);
 
   useEffect(() => {
     if (consumedRef.current) return;
     consumedRef.current = true;
 
-    const prefill = store.consumeComparePrefill();
+    const prefill = useSessionStore.getState().consumeComparePrefill();
     if (!prefill) return;
 
     // Rich-mode auto-run path: requires Find-my-careers results in session
     // (richCareerTitles). The /careers page isn't ported yet, but preserve
     // the flow so it works once it is.
     if (prefill.richCareerTitles && prefill.richCareerTitles.length >= 2) {
-      const careers = store.careers ?? [];
+      const careers = useSessionStore.getState().careers ?? [];
       const resolved = prefill.richCareerTitles
         .map((title) => careers.find((c) => c.jobTitle === title))
         .filter((c): c is NonNullable<typeof c> => !!c);
@@ -87,14 +97,8 @@ export default function Compare() {
           setLoading(false);
         }
       })();
-      return;
     }
-
-    // Quick-compare seed path: prefill the first target field.
-    if (prefill.seedTarget) {
-      setTarget1(prefill.seedTarget);
-      setPrefillLabel(true);
-    }
+    // Seed path: already applied via the state initializers above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -13,6 +13,18 @@ import toast, { Toaster } from 'react-hot-toast';
 
 type LLMProvider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
 
+const ENV_VAR_BY_PROVIDER: Record<LLMProvider, string> = {
+  openai: 'OPENAI_API_KEY',
+  claude: 'ANTHROPIC_API_KEY',
+  groq: 'GROQ_API_KEY',
+  gemini: 'GOOGLE_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
+  ollama: '',
+  custom: '',
+};
+
+const getEnvVarName = (provider: LLMProvider): string => ENV_VAR_BY_PROVIDER[provider];
+
 interface AvailableModel {
   id: string;
   name: string;
@@ -129,51 +141,37 @@ export default function Settings() {
   const [testingSearch, setTestingSearch] = useState(false);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    const loadSettings = async () => {
+      try {
+        const savedSettings = await settingsStore.get();
+        let apiKey = await secureStorage.getApiKey(savedSettings.provider);
 
-  const loadSettings = async () => {
-    try {
-      const savedSettings = await settingsStore.get();
-      let apiKey = await secureStorage.getApiKey(savedSettings.provider);
-
-      if (!apiKey) {
-        const envVarName = getEnvVarName(savedSettings.provider);
-        if (envVarName && typeof window !== 'undefined' && window.electronAPI) {
-          apiKey = (await window.electronAPI.getEnvVar(envVarName)) || '';
+        if (!apiKey) {
+          const envVarName = getEnvVarName(savedSettings.provider);
+          if (envVarName && typeof window !== 'undefined' && window.electronAPI) {
+            apiKey = (await window.electronAPI.getEnvVar(envVarName)) || '';
+          }
         }
+
+        setSettings({
+          ...savedSettings,
+          apiKey: apiKey || '',
+        });
+
+        const eng = savedSettings.searchEngine ?? 'duckduckgo';
+        setSearchEngine(eng);
+        setSearchUrl(savedSettings.searchUrl ?? '');
+        if (eng === 'brave' || eng === 'bing' || eng === 'serper') {
+          const key = await secureStorage.getSearchApiKey(eng);
+          setSearchApiKey(key ?? '');
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+        toast.error('Failed to load settings');
       }
-
-      setSettings({
-        ...savedSettings,
-        apiKey: apiKey || '',
-      });
-
-      const eng = savedSettings.searchEngine ?? 'duckduckgo';
-      setSearchEngine(eng);
-      setSearchUrl(savedSettings.searchUrl ?? '');
-      if (eng === 'brave' || eng === 'bing' || eng === 'serper') {
-        const key = await secureStorage.getSearchApiKey(eng);
-        setSearchApiKey(key ?? '');
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-      toast.error('Failed to load settings');
-    }
-  };
-
-  const getEnvVarName = (provider: LLMProvider): string => {
-    const envVarMap: Record<LLMProvider, string> = {
-      openai: 'OPENAI_API_KEY',
-      claude: 'ANTHROPIC_API_KEY',
-      groq: 'GROQ_API_KEY',
-      gemini: 'GOOGLE_API_KEY',
-      openrouter: 'OPENROUTER_API_KEY',
-      ollama: '',
-      custom: '',
     };
-    return envVarMap[provider];
-  };
+    void loadSettings();
+  }, []);
 
   const getApiKeyPlaceholder = (provider: LLMProvider): string => {
     if (provider === 'ollama') return 'Not needed for local use';

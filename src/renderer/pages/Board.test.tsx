@@ -29,7 +29,9 @@ beforeEach(() => {
 describe('Board prefill', () => {
   it('starts with empty inputs when there is no prefill', () => {
     renderBoard();
-    expect((screen.getByPlaceholderText(FRAMING_PLACEHOLDER) as HTMLTextAreaElement).value).toBe('');
+    expect((screen.getByPlaceholderText(FRAMING_PLACEHOLDER) as HTMLTextAreaElement).value).toBe(
+      ''
+    );
     expect((screen.getByPlaceholderText(FOCUS_PLACEHOLDER) as HTMLInputElement).value).toBe('');
   });
 

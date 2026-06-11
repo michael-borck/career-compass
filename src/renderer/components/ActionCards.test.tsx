@@ -21,9 +21,7 @@ describe('ActionCards layout', () => {
       expect(screen.getByText(pillar)).toBeTruthy();
     }
     // Activity cards are the buttons that contain an h3 title.
-    const cards = screen
-      .getAllByRole('button')
-      .filter((b) => b.querySelector('h3'));
+    const cards = screen.getAllByRole('button').filter((b) => b.querySelector('h3'));
     expect(cards).toHaveLength(15);
   });
 
@@ -31,7 +29,12 @@ describe('ActionCards layout', () => {
     render(<ActionCards />);
     expect(screen.getAllByText('Capstone')).toHaveLength(4);
     // The capstones are the last card of each column.
-    for (const title of ['Compare careers', 'Practice interview', 'Career story', 'Portfolio page']) {
+    for (const title of [
+      'Compare careers',
+      'Practice interview',
+      'Career story',
+      'Portfolio page',
+    ]) {
       const card = screen.getByText(title).closest('button')!;
       expect(card.textContent).toContain('Capstone');
     }
@@ -52,9 +55,7 @@ describe('ActionCards behaviour', () => {
   });
 
   it('"Find my careers" clears existing careers before navigating', () => {
-    useSessionStore.getState().setCareers([
-      { jobTitle: 'Existing' } as never,
-    ]);
+    useSessionStore.getState().setCareers([{ jobTitle: 'Existing' } as never]);
     render(<ActionCards />);
     fireEvent.click(screen.getByText('Find my careers'));
     expect(useSessionStore.getState().careers).toBeNull();

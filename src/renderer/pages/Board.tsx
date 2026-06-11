@@ -24,17 +24,14 @@ export default function Board() {
   const store = useSessionStore();
   const { boardReview } = store;
 
-  const [framing, setFraming] = useState('');
-  const [focusRole, setFocusRole] = useState('');
+  // Prefill from "Run again" (legacy parity): read during the initial render
+  // (a pure getState read), then cleared by the mount effect below.
+  const [initialPrefill] = useState(() => useSessionStore.getState().boardPrefill);
+  const [framing, setFraming] = useState(initialPrefill?.framing ?? '');
+  const [focusRole, setFocusRole] = useState(initialPrefill?.focusRole ?? '');
 
-  // Consume any prefill from "Run again" (legacy parity).
   useEffect(() => {
-    const prefill = store.consumeBoardPrefill();
-    if (prefill) {
-      if (prefill.framing) setFraming(prefill.framing);
-      if (prefill.focusRole) setFocusRole(prefill.focusRole);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useSessionStore.getState().consumeBoardPrefill();
   }, []);
 
   const hasResume = !!store.resumeText;

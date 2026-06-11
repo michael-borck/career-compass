@@ -11,16 +11,22 @@ const NAVIGATION = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const [lastPath, setLastPath] = useState(pathname);
 
-  useEffect(() => {
-    document.body.classList.remove('overflow-hidden');
+  // Close the mobile menu when the route changes — state is adjusted during
+  // render (React's documented alternative to setState-in-effect).
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
-  const handleNavMenu = () => {
-    setOpen((prev) => !prev);
-    document.body.classList.toggle('overflow-hidden');
-  };
+  // The body scroll lock always mirrors the menu state.
+  useEffect(() => {
+    document.body.classList.toggle('overflow-hidden', open);
+    return () => document.body.classList.remove('overflow-hidden');
+  }, [open]);
+
+  const handleNavMenu = () => setOpen((prev) => !prev);
 
   return (
     <header>

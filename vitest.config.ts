@@ -9,11 +9,7 @@ export default defineConfig({
     // Required for @testing-library/react's automatic DOM cleanup, which
     // registers itself via a global afterEach.
     globals: true,
-    include: [
-      'lib/**/*.test.{ts,tsx}',
-      'src/**/*.test.{js,ts,tsx}',
-      'components/**/*.test.tsx',
-    ],
+    include: ['lib/**/*.test.{ts,tsx}', 'src/**/*.test.{js,ts,tsx}', 'components/**/*.test.tsx'],
   },
   resolve: {
     alias: {

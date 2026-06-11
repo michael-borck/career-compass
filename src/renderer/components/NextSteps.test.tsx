@@ -39,7 +39,9 @@ describe('NextSteps', () => {
     navigate.mockImplementation(() => calls.push('nav'));
     render(
       <NextSteps
-        steps={[{ title: 'Cover letter', description: 'Draft it.', path: '/cover-letter', preNavigate }]}
+        steps={[
+          { title: 'Cover letter', description: 'Draft it.', path: '/cover-letter', preNavigate },
+        ]}
       />
     );
     fireEvent.click(screen.getByText('Cover letter'));

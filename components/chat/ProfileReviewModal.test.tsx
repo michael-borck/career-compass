@@ -49,9 +49,7 @@ describe('ProfileReviewModal', () => {
 
   it('redistill is disabled until guidance is entered, then passes it through', () => {
     const onRedistill = vi.fn();
-    render(
-      <ProfileReviewModal {...baseProps} onRedistill={onRedistill} profile={profile('x')} />
-    );
+    render(<ProfileReviewModal {...baseProps} onRedistill={onRedistill} profile={profile('x')} />);
     const button = screen.getByText('Redistill').closest('button')!;
     expect(button.hasAttribute('disabled')).toBe(true);
     fireEvent.change(screen.getByPlaceholderText(GUIDANCE_PLACEHOLDER), {

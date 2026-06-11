@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,12 +75,15 @@ export default function ProfileReviewModal({
 }: Props) {
   const [local, setLocal] = useState<StudentProfile | null>(profile);
   const [guidance, setGuidance] = useState('');
+  const [lastProfile, setLastProfile] = useState(profile);
 
-  // When a fresh profile arrives, reset local copy.
-  useEffect(() => {
+  // When a fresh profile arrives, reset the local copy — adjusted during
+  // render (React's documented alternative to setState-in-effect).
+  if (profile !== lastProfile) {
+    setLastProfile(profile);
     setLocal(profile);
     setGuidance('');
-  }, [profile]);
+  }
 
   if (!open || !local) return null;
 
