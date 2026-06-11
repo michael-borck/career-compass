@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import type { finalCareerInfo } from '@/lib/types';
 
 export type GapSeverity = 'critical' | 'important' | 'nice-to-have';
@@ -444,177 +445,208 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export const useSessionStore = create<SessionState>((set, get) => ({
-  ...initialState,
+// Sessions persist across app restarts via localStorage, which Electron
+// keeps on disk in the app's profile (on-device only — consistent with the
+// privacy design; the data is the user's own resume and results). Tests run
+// under plain Node where localStorage doesn't exist, hence the noop fallback.
+const noopStorage: StateStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
 
-  setResume: (text, filename) => set({ resumeText: text, resumeFilename: filename }),
-  clearResume: () => set({ resumeText: null, resumeFilename: null }),
-  setFreeText: (text) => set({ freeText: text }),
-  setJobTitle: (title) => set({ jobTitle: title }),
+export const SESSION_STORAGE_KEY = 'career-compass-session';
 
-  addChatMessage: (msg) =>
-    set((s) => ({
-      chatMessages: [
-        ...s.chatMessages,
-        {
-          id: msg.id ?? makeId(),
-          timestamp: msg.timestamp ?? Date.now(),
-          kind: msg.kind ?? 'message',
-          role: msg.role,
-          content: msg.content,
-        },
-      ],
-    })),
-
-  replaceChatMessages: (msgs) => set({ chatMessages: msgs }),
-
-  setFocus: (career) => set({ currentFocus: career }),
-  setDistilledProfile: (profile) => set({ distilledProfile: profile }),
-  setCareers: (careers) => set({ careers }),
-  setJobAdvert: (text) => set({ jobAdvert: text }),
-  setGapAnalysis: (g) => set({ gapAnalysis: g }),
-  setLearningPath: (l) => set({ learningPath: l }),
-
-  setInterviewSession: (target, difficulty) =>
-    set({
-      interviewTarget: target,
-      interviewDifficulty: difficulty,
-      interviewMessages: [],
-      interviewPhase: 'warm-up',
-      interviewTurnInPhase: 0,
-      interviewFeedback: null,
-    }),
-
-  addInterviewMessage: (msg) =>
-    set((s) => ({
-      interviewMessages: [
-        ...s.interviewMessages,
-        {
-          id: msg.id ?? makeId(),
-          timestamp: msg.timestamp ?? Date.now(),
-          kind: msg.kind ?? 'message',
-          role: msg.role,
-          content: msg.content,
-        },
-      ],
-    })),
-
-  advanceInterviewPhase: (phase, turnInPhase) =>
-    set({ interviewPhase: phase, interviewTurnInPhase: turnInPhase }),
-
-  setInterviewDifficulty: (d) => set({ interviewDifficulty: d }),
-  setInterviewTarget: (t) => set({ interviewTarget: t }),
-  setInterviewFeedback: (f) => set({ interviewFeedback: f }),
-
-  resetInterview: () =>
-    set({
-      interviewMessages: [],
-      interviewTarget: null,
-      interviewDifficulty: 'standard',
-      interviewPhase: null,
-      interviewTurnInPhase: 0,
-      interviewFeedback: null,
-      interviewSources: [],
-    }),
-
-  setOdysseySeed: (type, label, seed) =>
-    set((s) => ({
-      odysseyLives: {
-        ...s.odysseyLives,
-        [type]: { ...s.odysseyLives[type], label, seed },
-      },
-    })),
-
-  setOdysseyElaboration: (type, elaboration) =>
-    set((s) => ({
-      odysseyLives: {
-        ...s.odysseyLives,
-        [type]: { ...s.odysseyLives[type], ...elaboration },
-      },
-    })),
-
-  setOdysseyDashboard: (type, field, value) =>
-    set((s) => ({
-      odysseyLives: {
-        ...s.odysseyLives,
-        [type]: {
-          ...s.odysseyLives[type],
-          dashboard: { ...s.odysseyLives[type].dashboard, [field]: value },
-        },
-      },
-    })),
-
-  resetOdysseyLife: (type) =>
-    set((s) => ({
-      odysseyLives: { ...s.odysseyLives, [type]: makeEmptyLife(type) },
-    })),
-
-  setUrlInput: (url) => set({ urlInput: url }),
-  setUrlFetchedTitle: (title) => set({ urlFetchedTitle: title }),
-  setGapAnalysisSources: (s) => set({ gapAnalysisSources: s }),
-  setLearningPathSources: (s) => set({ learningPathSources: s }),
-
-  addInterviewSources: (sources) =>
-    set((state) => {
-      const existing = new Set(state.interviewSources.map((s) => s.url));
-      const fresh = sources.filter((s) => !existing.has(s.url));
-      return { interviewSources: [...state.interviewSources, ...fresh] };
-    }),
-
-  setChatSourcesForMessage: (messageId, sources) =>
-    set((state) => ({
-      chatSources: { ...state.chatSources, [messageId]: sources },
-    })),
-
-  setBoardReview: (r) => set({ boardReview: r }),
-  setBoardPrefill: (p) => set({ boardPrefill: p }),
-  consumeBoardPrefill: () => {
-    const current = get().boardPrefill;
-    if (current) set({ boardPrefill: null });
-    return current;
-  },
-
-  setComparison: (c) => set({ comparison: c }),
-  setComparePrefill: (p) => set({ comparePrefill: p }),
-  consumeComparePrefill: () => {
-    const current = get().comparePrefill;
-    if (current) set({ comparePrefill: null });
-    return current;
-  },
-  toggleComparing: (title) =>
-    set((state) => {
-      if (state.comparing.includes(title)) {
-        return { comparing: state.comparing.filter((t) => t !== title) };
-      }
-      if (state.comparing.length >= 3) {
-        return state;
-      }
-      return { comparing: [...state.comparing, title] };
-    }),
-  clearComparing: () => set({ comparing: [] }),
-
-  setPortfolio: (p) => set({ portfolio: p }),
-  setCareerStory: (s) => set({ careerStory: s }),
-  setElevatorPitch: (p) => set({ elevatorPitch: p }),
-  setCoverLetter: (l) => set({ coverLetter: l }),
-  setResumeReview: (r) => set({ resumeReview: r }),
-  setSkillsMapping: (m) => set({ skillsMapping: m }),
-  setIndustryExploration: (e) => set({ industryExploration: e }),
-  setValuesCompass: (v) => set({ valuesCompass: v }),
-
-  resetOutputs: () => {
-    const s = get();
-    set({
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set, get) => ({
       ...initialState,
-      resumeText: s.resumeText,
-      resumeFilename: s.resumeFilename,
-      freeText: s.freeText,
-      jobTitle: s.jobTitle,
-      jobAdvert: s.jobAdvert,
-      urlInput: s.urlInput,
-      urlFetchedTitle: s.urlFetchedTitle,
-    });
-  },
 
-  reset: () => set({ ...initialState }),
-}));
+      setResume: (text, filename) => set({ resumeText: text, resumeFilename: filename }),
+      clearResume: () => set({ resumeText: null, resumeFilename: null }),
+      setFreeText: (text) => set({ freeText: text }),
+      setJobTitle: (title) => set({ jobTitle: title }),
+
+      addChatMessage: (msg) =>
+        set((s) => ({
+          chatMessages: [
+            ...s.chatMessages,
+            {
+              id: msg.id ?? makeId(),
+              timestamp: msg.timestamp ?? Date.now(),
+              kind: msg.kind ?? 'message',
+              role: msg.role,
+              content: msg.content,
+            },
+          ],
+        })),
+
+      replaceChatMessages: (msgs) => set({ chatMessages: msgs }),
+
+      setFocus: (career) => set({ currentFocus: career }),
+      setDistilledProfile: (profile) => set({ distilledProfile: profile }),
+      setCareers: (careers) => set({ careers }),
+      setJobAdvert: (text) => set({ jobAdvert: text }),
+      setGapAnalysis: (g) => set({ gapAnalysis: g }),
+      setLearningPath: (l) => set({ learningPath: l }),
+
+      setInterviewSession: (target, difficulty) =>
+        set({
+          interviewTarget: target,
+          interviewDifficulty: difficulty,
+          interviewMessages: [],
+          interviewPhase: 'warm-up',
+          interviewTurnInPhase: 0,
+          interviewFeedback: null,
+        }),
+
+      addInterviewMessage: (msg) =>
+        set((s) => ({
+          interviewMessages: [
+            ...s.interviewMessages,
+            {
+              id: msg.id ?? makeId(),
+              timestamp: msg.timestamp ?? Date.now(),
+              kind: msg.kind ?? 'message',
+              role: msg.role,
+              content: msg.content,
+            },
+          ],
+        })),
+
+      advanceInterviewPhase: (phase, turnInPhase) =>
+        set({ interviewPhase: phase, interviewTurnInPhase: turnInPhase }),
+
+      setInterviewDifficulty: (d) => set({ interviewDifficulty: d }),
+      setInterviewTarget: (t) => set({ interviewTarget: t }),
+      setInterviewFeedback: (f) => set({ interviewFeedback: f }),
+
+      resetInterview: () =>
+        set({
+          interviewMessages: [],
+          interviewTarget: null,
+          interviewDifficulty: 'standard',
+          interviewPhase: null,
+          interviewTurnInPhase: 0,
+          interviewFeedback: null,
+          interviewSources: [],
+        }),
+
+      setOdysseySeed: (type, label, seed) =>
+        set((s) => ({
+          odysseyLives: {
+            ...s.odysseyLives,
+            [type]: { ...s.odysseyLives[type], label, seed },
+          },
+        })),
+
+      setOdysseyElaboration: (type, elaboration) =>
+        set((s) => ({
+          odysseyLives: {
+            ...s.odysseyLives,
+            [type]: { ...s.odysseyLives[type], ...elaboration },
+          },
+        })),
+
+      setOdysseyDashboard: (type, field, value) =>
+        set((s) => ({
+          odysseyLives: {
+            ...s.odysseyLives,
+            [type]: {
+              ...s.odysseyLives[type],
+              dashboard: { ...s.odysseyLives[type].dashboard, [field]: value },
+            },
+          },
+        })),
+
+      resetOdysseyLife: (type) =>
+        set((s) => ({
+          odysseyLives: { ...s.odysseyLives, [type]: makeEmptyLife(type) },
+        })),
+
+      setUrlInput: (url) => set({ urlInput: url }),
+      setUrlFetchedTitle: (title) => set({ urlFetchedTitle: title }),
+      setGapAnalysisSources: (s) => set({ gapAnalysisSources: s }),
+      setLearningPathSources: (s) => set({ learningPathSources: s }),
+
+      addInterviewSources: (sources) =>
+        set((state) => {
+          const existing = new Set(state.interviewSources.map((s) => s.url));
+          const fresh = sources.filter((s) => !existing.has(s.url));
+          return { interviewSources: [...state.interviewSources, ...fresh] };
+        }),
+
+      setChatSourcesForMessage: (messageId, sources) =>
+        set((state) => ({
+          chatSources: { ...state.chatSources, [messageId]: sources },
+        })),
+
+      setBoardReview: (r) => set({ boardReview: r }),
+      setBoardPrefill: (p) => set({ boardPrefill: p }),
+      consumeBoardPrefill: () => {
+        const current = get().boardPrefill;
+        if (current) set({ boardPrefill: null });
+        return current;
+      },
+
+      setComparison: (c) => set({ comparison: c }),
+      setComparePrefill: (p) => set({ comparePrefill: p }),
+      consumeComparePrefill: () => {
+        const current = get().comparePrefill;
+        if (current) set({ comparePrefill: null });
+        return current;
+      },
+      toggleComparing: (title) =>
+        set((state) => {
+          if (state.comparing.includes(title)) {
+            return { comparing: state.comparing.filter((t) => t !== title) };
+          }
+          if (state.comparing.length >= 3) {
+            return state;
+          }
+          return { comparing: [...state.comparing, title] };
+        }),
+      clearComparing: () => set({ comparing: [] }),
+
+      setPortfolio: (p) => set({ portfolio: p }),
+      setCareerStory: (s) => set({ careerStory: s }),
+      setElevatorPitch: (p) => set({ elevatorPitch: p }),
+      setCoverLetter: (l) => set({ coverLetter: l }),
+      setResumeReview: (r) => set({ resumeReview: r }),
+      setSkillsMapping: (m) => set({ skillsMapping: m }),
+      setIndustryExploration: (e) => set({ industryExploration: e }),
+      setValuesCompass: (v) => set({ valuesCompass: v }),
+
+      resetOutputs: () => {
+        const s = get();
+        set({
+          ...initialState,
+          resumeText: s.resumeText,
+          resumeFilename: s.resumeFilename,
+          freeText: s.freeText,
+          jobTitle: s.jobTitle,
+          jobAdvert: s.jobAdvert,
+          urlInput: s.urlInput,
+          urlFetchedTitle: s.urlFetchedTitle,
+        });
+      },
+
+      reset: () => set({ ...initialState }),
+    }),
+    {
+      name: SESSION_STORAGE_KEY,
+      version: 1,
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined' && window.localStorage ? window.localStorage : noopStorage
+      ),
+      // The navigation prefills are one-shot seeds consumed on page mount —
+      // restoring them after a restart would replay a stale navigation.
+      partialize: (state) => {
+        const { boardPrefill, comparePrefill, ...rest } = state;
+        void boardPrefill;
+        void comparePrefill;
+        return rest;
+      },
+    }
+  )
+);

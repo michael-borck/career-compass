@@ -13,6 +13,14 @@ const { isSafeExternalUrl } = require('./services/external-urls');
 const { PROVIDERS } = require('../shared/providers');
 const isDev = process.env.NODE_ENV === 'development';
 
+// Test hook: e2e runs point userData at a temp dir so they never read or
+// write a real profile (the session store persists via localStorage now).
+// Must run before anything touches app.getPath('userData') — the
+// electron-store init below does.
+if (process.env.CAREER_COMPASS_USER_DATA) {
+  app.setPath('userData', process.env.CAREER_COMPASS_USER_DATA);
+}
+
 // The renderer may only read the API-key env vars declared in the shared
 // provider registry — never arbitrary process.env entries.
 const ALLOWED_ENV_VARS = new Set(
