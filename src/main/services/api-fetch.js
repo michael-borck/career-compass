@@ -24,6 +24,10 @@ const electron = require('electron');
 // hostile endpoint, and buffering it would exhaust main-process memory.
 const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
 
+// Redirect chains beyond this are a loop or a hostile endpoint; Electron's
+// default 'follow' mode would chase them indefinitely.
+const MAX_REDIRECTS = 5;
+
 function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeoutMs }) {
   return new Promise((resolve, reject) => {
     // Only plain web schemes. The renderer is trusted code, but this handler
@@ -44,7 +48,9 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
 
     let request;
     try {
-      request = net.request({ method, url });
+      // redirect: 'manual' so each hop goes through the counted handler
+      // below instead of being followed without limit.
+      request = net.request({ method, url, redirect: 'manual' });
     } catch (err) {
       reject(new Error(`Invalid request: ${err.message}`));
       return;
@@ -87,6 +93,24 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
       // isn't honored on this Electron build. Cheap insurance.
       timeoutHandle = setTimeout(fireTimeout, timeoutMs);
     }
+
+    let redirectCount = 0;
+    request.on('redirect', () => {
+      if (settled) return;
+      redirectCount += 1;
+      if (redirectCount > MAX_REDIRECTS) {
+        settled = true;
+        clearBackupTimeout();
+        try {
+          request.abort();
+        } catch {
+          // already aborted — ignore
+        }
+        reject(new Error(`Too many redirects (limit ${MAX_REDIRECTS})`));
+        return;
+      }
+      request.followRedirect();
+    });
 
     const chunks = [];
     let receivedBytes = 0;
@@ -155,4 +179,4 @@ function apiFetch(args) {
   return _apiFetchWithNet(electron.net, args);
 }
 
-module.exports = { apiFetch, _apiFetchWithNet, MAX_RESPONSE_BYTES };
+module.exports = { apiFetch, _apiFetchWithNet, MAX_RESPONSE_BYTES, MAX_REDIRECTS };

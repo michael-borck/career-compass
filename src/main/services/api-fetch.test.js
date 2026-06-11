@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { _apiFetchWithNet, MAX_RESPONSE_BYTES } from './api-fetch.js';
+import { _apiFetchWithNet, MAX_RESPONSE_BYTES, MAX_REDIRECTS } from './api-fetch.js';
 
 // Builds a fake net + a place to grab the most recent ClientRequest.
 function makeFakeNet() {
@@ -26,6 +26,7 @@ function makeFakeNet() {
       req.setTimeout = vi.fn();
       req.write = vi.fn();
       req.end = vi.fn();
+      req.followRedirect = vi.fn();
       req.abort = vi.fn(() => {
         // Electron's real abort emits 'abort' on the request. The 'abort'
         // handler in apiFetch checks `settled` so post-timeout aborts are
@@ -212,6 +213,34 @@ describe('apiFetch — URL validation', () => {
     state.lastRequest.emit('response', fakeResponse({ body: '{}' }));
     const res = await promise;
     expect(res.ok).toBe(true);
+  });
+});
+
+describe('apiFetch — redirect limit', () => {
+  it('requests with manual redirect mode and follows redirects up to the limit', async () => {
+    const { net, state } = makeFakeNet();
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/r' });
+    await tick();
+    expect(net.request).toHaveBeenCalledWith(expect.objectContaining({ redirect: 'manual' }));
+    for (let i = 0; i < MAX_REDIRECTS; i++) {
+      state.lastRequest.emit('redirect');
+    }
+    expect(state.lastRequest.followRedirect).toHaveBeenCalledTimes(MAX_REDIRECTS);
+    state.lastRequest.emit('response', fakeResponse({ body: 'ok' }));
+    const res = await promise;
+    expect(res.ok).toBe(true);
+  });
+
+  it('aborts and rejects past the redirect limit', async () => {
+    const { net, state } = makeFakeNet();
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/loop' });
+    await tick();
+    for (let i = 0; i <= MAX_REDIRECTS; i++) {
+      state.lastRequest.emit('redirect');
+    }
+    await expect(promise).rejects.toThrow(/Too many redirects/);
+    expect(state.lastRequest.followRedirect).toHaveBeenCalledTimes(MAX_REDIRECTS);
+    expect(state.lastRequest.abort).toHaveBeenCalled();
   });
 });
 
