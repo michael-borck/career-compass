@@ -39,6 +39,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm run release gates on these locally, but a tag pushed any other
+      # way would build untested code — re-verify here before packaging.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
       - name: Build Vite app
         run: npm run build
 

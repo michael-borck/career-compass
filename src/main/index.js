@@ -4,7 +4,17 @@ const { apiFetch } = require('./services/api-fetch');
 const { parsePdf, parseDocx } = require('./services/file-processors');
 const { getOllamaModels, listModels, testConnection } = require('./services/providers');
 const { setPassword, getPassword, deletePassword } = require('./services/secure-storage');
+const { isSafeExternalUrl } = require('./services/external-urls');
+const { PROVIDERS } = require('../shared/providers');
 const isDev = process.env.NODE_ENV === 'development';
+
+// The renderer may only read the API-key env vars declared in the shared
+// provider registry — never arbitrary process.env entries.
+const ALLOWED_ENV_VARS = new Set(
+  Object.values(PROVIDERS)
+    .map((p) => p.envVar)
+    .filter(Boolean)
+);
 
 // Import electron-store - only available in Electron context
 let Store;
@@ -61,19 +71,10 @@ if (Store) {
 
 function createFallbackStore() {
   return {
-    get: (key, defaultValue) => {
-      console.log('Fallback store: getting', key, 'returning default:', defaultValue);
-      return defaultValue;
-    },
-    set: (key, value) => {
-      console.log('Fallback store: would set', key, 'to', value);
-    },
-    delete: (key) => {
-      console.log('Fallback store: would delete', key);
-    },
-    clear: () => {
-      console.log('Fallback store: would clear all');
-    }
+    get: (key, defaultValue) => defaultValue,
+    set: () => {},
+    delete: () => {},
+    clear: () => {}
   };
 }
 
@@ -107,9 +108,13 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  // Handle external links
+  // Handle external links — open in the system browser, web/mail schemes only
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url);
+    } else {
+      console.warn('Blocked external open of unsafe URL:', url);
+    }
     return { action: 'deny' };
   });
 
@@ -272,7 +277,11 @@ app.on('window-all-closed', () => {
 app.on('web-contents-created', (event, contents) => {
   contents.on('new-window', (event, navigationUrl) => {
     event.preventDefault();
-    shell.openExternal(navigationUrl);
+    if (isSafeExternalUrl(navigationUrl)) {
+      shell.openExternal(navigationUrl);
+    } else {
+      console.warn('Blocked external open of unsafe URL:', navigationUrl);
+    }
   });
 });
 
@@ -307,30 +316,22 @@ if (!isDev && autoUpdater) {
   });
 }
 
-// IPC handlers for settings store
+// IPC handlers for settings store. Never log values or store contents —
+// the secure-storage plaintext fallback keeps API keys in this store, so
+// dumping it would leak credentials to the console.
 ipcMain.handle('store-get', (event, key, defaultValue) => {
-  const result = store.get(key, defaultValue);
-  console.log('Store GET:', key, 'defaultValue:', defaultValue, '→', result);
-  console.log('Store file path:', store.path);
-  console.log('Store all data:', store.store);
-  return result;
+  return store.get(key, defaultValue);
 });
 
 ipcMain.handle('store-set', (event, key, value) => {
-  console.log('Store SET:', key, '←', value);
   store.set(key, value);
-  // Verify it was saved
-  const saved = store.get(key);
-  console.log('Store VERIFY:', key, '→', saved);
 });
 
 ipcMain.handle('store-delete', (event, key) => {
-  console.log('Store DELETE:', key);
   store.delete(key);
 });
 
 ipcMain.handle('store-clear', (event) => {
-  console.log('Store CLEAR: all data');
   store.clear();
 });
 
@@ -381,5 +382,6 @@ ipcMain.handle('get-version', () => {
 });
 
 ipcMain.handle('get-env-var', (event, varName) => {
+  if (!ALLOWED_ENV_VARS.has(varName)) return null;
   return process.env[varName] || null;
 });

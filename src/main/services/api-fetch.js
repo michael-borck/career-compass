@@ -19,8 +19,29 @@
 
 const electron = require('electron');
 
+// Hard ceiling on response body size. Provider APIs return JSON in the
+// kilobyte-to-low-megabyte range; anything bigger means a misbehaving or
+// hostile endpoint, and buffering it would exhaust main-process memory.
+const MAX_RESPONSE_BYTES = 10 * 1024 * 1024;
+
 function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeoutMs }) {
   return new Promise((resolve, reject) => {
+    // Only plain web schemes. The renderer is trusted code, but this handler
+    // is the one place a compromised renderer could reach file:// or other
+    // schemes through the main process — fail closed. localhost stays
+    // allowed (Ollama, custom providers).
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      reject(new Error(`Invalid URL: ${url}`));
+      return;
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      reject(new Error(`URL must be http or https, got ${parsed.protocol}`));
+      return;
+    }
+
     let request;
     try {
       request = net.request({ method, url });
@@ -68,8 +89,24 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
     }
 
     const chunks = [];
+    let receivedBytes = 0;
     request.on('response', (response) => {
-      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('data', (chunk) => {
+        if (settled) return;
+        receivedBytes += chunk.length;
+        if (receivedBytes > MAX_RESPONSE_BYTES) {
+          settled = true;
+          clearBackupTimeout();
+          try {
+            request.abort();
+          } catch {
+            // already aborted — ignore
+          }
+          reject(new Error(`Response exceeded ${MAX_RESPONSE_BYTES} bytes`));
+          return;
+        }
+        chunks.push(chunk);
+      });
       response.on('end', () => {
         if (settled) return;
         settled = true;
@@ -118,4 +155,4 @@ function apiFetch(args) {
   return _apiFetchWithNet(electron.net, args);
 }
 
-module.exports = { apiFetch, _apiFetchWithNet };
+module.exports = { apiFetch, _apiFetchWithNet, MAX_RESPONSE_BYTES };

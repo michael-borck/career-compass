@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { _apiFetchWithNet } from './api-fetch.js';
+import { _apiFetchWithNet, MAX_RESPONSE_BYTES } from './api-fetch.js';
 
 // Builds a fake net + a place to grab the most recent ClientRequest.
 function makeFakeNet() {
@@ -187,8 +187,72 @@ describe('apiFetch — race conditions', () => {
       }),
     };
     await expect(
-      _apiFetchWithNet(net, { url: 'http://[::1' })
+      _apiFetchWithNet(net, { url: 'https://example.com/x' })
     ).rejects.toThrow(/Invalid request: bad url/);
+  });
+});
+
+describe('apiFetch — URL validation', () => {
+  it('rejects an unparseable URL without calling net.request', async () => {
+    const { net } = makeFakeNet();
+    await expect(_apiFetchWithNet(net, { url: 'http://[::1' })).rejects.toThrow(
+      /Invalid URL/
+    );
+    expect(net.request).not.toHaveBeenCalled();
+  });
+
+  it.each(['file:///etc/passwd', 'javascript:alert(1)', 'ftp://example.com/x'])(
+    'rejects %s without calling net.request',
+    async (url) => {
+      const { net } = makeFakeNet();
+      await expect(_apiFetchWithNet(net, { url })).rejects.toThrow(
+        /URL must be http or https/
+      );
+      expect(net.request).not.toHaveBeenCalled();
+    }
+  );
+
+  it('allows http://localhost (Ollama and custom providers)', async () => {
+    const { net, state } = makeFakeNet();
+    const promise = _apiFetchWithNet(net, { url: 'http://localhost:11434/api/tags' });
+    await tick();
+    state.lastRequest.emit('response', fakeResponse({ body: '{}' }));
+    const res = await promise;
+    expect(res.ok).toBe(true);
+  });
+});
+
+describe('apiFetch — response size cap', () => {
+  it('aborts and rejects when the response exceeds MAX_RESPONSE_BYTES', async () => {
+    const { net, state } = makeFakeNet();
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/huge' });
+    await tick();
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.statusMessage = 'OK';
+    res.headers = {};
+    state.lastRequest.emit('response', res);
+    res.emit('data', Buffer.alloc(MAX_RESPONSE_BYTES));
+    res.emit('data', Buffer.alloc(1));
+    await expect(promise).rejects.toThrow(/Response exceeded/);
+    expect(state.lastRequest.abort).toHaveBeenCalled();
+  });
+
+  it('ignores data arriving after the size-cap rejection (no double settle)', async () => {
+    const { net, state } = makeFakeNet();
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/huge' });
+    await tick();
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.statusMessage = 'OK';
+    res.headers = {};
+    state.lastRequest.emit('response', res);
+    res.emit('data', Buffer.alloc(MAX_RESPONSE_BYTES + 1));
+    await expect(promise).rejects.toThrow(/Response exceeded/);
+    res.emit('data', Buffer.from('late'));
+    res.emit('end');
+    await tick();
+    // Test passes if no unhandled rejection / double-settle error.
   });
 });
 
