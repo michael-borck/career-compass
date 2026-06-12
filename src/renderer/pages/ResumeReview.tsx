@@ -35,6 +35,7 @@ export default function ResumeReview() {
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
+        skillsMapping: state.skillsMapping ?? undefined,
       });
     },
     persist: (r) => useSessionStore.getState().setResumeReview(r.review),

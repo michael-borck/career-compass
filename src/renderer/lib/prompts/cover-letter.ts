@@ -1,4 +1,4 @@
-import type { StudentProfile } from '@/lib/session-store';
+import type { StudentProfile, ElevatorPitch } from '@/lib/session-store';
 import { parseModelJson } from './model-json';
 
 export type CoverLetterInput = {
@@ -7,6 +7,9 @@ export type CoverLetterInput = {
   jobTitle?: string;
   jobAdvert?: string;
   distilledProfile?: StudentProfile;
+  // When the session has an elevator pitch, the letter expands its angle
+  // rather than inventing a new one.
+  elevatorPitch?: ElevatorPitch;
 };
 
 export type CoverLetterOutput = {
@@ -51,6 +54,11 @@ export function buildCoverLetterPrompt(input: CoverLetterInput): string {
     sections.push(`<targetRole>\n${input.jobTitle.trim()}\n</targetRole>`);
   if (input.jobAdvert?.trim())
     sections.push(`<jobAdvert>\n${input.jobAdvert.trim()}\n</jobAdvert>`);
+  if (input.elevatorPitch) {
+    sections.push(
+      `<elevatorPitch>\n${input.elevatorPitch.fullScript}\n</elevatorPitch>\n\nThe letter should expand on this pitch's angle and strengths — keep the same positioning, do not contradict it.`
+    );
+  }
   sections.push(buildProfileSection(input));
   sections.push('ONLY respond with JSON. No prose, no code fences.');
   return sections.join('\n\n');

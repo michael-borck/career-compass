@@ -52,3 +52,25 @@ describe('parseCoverLetter', () => {
     );
   });
 });
+
+describe('buildCoverLetterPrompt — pitch threading', () => {
+  it('includes the elevator pitch script when provided', () => {
+    const prompt = buildCoverLetterPrompt({
+      jobTitle: 'Data analyst',
+      elevatorPitch: {
+        target: 'Data analyst',
+        hook: 'h',
+        body: 'b',
+        close: 'c',
+        fullScript: 'I turn messy data into decisions.',
+      },
+    });
+    expect(prompt).toContain('<elevatorPitch>');
+    expect(prompt).toContain('I turn messy data into decisions.');
+    expect(prompt).toContain("expand on this pitch's angle");
+  });
+
+  it('omits the section without a pitch', () => {
+    expect(buildCoverLetterPrompt({ jobTitle: 'Data analyst' })).not.toContain('<elevatorPitch>');
+  });
+});

@@ -77,3 +77,38 @@ describe('parseResumeReview', () => {
     ).toThrow(/improvement/i);
   });
 });
+
+describe('buildResumeReviewPrompt — skills mapping threading', () => {
+  it('includes professional phrasings when a mapping exists', () => {
+    const prompt = buildResumeReviewPrompt({
+      resume: 'my resume',
+      skillsMapping: {
+        summary: 's',
+        frameworkNotes: '',
+        mappings: [
+          {
+            skill: 'Data analysis',
+            sfia: null,
+            onet: null,
+            esco: null,
+            aqf: null,
+            professionalPhrase: 'Performed exploratory data analysis',
+            nextLevel: '',
+          },
+        ],
+      },
+    });
+    expect(prompt).toContain('<skillsMapping>');
+    expect(prompt).toContain('- Data analysis: "Performed exploratory data analysis"');
+  });
+
+  it('omits the section without a mapping or with an empty one', () => {
+    expect(buildResumeReviewPrompt({ resume: 'r' })).not.toContain('<skillsMapping>');
+    expect(
+      buildResumeReviewPrompt({
+        resume: 'r',
+        skillsMapping: { summary: '', frameworkNotes: '', mappings: [] },
+      })
+    ).not.toContain('<skillsMapping>');
+  });
+});

@@ -1,4 +1,4 @@
-import type { StudentProfile, ResumeReviewItem } from '@/lib/session-store';
+import type { StudentProfile, ResumeReviewItem, SkillsMapping } from '@/lib/session-store';
 import { parseModelJson, toStringArray } from './model-json';
 
 export type ResumeReviewInput = {
@@ -6,6 +6,9 @@ export type ResumeReviewInput = {
   jobTitle?: string;
   jobAdvert?: string;
   distilledProfile?: StudentProfile;
+  // When the session has a skills mapping, its professional phrasings feed
+  // the rewrite suggestions.
+  skillsMapping?: SkillsMapping;
 };
 
 export type ResumeReviewOutput = {
@@ -29,6 +32,14 @@ export function buildResumeReviewPrompt(input: ResumeReviewInput): string {
     sections.push(`<targetRole>\n${input.jobTitle.trim()}\n</targetRole>`);
   if (input.jobAdvert?.trim())
     sections.push(`<jobAdvert>\n${input.jobAdvert.trim()}\n</jobAdvert>`);
+  if (input.skillsMapping && input.skillsMapping.mappings.length > 0) {
+    const phrasings = input.skillsMapping.mappings
+      .map((m) => `- ${m.skill}: "${m.professionalPhrase}"`)
+      .join('\n');
+    sections.push(
+      `<skillsMapping>\n${phrasings}\n</skillsMapping>\n\nWhere relevant, use these professional phrasings in your rewrite examples.`
+    );
+  }
   sections.push('ONLY respond with JSON. No prose, no code fences.');
   return sections.join('\n\n');
 }

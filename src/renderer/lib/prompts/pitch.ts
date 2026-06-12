@@ -1,4 +1,4 @@
-import type { StudentProfile } from '@/lib/session-store';
+import type { StudentProfile, CareerStory } from '@/lib/session-store';
 import { parseModelJson } from './model-json';
 
 export type PitchInput = {
@@ -7,6 +7,9 @@ export type PitchInput = {
   jobTitle?: string;
   jobAdvert?: string;
   distilledProfile?: StudentProfile;
+  // When the session has a career story, the pitch is built around its
+  // narrative thread instead of re-deriving one from raw inputs.
+  careerStory?: CareerStory;
 };
 
 export type PitchOutput = {
@@ -52,6 +55,12 @@ export function buildPitchPrompt(input: PitchInput): string {
     sections.push(`<targetRole>\n${input.jobTitle.trim()}\n</targetRole>`);
   if (input.jobAdvert?.trim())
     sections.push(`<jobAdvert>\n${input.jobAdvert.trim()}\n</jobAdvert>`);
+  if (input.careerStory) {
+    const themes = input.careerStory.themes.map((t) => t.name).join(', ');
+    sections.push(
+      `<careerStory>\nThemes: ${themes}\n\n${input.careerStory.narrative}\n</careerStory>\n\nBuild the pitch around this career story — its narrative thread and themes are the spine; do not invent a different angle.`
+    );
+  }
   sections.push(buildProfileSection(input));
   sections.push('ONLY respond with JSON. No prose, no code fences.');
   return sections.join('\n\n');

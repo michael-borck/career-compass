@@ -38,6 +38,7 @@ export default function CoverLetter() {
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
+        elevatorPitch: state.elevatorPitch ?? undefined,
       });
     },
     persist: (r) => useSessionStore.getState().setCoverLetter(r.letter),

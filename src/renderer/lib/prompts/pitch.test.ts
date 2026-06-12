@@ -55,3 +55,26 @@ describe('parsePitch', () => {
     );
   });
 });
+
+describe('buildPitchPrompt — career story threading', () => {
+  it('includes the career story narrative and themes when provided', () => {
+    const prompt = buildPitchPrompt({
+      jobTitle: 'Data analyst',
+      careerStory: {
+        narrative: 'It started in a lab.',
+        themes: [
+          { name: 'Curiosity', evidence: [], reflectionQuestion: '' },
+          { name: 'Service', evidence: [], reflectionQuestion: '' },
+        ],
+      },
+    });
+    expect(prompt).toContain('<careerStory>');
+    expect(prompt).toContain('It started in a lab.');
+    expect(prompt).toContain('Themes: Curiosity, Service');
+    expect(prompt).toContain('narrative thread and themes are the spine');
+  });
+
+  it('omits the section without a career story', () => {
+    expect(buildPitchPrompt({ jobTitle: 'Data analyst' })).not.toContain('<careerStory>');
+  });
+});

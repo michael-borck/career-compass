@@ -41,6 +41,7 @@ export default function Pitch() {
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
+        careerStory: state.careerStory ?? undefined,
       });
     },
     persist: (r) => useSessionStore.getState().setElevatorPitch(r.pitch),
