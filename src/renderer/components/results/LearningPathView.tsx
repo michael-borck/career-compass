@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Link, useNavigate } from 'react-router-dom';
 import { FolderOpen, Presentation, FileText } from 'lucide-react';
 import type { LearningPath } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
@@ -13,7 +12,7 @@ import SourcesList from './SourcesList';
 type Props = { path: LearningPath };
 
 export default function LearningPathView({ path }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const store = useSessionStore();
   const sources = useSessionStore((s) => s.learningPathSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -37,22 +36,22 @@ export default function LearningPathView({ path }: Props) {
   const allExpanded = path.milestones.every((_, i) => expanded[i]);
 
   function handlePracticeInterview() {
-    router.push('/interview');
+    navigate('/interview');
   }
 
   function handleChainToGapAnalysis() {
     store.setGapAnalysis(null);
-    router.push('/gap-analysis');
+    navigate('/gap-analysis');
   }
 
   function handleWritePitch() {
     store.setElevatorPitch(null);
-    router.push('/pitch');
+    navigate('/pitch');
   }
 
   function handleDraftCoverLetter() {
     store.setCoverLetter(null);
-    router.push('/cover-letter');
+    navigate('/cover-letter');
   }
 
   return (
@@ -160,7 +159,7 @@ export default function LearningPathView({ path }: Props) {
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
         Ready to see the bigger picture?{' '}
-        <Link href='/career-story' className='underline hover:text-accent'>
+        <Link to='/career-story' className='underline hover:text-accent'>
           Build your career story
         </Link>
       </p>

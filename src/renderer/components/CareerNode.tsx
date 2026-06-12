@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { Handle, Position } from 'reactflow';
 import type { NodeProps } from 'reactflow';
 import {
@@ -62,7 +62,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
   } = data;
   const position = connectPosition === 'top' ? Position.Top : Position.Bottom;
 
-  const router = useRouter();
+  const navigate = useNavigate();
   const setFocus = useSessionStore((s) => s.setFocus);
   const addChatMessage = useSessionStore((s) => s.addChatMessage);
   const setGapAnalysis = useSessionStore((s) => s.setGapAnalysis);
@@ -86,46 +86,46 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
     setGapAnalysis(null);
-    router.push('/gap-analysis');
+    navigate('/gap-analysis');
   }
 
   function handleLearningPath() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
     setLearningPath(null);
-    router.push('/learning-path');
+    navigate('/learning-path');
   }
 
   function handlePracticeInterview() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
-    router.push('/interview');
+    navigate('/interview');
   }
 
   function handleBoardShortcut() {
     useSessionStore.getState().setBoardPrefill({ focusRole: jobTitle });
-    router.push('/board');
+    navigate('/board');
   }
 
   function handleWritePitch() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
     useSessionStore.getState().setElevatorPitch(null);
-    router.push('/pitch');
+    navigate('/pitch');
   }
 
   function handleDraftCoverLetter() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
     useSessionStore.getState().setCoverLetter(null);
-    router.push('/cover-letter');
+    navigate('/cover-letter');
   }
 
   function handleBuildPortfolio() {
     if (!jobTitle) return;
     setStoreJobTitle(jobTitle);
     useSessionStore.getState().setPortfolio(null);
-    router.push('/portfolio');
+    navigate('/portfolio');
   }
 
   const difficultyColor =
@@ -240,7 +240,7 @@ function CareerNode({ data }: NodeProps<CareerNodeProps>) {
               <DropdownMenuItem
                 onClick={() => {
                   handleChatAboutThis();
-                  router.push('/chat');
+                  navigate('/chat');
                 }}
               >
                 <MessageCircle className='w-4 h-4 mr-2' /> Chat about this role

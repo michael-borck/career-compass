@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SkillsMapping, SkillFrameworkMapping, FrameworkLevel } from '@/lib/session-store';
@@ -80,7 +79,7 @@ function SkillCard({
 }
 
 export default function SkillsMappingResultView({ mapping }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Record<number, boolean>>(() => {
     const initial: Record<number, boolean> = {};
     if (mapping.mappings.length > 0) initial[0] = true;
@@ -149,17 +148,17 @@ export default function SkillsMappingResultView({ mapping }: Props) {
       </div>
 
       <div className='flex flex-wrap justify-end gap-3'>
-        <Button variant='outline' onClick={() => router.push('/gap-analysis')}>
+        <Button variant='outline' onClick={() => navigate('/gap-analysis')}>
           Run gap analysis →
         </Button>
-        <Button variant='outline' onClick={() => router.push('/learning-path')}>
+        <Button variant='outline' onClick={() => navigate('/learning-path')}>
           Build a learning path →
         </Button>
       </div>
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
         These mappings are approximate — based on AI interpretation, not certified assessment.{' '}
-        <Link href='/career-story' className='underline hover:text-accent'>
+        <Link to='/career-story' className='underline hover:text-accent'>
           Build your career story
         </Link>
       </p>

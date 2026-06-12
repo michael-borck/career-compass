@@ -24,7 +24,7 @@ One LLM backend — `ollama`, `openai`, `claude`, `groq`, `gemini`,
 _Avoid_: vendor, model host, backend.
 
 **Prompt builder**:
-A `lib/prompts/*` module that builds the prompt text for a feature and parses
+A `src/renderer/lib/prompts/*` module that builds the prompt text for a feature and parses
 the model's reply back into a typed result. Framework-agnostic, no node-only
 deps.
 _Avoid_: template, formatter.
@@ -97,7 +97,7 @@ _Avoid_: provider config, constants.
 **ExportDoc**:
 A format-neutral representation of a feature's exportable content — a `title`
 plus a list of blocks (heading, paragraph, bullets, note, disclaimer). Each
-feature builds one (`lib/export/features/*`); it's the single content
+feature builds one (`src/renderer/lib/export/features/*`); it's the single content
 definition both export formats render from.
 _Avoid_: document, report, output.
 

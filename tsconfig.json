@@ -12,15 +12,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "paths": {
-      "@/*": ["./*"],
-      "next/navigation": ["./src/renderer/shims/next-navigation"],
-      "next/link": ["./src/renderer/shims/next-link"]
+      "@/*": ["./src/renderer/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "src/main/**/*.js", "src/shared/**/*.js"],

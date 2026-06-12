@@ -67,7 +67,7 @@ Supported providers:
 - **Custom OpenAI-compatible**
 
 ### Settings and Storage Architecture
-Settings live in `lib/settings-store.ts` (still in the legacy tree — will move to `src/renderer/services/` in a later cleanup pass).
+Settings live in `src/renderer/lib/settings-store.ts`.
 
 - **Settings**: `electron-store` in user data directory
 - **API Keys**: `safeStorage` with OS-native encryption (Keychain on macOS, Credential Manager on Windows, libsecret on Linux)
@@ -118,24 +118,22 @@ Two-stage LLM process in `src/renderer/services/careers.ts`:
 1. **Initial Analysis**: Resume + context → 6 career suggestions with basic info
 2. **Detailed Analysis**: Each career → comprehensive roadmap, skills analysis, timeline
 
-**ReactFlow Integration**: Career suggestions rendered as interactive nodes in `components/CareerNode.tsx` with visualization in `src/renderer/pages/Careers.tsx`.
+**ReactFlow Integration**: Career suggestions rendered as interactive nodes in `src/renderer/components/CareerNode.tsx` with visualization in `src/renderer/pages/Careers.tsx`.
 
 ## Build Configuration
 
 ### Vite (`vite.config.ts`)
 - `base: './'` so Electron can load `dist/index.html` over `file://`
 - React plugin only; no SSR
-- Aliases:
-  - `next/link` and `next/navigation` → renderer-side shims (`src/renderer/shims/*`) — kept until the rest of the legacy `components/` tree is moved into `src/renderer/`
-  - `@/components/*` → `components/*` (legacy tree, still imported by ported pages)
-  - `@/lib/*` → `lib/*` (legacy tree)
-  - `@` → `src/renderer` (everything new lives under here)
+- Aliases: a single `@` → `src/renderer` (the former legacy root-level `lib/`
+  and `components/` trees and the `next/*` shims were folded into the renderer
+  tree post-migration)
 
 ### Electron Builder (`package.json` build section)
-- **Cross-platform targets**: Windows (NSIS), macOS (DMG), Linux (AppImage)
+- **Cross-platform targets**: Windows (NSIS), macOS (DMG), Linux (AppImage + deb)
 - **Artifact naming**: `Career-Compass-{version}-{arch}.{ext}` (no spaces)
 - **Auto-updater**: GitHub releases integration via `electron-updater`
-- **Code signing**: Placeholder configuration; macOS notarisation hasn't been wired up yet (Phase 5)
+- **Code signing**: macOS builds are Developer ID-signed and notarised in CI (see SECURITY.md); Windows is unsigned
 
 ### GitHub Actions (`.github/workflows/release.yml`)
 - **Matrix build**: Parallel builds on macOS, Windows, Ubuntu
@@ -148,22 +146,21 @@ Two-stage LLM process in `src/renderer/services/careers.ts`:
 Settings system supports environment variables as fallback:
 - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `GOOGLE_API_KEY`
 - Accessed via `window.electronAPI.getEnvVar()` in the renderer
-- Check `lib/settings-store.ts` for precedence order
+- Check `src/renderer/lib/settings-store.ts` for precedence order
 
 ### Error Handling Patterns
 - **`LLMError`** in `src/renderer/services/llm.ts` wraps parse + network failures with structured `code` strings
 - **Toast notifications** using `react-hot-toast` for user feedback
-- **`isTokenLimitError()`** (`lib/token-limit.ts`) recognises provider-specific token-budget errors so pages can suggest trimming context
+- **`isTokenLimitError()`** (`src/renderer/lib/token-limit.ts`) recognises provider-specific token-budget errors so pages can suggest trimming context
 
 ### File Structure Conventions
-- `/src/renderer/*` — Vite-built React app (pages, components, services, shims)
+- `/src/renderer/*` — Vite-built React app
   - `pages/` — route components (one per `/<path>` in `App.tsx`)
   - `services/` — business logic (llm, file-upload, board, careers, …) with co-located `.test.ts`
-  - `components/` — shared UI (Header, Footer, Hero, ActionCards, SessionBanner)
-  - `shims/` — Next.js compatibility shims for legacy imports (`next/link`, `next/navigation`)
-- `/src/main/*` — Electron main process (`index.js`, `preload.js`, `services/`)
-- `/lib/*` — legacy business logic still consumed by renderer (`session-store`, `settings-store`, `prompts/`, `markdown-export`, …). Slated to move under `src/renderer/` in a future cleanup pass.
-- `/components/*` — legacy UI components still consumed by renderer (UI primitives in `ui/`, per-feature `ResultView` and `-docx` files). Same migration trajectory as `lib/`.
+  - `components/` — shared UI (Header, ActionCards, NextSteps, …), UI primitives (`ui/`), and per-feature `ResultView`/`-docx` modules
+  - `lib/` — framework-agnostic business logic (`session-store`, `settings-store`, `prompts/`, `export/`, …)
+- `/src/main/*` — Electron main process (`index.js`, `preload.js`, `services/`) — plain JS, type-checked via `@ts-check` + JSDoc
+- `/src/shared/*` — CommonJS modules used by both processes (`providers.js`, `limits.js`)
 - `/assets/*` — icons for electron-builder
 
 ### Testing Connection to LLM Providers

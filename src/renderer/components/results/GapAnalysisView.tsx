@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Link, useNavigate } from 'react-router-dom';
 import type { GapAnalysis, SourceRef } from '@/lib/session-store';
 import { useSessionStore } from '@/lib/session-store';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ function renderWithCitations(text: string, sources: SourceRef[]) {
 }
 
 export default function GapAnalysisView({ analysis }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const store = useSessionStore();
   const sources = useSessionStore((s) => s.gapAnalysisSources) ?? [];
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -45,22 +44,22 @@ export default function GapAnalysisView({ analysis }: Props) {
   const allExpanded = analysis.gaps.every((_, i) => expanded[i]);
 
   function handlePracticeInterview() {
-    router.push('/interview');
+    navigate('/interview');
   }
 
   function handleChainToLearningPath() {
     store.setLearningPath(null);
-    router.push('/learning-path');
+    navigate('/learning-path');
   }
 
   function handleWritePitch() {
     store.setElevatorPitch(null);
-    router.push('/pitch');
+    navigate('/pitch');
   }
 
   function handleDraftCoverLetter() {
     store.setCoverLetter(null);
-    router.push('/cover-letter');
+    navigate('/cover-letter');
   }
 
   return (
@@ -171,7 +170,7 @@ export default function GapAnalysisView({ analysis }: Props) {
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
         Ready to see the bigger picture?{' '}
-        <Link href='/career-story' className='underline hover:text-accent'>
+        <Link to='/career-story' className='underline hover:text-accent'>
           Build your career story
         </Link>
       </p>

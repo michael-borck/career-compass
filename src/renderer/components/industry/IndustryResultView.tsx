@@ -1,14 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import type { IndustryExploration } from '@/lib/session-store';
 
 type Props = { exploration: IndustryExploration };
 
 export default function IndustryResultView({ exploration }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <div className='space-y-8'>
@@ -118,17 +117,17 @@ export default function IndustryResultView({ exploration }: Props) {
       )}
 
       <div className='flex flex-wrap justify-end gap-3'>
-        <Button variant='outline' onClick={() => router.push('/gap-analysis')}>
+        <Button variant='outline' onClick={() => navigate('/gap-analysis')}>
           Run gap analysis →
         </Button>
-        <Button variant='outline' onClick={() => router.push('/careers')}>
+        <Button variant='outline' onClick={() => navigate('/careers')}>
           Find careers in this space →
         </Button>
       </div>
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
         AI-generated overview. Verify specific claims before making decisions.{' '}
-        <Link href='/career-story' className='underline hover:text-accent'>
+        <Link to='/career-story' className='underline hover:text-accent'>
           Build your career story
         </Link>
       </p>

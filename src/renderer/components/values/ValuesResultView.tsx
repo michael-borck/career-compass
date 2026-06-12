@@ -1,14 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import type { ValuesCompass } from '@/lib/session-store';
 
 type Props = { compass: ValuesCompass };
 
 export default function ValuesResultView({ compass }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <div className='space-y-8'>
@@ -70,17 +69,17 @@ export default function ValuesResultView({ compass }: Props) {
       )}
 
       <div className='flex flex-wrap justify-end gap-3'>
-        <Button variant='outline' onClick={() => router.push('/odyssey')}>
+        <Button variant='outline' onClick={() => navigate('/odyssey')}>
           Imagine three lives →
         </Button>
-        <Button variant='outline' onClick={() => router.push('/career-story')}>
+        <Button variant='outline' onClick={() => navigate('/career-story')}>
           Build your career story →
         </Button>
       </div>
 
       <p className='text-[var(--text-xs)] text-ink-quiet text-center mt-6'>
         AI-inferred values. Treat as a starting point for reflection, not a personality test.{' '}
-        <Link href='/board' className='underline hover:text-accent'>
+        <Link to='/board' className='underline hover:text-accent'>
           Ask the board of advisors
         </Link>
       </p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionStore } from '@/lib/session-store';
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function ChatTopBar({ onGenerateCareers, canGenerate }: Props) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const currentFocus = useSessionStore((s) => s.currentFocus);
   const setFocus = useSessionStore((s) => s.setFocus);
   const addChatMessage = useSessionStore((s) => s.addChatMessage);
@@ -29,7 +29,7 @@ export default function ChatTopBar({ onGenerateCareers, canGenerate }: Props) {
   function startOver() {
     if (!confirm('Start over? This clears your session.')) return;
     reset();
-    router.push('/');
+    navigate('/');
   }
 
   return (
