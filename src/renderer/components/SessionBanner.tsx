@@ -1,8 +1,22 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useSessionStore } from '@/lib/session-store';
+import { saveSessionToFile, loadSessionFromFile } from '@/lib/session-file';
 
 export default function SessionBanner() {
   const store = useSessionStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleLoadFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      loadSessionFromFile(await file.text());
+      toast.success('Session loaded.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not load that file.');
+    }
+  }
   const {
     resumeText,
     resumeFilename,
@@ -268,15 +282,40 @@ export default function SessionBanner() {
         </div>
       )}
 
-      {hasAnyOutput && (
+      <div className='flex items-center gap-3 flex-shrink-0 text-[var(--text-xs)]'>
         <button
           type='button'
-          onClick={handleStartOver}
-          className='text-[var(--text-xs)] text-ink-muted hover:text-ink flex-shrink-0'
+          onClick={() => saveSessionToFile()}
+          className='text-ink-muted hover:text-ink'
+          title='Save this session to a file you can move between machines'
         >
-          Start over
+          Save session
         </button>
-      )}
+        <button
+          type='button'
+          onClick={() => fileInputRef.current?.click()}
+          className='text-ink-muted hover:text-ink'
+          title='Load a previously saved session file'
+        >
+          Load session
+        </button>
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.json,application/json'
+          className='hidden'
+          aria-label='Load session file'
+          onChange={(e) => {
+            void handleLoadFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        {hasAnyOutput && (
+          <button type='button' onClick={handleStartOver} className='text-ink-muted hover:text-ink'>
+            Start over
+          </button>
+        )}
+      </div>
 
       <div className='w-full flex flex-wrap items-center gap-x-3 gap-y-1 text-[var(--text-xs)] pt-2 border-t border-accent/20'>
         <span className='text-ink-quiet'>Journey:</span>
