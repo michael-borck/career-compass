@@ -49,6 +49,8 @@ export type RunChatTurnInput = {
   jobAdvert?: string;
   searchSources?: SourceRef[];
   attachedResults?: ChatAttachedResult[];
+  // Stream the reply: receives the cumulative text after each token.
+  onToken?: (contentSoFar: string) => void;
 };
 
 export type RunChatTurnResult = {
@@ -115,6 +117,7 @@ export async function runChatTurn(input: RunChatTurnInput): Promise<RunChatTurnR
         toProviderMessages(i.messages, systemPrompt, contextBlock, i.searchSources),
       parse: (raw) => raw,
       responseFormat: { type: 'text' },
+      onToken: input.onToken,
     },
     {
       steps: [(i) => ({ ...i, messages: trimHistory(i.messages, MESSAGE_TRIM_COUNT_TURN) })],

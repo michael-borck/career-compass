@@ -6,8 +6,8 @@
 // updates are visible to the LLM call). The assistant reply is appended on
 // return.
 //
-// Non-streaming — the legacy /api/chat route was also non-streaming, the
-// user waits for the full reply.
+// Streaming: the advisor's reply renders progressively as tokens arrive
+// (runChatTurn onToken), then is committed to the store on completion.
 //
 // Distillation is lazy: it only runs when the user clicks one of three
 // buttons:
@@ -52,6 +52,7 @@ export default function Chat() {
   const currentFocus = store.currentFocus;
 
   const [sending, setSending] = useState(false);
+  const [streamingReply, setStreamingReply] = useState<string | null>(null);
   const [paperclipOpen, setPaperclipOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewProfile, setReviewProfile] = useState<StudentProfile | null>(null);
@@ -94,6 +95,7 @@ export default function Chat() {
         jobAdvert: state.jobAdvert,
         searchSources,
         attachedResults: state.chatAttachedResults,
+        onToken: (partial) => setStreamingReply(partial),
       });
       if (trimmed) {
         store.addChatMessage({
@@ -113,6 +115,7 @@ export default function Chat() {
       });
     } finally {
       setSending(false);
+      setStreamingReply(null);
     }
   }
 
@@ -253,7 +256,22 @@ export default function Chat() {
         </Button>
       </div>
 
-      <ChatMessageList messages={messages} />
+      <ChatMessageList
+        messages={
+          streamingReply !== null
+            ? [
+                ...messages,
+                {
+                  id: 'streaming-reply',
+                  role: 'assistant' as const,
+                  content: streamingReply,
+                  timestamp: Date.now(),
+                  kind: 'message' as const,
+                },
+              ]
+            : messages
+        }
+      />
       <ChatComposer
         onSend={handleSend}
         onPaperclip={() => setPaperclipOpen(true)}

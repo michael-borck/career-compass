@@ -13,7 +13,7 @@
 // This replaces the per-feature callOnce wrapper + hand-written nested
 // try/catch retry that every feature service used to carry.
 
-import { chat, type ChatMessage, type ResponseFormat } from './llm';
+import { chat, chatStream, type ChatMessage, type ResponseFormat, type TokenHandler } from './llm';
 import { isTokenLimitError } from '@/lib/token-limit';
 
 export type GenSpec<I, T> = {
@@ -29,6 +29,11 @@ export type GenSpec<I, T> = {
   // how 'text' maps onto the wire.
   responseFormat?: ResponseFormat;
   temperature?: number;
+  // When set, the model call streams and onToken receives the cumulative
+  // content after each delta. Intended for free-text conversational turns;
+  // JSON-mode features gain nothing from partial output. If a trim-ladder
+  // retry fires, the stream restarts from empty content.
+  onToken?: TokenHandler;
 };
 
 /** One attempt: build messages, call the model, parse the reply. No retry. */
@@ -38,11 +43,12 @@ export async function callStructured<I, T>(spec: GenSpec<I, T>): Promise<T> {
   // set it. chat() only forwards response_format when present, so omitting is
   // 1:1 with the old behaviour — sending { type: 'text' } would not be.
   const responseFormat = spec.responseFormat ?? { type: 'json_object' };
-  const result = await chat({
+  const options = {
     messages: spec.buildMessages(spec.input),
     ...(responseFormat.type === 'json_object' ? { response_format: responseFormat } : {}),
     ...(spec.temperature !== undefined ? { temperature: spec.temperature } : {}),
-  });
+  };
+  const result = spec.onToken ? await chatStream(options, spec.onToken) : await chat(options);
   return spec.parse(result.content, spec.input);
 }
 

@@ -323,3 +323,63 @@ describe('apiFetch — request wiring', () => {
     await promise;
   });
 });
+
+describe('apiFetch — streaming mode', () => {
+  it('delivers 2xx bodies via onChunk and resolves with an empty body', async () => {
+    const { net, state } = makeFakeNet();
+    const received = [];
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/sse' }, (t) =>
+      received.push(t)
+    );
+    await tick();
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.statusMessage = 'OK';
+    res.headers = {};
+    state.lastRequest.emit('response', res);
+    res.emit('data', Buffer.from('data: {"a":1}\n'));
+    res.emit('data', Buffer.from('data: {"a":2}\n'));
+    res.emit('end');
+    const out = await promise;
+    expect(received).toEqual(['data: {"a":1}\n', 'data: {"a":2}\n']);
+    expect(out.ok).toBe(true);
+    expect(out.body).toBe('');
+  });
+
+  it('keeps multi-byte UTF-8 sequences intact across chunk boundaries', async () => {
+    const { net, state } = makeFakeNet();
+    const received = [];
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/sse' }, (t) =>
+      received.push(t)
+    );
+    await tick();
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.statusMessage = 'OK';
+    res.headers = {};
+    state.lastRequest.emit('response', res);
+    const emoji = Buffer.from('🎓'); // 4 bytes
+    res.emit('data', emoji.subarray(0, 2));
+    res.emit('data', emoji.subarray(2));
+    res.emit('end');
+    await promise;
+    expect(received.join('')).toBe('🎓');
+  });
+
+  it('buffers non-2xx bodies so the error payload is available', async () => {
+    const { net, state } = makeFakeNet();
+    const received = [];
+    const promise = _apiFetchWithNet(net, { url: 'https://example.com/sse' }, (t) =>
+      received.push(t)
+    );
+    await tick();
+    state.lastRequest.emit(
+      'response',
+      fakeResponse({ statusCode: 429, statusMessage: 'Too Many', body: '{"error":"rate"}' })
+    );
+    const out = await promise;
+    expect(received).toEqual([]);
+    expect(out.ok).toBe(false);
+    expect(out.body).toBe('{"error":"rate"}');
+  });
+});

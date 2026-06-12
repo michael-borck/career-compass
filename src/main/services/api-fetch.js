@@ -18,6 +18,7 @@
 // process).
 
 const electron = require('electron');
+const { StringDecoder } = require('node:string_decoder');
 
 // Hard ceiling on response body size. Provider APIs return JSON in the
 // kilobyte-to-low-megabyte range; anything bigger means a misbehaving or
@@ -51,8 +52,12 @@ const MAX_REDIRECTS = 5;
 /**
  * @param {{ request: (options: object) => TimeoutCapableRequest }} net
  * @param {ApiFetchArgs} args
+ * @param {(text: string) => void} [onChunk] - streaming mode: 2xx response
+ *   bodies are delivered incrementally as UTF-8 text (multi-byte sequences
+ *   kept intact via StringDecoder) and the resolved body is empty. Non-2xx
+ *   responses are buffered as usual so callers can surface the error payload.
  */
-function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeoutMs }) {
+function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeoutMs }, onChunk) {
   return new Promise((resolve, reject) => {
     // Only plain web schemes. The renderer is trusted code, but this handler
     // is the one place a compromised renderer could reach file:// or other
@@ -139,6 +144,9 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
     const chunks = [];
     let receivedBytes = 0;
     request.on('response', (response) => {
+      const ok = response.statusCode >= 200 && response.statusCode < 300;
+      const streaming = !!onChunk && ok;
+      const decoder = streaming ? new StringDecoder('utf-8') : null;
       response.on('data', (chunk) => {
         if (settled) return;
         receivedBytes += chunk.length;
@@ -153,15 +161,24 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
           reject(new Error(`Response exceeded ${MAX_RESPONSE_BYTES} bytes`));
           return;
         }
-        chunks.push(chunk);
+        if (streaming && decoder && onChunk) {
+          const text = decoder.write(chunk);
+          if (text) onChunk(text);
+        } else {
+          chunks.push(chunk);
+        }
       });
       response.on('end', () => {
         if (settled) return;
         settled = true;
         clearBackupTimeout();
+        if (streaming && decoder && onChunk) {
+          const tail = decoder.end();
+          if (tail) onChunk(tail);
+        }
         const buf = Buffer.concat(chunks);
         resolve({
-          ok: response.statusCode >= 200 && response.statusCode < 300,
+          ok,
           status: response.statusCode,
           statusText: response.statusMessage,
           headers: response.headers,
@@ -196,6 +213,16 @@ function _apiFetchWithNet(net, { url, method = 'GET', headers = {}, body, timeou
   });
 }
 
+/**
+ * Streaming variant: 2xx bodies arrive via onChunk; resolves with the final
+ * status (body empty on success, buffered error payload otherwise).
+ * @param {ApiFetchArgs} args
+ * @param {(text: string) => void} onChunk
+ */
+function apiFetchStream(args, onChunk) {
+  return _apiFetchWithNet(/** @type {any} */ (electron.net), args, onChunk);
+}
+
 /** @param {ApiFetchArgs} args */
 function apiFetch(args) {
   // Inside Electron, `require('electron')` returns the API object with
@@ -205,4 +232,4 @@ function apiFetch(args) {
   return _apiFetchWithNet(/** @type {any} */ (electron.net), args);
 }
 
-module.exports = { apiFetch, _apiFetchWithNet, MAX_RESPONSE_BYTES, MAX_REDIRECTS };
+module.exports = { apiFetch, apiFetchStream, _apiFetchWithNet, MAX_RESPONSE_BYTES, MAX_REDIRECTS };

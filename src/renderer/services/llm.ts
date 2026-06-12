@@ -16,6 +16,7 @@
 // with the addition of native Gemini support per Phase 3 spec.
 
 import { PROVIDERS } from '../../shared/providers';
+import { createSSEParser, openAIDelta, anthropicDelta, geminiDelta } from './sse';
 
 export type Provider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
 
@@ -216,14 +217,9 @@ async function callOpenAICompatible(args: {
   return parseOpenAIResponse(provider, resp);
 }
 
-async function callAnthropic(args: {
-  apiKey: string;
-  model: string;
-  options: ChatOptions;
-}): Promise<ChatResult> {
-  const { apiKey, model, options } = args;
-  // Anthropic puts the system prompt in a separate top-level `system` field,
-  // not in the messages array. Concatenate any system messages.
+// Anthropic puts the system prompt in a separate top-level `system` field,
+// not in the messages array. Concatenate any system messages.
+function buildAnthropicBody(model: string, options: ChatOptions): Record<string, unknown> {
   const systemMessages = options.messages.filter((m) => m.role === 'system');
   const nonSystem = options.messages.filter((m) => m.role !== 'system');
   const body: Record<string, unknown> = {
@@ -236,17 +232,29 @@ async function callAnthropic(args: {
   }
   if (options.temperature !== undefined) body.temperature = options.temperature;
   // Anthropic has no equivalent of response_format; omit silently.
+  return body;
+}
+
+const ANTHROPIC_HEADERS = (apiKey: string): Record<string, string> => ({
+  'Content-Type': 'application/json',
+  'x-api-key': apiKey,
+  'anthropic-version': '2023-06-01',
+});
+
+async function callAnthropic(args: {
+  apiKey: string;
+  model: string;
+  options: ChatOptions;
+}): Promise<ChatResult> {
+  const { apiKey, model, options } = args;
+  const body = buildAnthropicBody(model, options);
 
   let resp;
   try {
     resp = await window.electronAPI.apiFetch({
       url: 'https://api.anthropic.com/v1/messages',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: ANTHROPIC_HEADERS(apiKey),
       body: JSON.stringify(body),
       // LLM requests legitimately run 30-60s; this bounds the worst case.
       timeoutMs: 60000,
@@ -280,16 +288,11 @@ async function callAnthropic(args: {
   return { content, usage };
 }
 
-async function callGemini(args: {
-  apiKey: string;
-  model: string;
-  options: ChatOptions;
-}): Promise<ChatResult> {
-  const { apiKey, model, options } = args;
-  // Gemini native generateContent expects:
-  //   - role 'user' or 'model' (not 'assistant')
-  //   - parts: [{ text }]
-  //   - systemInstruction split out from contents
+// Gemini native generateContent expects:
+//   - role 'user' or 'model' (not 'assistant')
+//   - parts: [{ text }]
+//   - systemInstruction split out from contents
+function buildGeminiBody(options: ChatOptions): Record<string, unknown> {
   const systemMessages = options.messages.filter((m) => m.role === 'system');
   const nonSystem = options.messages.filter((m) => m.role !== 'system');
   const contents = nonSystem.map((m) => ({
@@ -311,10 +314,24 @@ async function callGemini(args: {
   if (Object.keys(generationConfig).length > 0) {
     body.generationConfig = generationConfig;
   }
+  return body;
+}
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+function geminiUrl(model: string, apiKey: string, stream: boolean): string {
+  const verb = stream ? 'streamGenerateContent?alt=sse&' : 'generateContent?';
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model
-  )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  )}:${verb}key=${encodeURIComponent(apiKey)}`;
+}
+
+async function callGemini(args: {
+  apiKey: string;
+  model: string;
+  options: ChatOptions;
+}): Promise<ChatResult> {
+  const { apiKey, model, options } = args;
+  const body = buildGeminiBody(options);
+  const url = geminiUrl(model, apiKey, false);
   let resp;
   try {
     resp = await window.electronAPI.apiFetch({
@@ -413,6 +430,132 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
         apiKey,
         model,
         options,
+      });
+    }
+    default: {
+      const exhaustive: never = provider;
+      throw new LLMError(`Unknown provider: ${String(exhaustive)}`, 0, '');
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Streaming
+
+export type TokenHandler = (contentSoFar: string) => void;
+
+// Streaming requests get a longer wall-clock bound than one-shot calls: the
+// timeout in api-fetch is a hard cap, not an inactivity timer, and long
+// generations stream well past 60s on local models.
+const STREAM_TIMEOUT_MS = 300000;
+
+async function streamRequest(args: {
+  provider: Provider;
+  url: string;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  extract: (data: any) => string;
+  onToken: TokenHandler;
+}): Promise<ChatResult> {
+  let content = '';
+  const push = createSSEParser((payload) => {
+    let data: unknown;
+    try {
+      data = JSON.parse(payload);
+    } catch {
+      return; // tolerate non-JSON keepalives
+    }
+    const delta = args.extract(data);
+    if (delta) {
+      content += delta;
+      args.onToken(content);
+    }
+  });
+
+  let resp;
+  try {
+    resp = await window.electronAPI.apiFetchStream(
+      {
+        url: args.url,
+        method: 'POST',
+        headers: args.headers,
+        body: JSON.stringify(args.body),
+        timeoutMs: STREAM_TIMEOUT_MS,
+      },
+      push
+    );
+  } catch (err) {
+    throw new LLMError(
+      `Network error contacting ${PROVIDERS[args.provider].label}: ${err instanceof Error ? err.message : String(err)}`,
+      0,
+      ''
+    );
+  }
+  if (!resp.ok) {
+    throw new LLMError(
+      `${PROVIDERS[args.provider].label} request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
+      resp.status,
+      resp.body
+    );
+  }
+  return { content };
+}
+
+// Streaming chat. Same provider dispatch and request shapes as chat(), with
+// the provider's stream flag set; onToken receives the cumulative content
+// after every delta. Resolves with the final ChatResult (no usage stats —
+// not all providers report them on streams).
+export async function chatStream(options: ChatOptions, onToken: TokenHandler): Promise<ChatResult> {
+  const settings = await loadSettings();
+  const provider = settings.provider;
+  const model = settings.model;
+  const apiKey = await loadApiKey(provider);
+
+  switch (provider) {
+    case 'ollama':
+    case 'openai':
+    case 'groq':
+    case 'openrouter':
+    case 'custom': {
+      const key =
+        provider === 'ollama'
+          ? null
+          : provider === 'custom'
+            ? apiKey
+            : requireApiKey(provider, apiKey);
+      const baseURL = resolveBaseURL(provider, settings.baseURL);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (key) headers.Authorization = `Bearer ${key}`;
+      return streamRequest({
+        provider,
+        url: `${stripTrailingSlash(baseURL)}/chat/completions`,
+        headers,
+        body: { ...buildOpenAIBody(model, options), stream: true },
+        extract: openAIDelta,
+        onToken,
+      });
+    }
+    case 'claude': {
+      const key = requireApiKey(provider, apiKey);
+      return streamRequest({
+        provider,
+        url: 'https://api.anthropic.com/v1/messages',
+        headers: ANTHROPIC_HEADERS(key),
+        body: { ...buildAnthropicBody(model, options), stream: true },
+        extract: anthropicDelta,
+        onToken,
+      });
+    }
+    case 'gemini': {
+      const key = requireApiKey(provider, apiKey);
+      return streamRequest({
+        provider,
+        url: geminiUrl(model, key, true),
+        headers: { 'Content-Type': 'application/json' },
+        body: buildGeminiBody(options),
+        extract: geminiDelta,
+        onToken,
       });
     }
     default: {

@@ -48,6 +48,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   /** @param {object} args */
   apiFetch: (args) => ipcRenderer.invoke('api:fetch', args),
 
+  // Streaming fetch: onChunk receives UTF-8 text pieces of a 2xx body; the
+  // returned promise resolves with the final status once the stream ends.
+  /**
+   * @param {object} args
+   * @param {(text: string) => void} onChunk
+   */
+  apiFetchStream: (args, onChunk) => {
+    const streamId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const channel = `api:stream:${streamId}`;
+    /** @param {unknown} _event @param {string} text */
+    const listener = (_event, text) => onChunk(text);
+    ipcRenderer.on(channel, listener);
+    return ipcRenderer.invoke('api:fetchStream', { ...args, streamId }).finally(() => {
+      ipcRenderer.removeListener(channel, listener);
+    });
+  },
+
   // File parsing
   /** @param {Uint8Array} fileBytes */
   parsePdf: (fileBytes) => ipcRenderer.invoke('files:parsePdf', fileBytes),

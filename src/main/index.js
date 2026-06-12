@@ -1,7 +1,7 @@
 // @ts-check
 const { app, BrowserWindow, Menu, shell, dialog, ipcMain, safeStorage } = require('electron');
 const path = require('path');
-const { apiFetch } = require('./services/api-fetch');
+const { apiFetch, apiFetchStream } = require('./services/api-fetch');
 const { parsePdf, parseDocx } = require('./services/file-processors');
 const { getOllamaModels, listModels, testConnection } = require('./services/providers');
 const {
@@ -360,6 +360,17 @@ ipcMain.handle('store-clear', () => {
 
 // Generic HTTP fetch proxy (bypasses CORS via main process)
 ipcMain.handle('api:fetch', async (event, args) => apiFetch(args));
+
+// Streaming variant: chunks flow to the renderer over a per-request channel
+// (api:stream:<id>) while the invoke promise resolves with the final status.
+ipcMain.handle('api:fetchStream', async (event, args) => {
+  const { streamId, ...fetchArgs } = args;
+  return apiFetchStream(fetchArgs, (text) => {
+    if (!event.sender.isDestroyed()) {
+      event.sender.send(`api:stream:${streamId}`, text);
+    }
+  });
+});
 
 // File parsing — renderer ships file bytes as a Uint8Array (structured-cloned
 // across IPC); we convert to a Node Buffer here for pdf-parse / mammoth.

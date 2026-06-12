@@ -53,6 +53,8 @@ export type RunInterviewTurnInput = {
   jobTitle?: string;
   jobAdvert?: string;
   distilledProfile?: StudentProfile | null;
+  // Stream the interviewer's reply: cumulative text after each token.
+  onToken?: (contentSoFar: string) => void;
 };
 
 export type RunInterviewTurnResult = {
@@ -179,6 +181,7 @@ export async function runInterviewTurn(
         ),
       parse: (raw) => raw,
       responseFormat: { type: 'text' },
+      onToken: input.onToken,
     },
     {
       steps: [

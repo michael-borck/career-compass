@@ -66,6 +66,13 @@ declare global {
 
       // Phase 2 additions
       apiFetch: (args: ApiFetchArgs) => Promise<ApiFetchResponse>;
+      // Streaming variant: onChunk receives UTF-8 text pieces of a 2xx body;
+      // resolves with the final status (body empty on success, buffered
+      // error payload on failure).
+      apiFetchStream: (
+        args: ApiFetchArgs,
+        onChunk: (text: string) => void
+      ) => Promise<ApiFetchResponse>;
       parsePdf: (fileBytes: Uint8Array) => Promise<string>;
       parseDocx: (fileBytes: Uint8Array) => Promise<string>;
     };

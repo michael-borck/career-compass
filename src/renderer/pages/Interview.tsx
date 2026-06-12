@@ -317,6 +317,7 @@ function SetupCard({ initialTarget }: { initialTarget: string }) {
 function Chat() {
   const store = useSessionStore();
   const [sending, setSending] = useState(false);
+  const [streamingReply, setStreamingReply] = useState<string | null>(null);
   const [generatingFeedback, setGeneratingFeedback] = useState(false);
 
   const target = store.interviewTarget ?? '';
@@ -366,6 +367,7 @@ function Chat() {
         jobTitle: state.jobTitle || undefined,
         jobAdvert: state.jobAdvert || undefined,
         distilledProfile: state.distilledProfile ?? undefined,
+        onToken: (partial) => setStreamingReply(partial),
       });
       store.addInterviewMessage({ role: 'assistant', content: reply });
       store.advanceInterviewPhase(nextPhase, nextTurnInPhase);
@@ -388,6 +390,7 @@ function Chat() {
       );
     } finally {
       setSending(false);
+      setStreamingReply(null);
     }
   }
 
@@ -428,7 +431,22 @@ function Chat() {
         </Button>
       </div>
 
-      <ChatMessageList messages={messages} />
+      <ChatMessageList
+        messages={
+          streamingReply !== null
+            ? [
+                ...messages,
+                {
+                  id: 'streaming-reply',
+                  role: 'assistant' as const,
+                  content: streamingReply,
+                  timestamp: Date.now(),
+                  kind: 'message' as const,
+                },
+              ]
+            : messages
+        }
+      />
 
       {generatingFeedback && (
         <div className='flex-shrink-0 border-t border-border px-6 py-3 text-[var(--text-sm)] text-ink-muted text-center'>
