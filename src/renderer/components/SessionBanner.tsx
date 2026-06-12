@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSessionStore } from '@/lib/session-store';
 import { saveSessionToFile, loadSessionFromFile } from '@/lib/session-file';
+import { careerPackToExportDoc, countPackSections } from '@/lib/export/features/career-pack';
+import { toDocx } from '@/lib/export/to-docx';
+import { downloadBlob } from '@/lib/download';
 
 export default function SessionBanner() {
   const store = useSessionStore();
@@ -135,6 +138,41 @@ export default function SessionBanner() {
   function handleStartOver() {
     if (!confirm('Start over? This clears your results but keeps your uploaded material.')) return;
     store.resetOutputs();
+  }
+
+  // Career Pack: one document bundling every completed activity. Offered once
+  // there are at least two sections — below that the per-page exports suffice.
+  const packInput = {
+    careerStory,
+    valuesCompass,
+    industryExploration,
+    comparison,
+    skillsMapping,
+    gapAnalysis,
+    gapAnalysisSources: store.gapAnalysisSources,
+    learningPath,
+    learningPathSources: store.learningPathSources,
+    interviewFeedback,
+    interviewSources: store.interviewSources,
+    boardReview,
+    odysseyLives,
+    elevatorPitch,
+    coverLetter,
+    resumeReview,
+  };
+  const packSections = countPackSections(packInput);
+
+  async function handleExportPack() {
+    const doc = careerPackToExportDoc(packInput);
+    if (!doc) return;
+    try {
+      const blob = await toDocx(doc);
+      downloadBlob(`career-pack-${new Date().toISOString().slice(0, 10)}.docx`, blob);
+      toast.success('Career pack saved.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not build the career pack.');
+    }
   }
 
   const pillClass =
@@ -283,6 +321,16 @@ export default function SessionBanner() {
       )}
 
       <div className='flex items-center gap-3 flex-shrink-0 text-[var(--text-xs)]'>
+        {packSections >= 2 && (
+          <button
+            type='button'
+            onClick={() => void handleExportPack()}
+            className='font-medium text-accent hover:underline'
+            title={`One document with all ${packSections} completed sections`}
+          >
+            Export career pack
+          </button>
+        )}
         <button
           type='button'
           onClick={() => saveSessionToFile()}

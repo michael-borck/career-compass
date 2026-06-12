@@ -1,10 +1,9 @@
 /**
- * Triggers a browser download for a JSON string. Used by the Talk Buddy
- * export buttons. No-op in environments without `document` (e.g. SSR).
+ * Triggers a browser download for a Blob. No-op in environments without
+ * `document` (e.g. tests without jsdom).
  */
-export function downloadJsonFile(filename: string, json: string): void {
+export function downloadBlob(filename: string, blob: Blob): void {
   if (typeof document === 'undefined') return;
-  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -13,4 +12,9 @@ export function downloadJsonFile(filename: string, json: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/** Triggers a browser download for a JSON string. */
+export function downloadJsonFile(filename: string, json: string): void {
+  downloadBlob(filename, new Blob([json], { type: 'application/json' }));
 }
