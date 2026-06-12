@@ -1,4 +1,15 @@
+import toast from 'react-hot-toast';
+import { useSessionStore } from '@/lib/session-store';
+import { loadSampleProfile } from '@/lib/sample-data';
+
 export default function Hero() {
+  const hasProfile = useSessionStore((s) => !!s.resumeText || !!s.freeText.trim());
+
+  function handleLoadSample() {
+    loadSampleProfile();
+    toast.success('Sample profile loaded — try any activity below.');
+  }
+
   return (
     <section>
       <div className='custom-screen pt-14 sm:pt-20 pb-8 text-center'>
@@ -12,6 +23,19 @@ export default function Hero() {
           Explore what's possible. Understand what it takes. Reflect on what fits. Build what you
           need.
         </p>
+        {!hasProfile && (
+          <p className='mt-4 text-[var(--text-sm)] text-ink-quiet'>
+            Just exploring?{' '}
+            <button
+              type='button'
+              onClick={handleLoadSample}
+              className='underline hover:text-accent'
+            >
+              Load a sample profile
+            </button>{' '}
+            and try any activity.
+          </p>
+        )}
       </div>
     </section>
   );
