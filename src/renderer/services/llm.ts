@@ -454,7 +454,6 @@ async function streamRequest(args: {
   url: string;
   headers: Record<string, string>;
   body: Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   extract: (data: any) => string;
   onToken: TokenHandler;
 }): Promise<ChatResult> {

@@ -440,7 +440,9 @@ function Chat() {
                   id: 'streaming-reply',
                   role: 'assistant' as const,
                   content: streamingReply,
-                  timestamp: Date.now(),
+                  // Synthetic in-flight message; a stable timestamp keeps
+                  // render pure (react-hooks/purity). Never persisted.
+                  timestamp: 0,
                   kind: 'message' as const,
                 },
               ]

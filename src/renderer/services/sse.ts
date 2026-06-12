@@ -26,7 +26,6 @@ export function createSSEParser(onData: SSEDataHandler): (chunk: string) => void
 // Per-provider-family token extractors. Each takes one parsed SSE JSON
 // payload and returns the text delta it carries ('' when the event is
 // bookkeeping, e.g. anthropic message_start / openai role priming).
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function openAIDelta(data: any): string {
   return data?.choices?.[0]?.delta?.content ?? '';
