@@ -16,6 +16,8 @@ import { generateCoverLetter } from '../services/coverLetter';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { coverLetterToExportDoc } from '@/lib/export/features/cover-letter';
 
 export default function CoverLetter() {
   const navigate = useNavigate();
@@ -224,6 +226,7 @@ export default function CoverLetter() {
                   description: 'Cap off your materials with a personal site.',
                   path: '/portfolio',
                 },
+                discussWithAdvisorStep('your cover letter', () => coverLetterToExportDoc(letter)),
               ]}
             />
           </>

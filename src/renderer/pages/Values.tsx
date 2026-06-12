@@ -16,6 +16,8 @@ import { generateValuesCompass } from '../services/values';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { valuesCompassToExportDoc } from '@/lib/export/features/values';
 
 export default function Values() {
   const navigate = useNavigate();
@@ -196,6 +198,9 @@ export default function Values() {
                   description: 'Weave your values into one narrative.',
                   path: '/career-story',
                 },
+                discussWithAdvisorStep('your values compass', () =>
+                  valuesCompassToExportDoc(compass)
+                ),
               ]}
             />
           </>

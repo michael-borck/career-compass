@@ -16,6 +16,8 @@ import { generateLearningPath } from '../services/learningPath';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { learningPathToExportDoc } from '@/lib/export/features/learning-path';
 
 export default function LearningPath() {
   const navigate = useNavigate();
@@ -224,6 +226,9 @@ export default function LearningPath() {
                   description: 'Rehearse the role you are working toward.',
                   path: '/interview',
                 },
+                discussWithAdvisorStep('your learning path', () =>
+                  learningPathToExportDoc(path, sources)
+                ),
               ]}
             />
           </>

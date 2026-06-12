@@ -18,6 +18,8 @@ import { generateBoardReview } from '../services/board';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { boardReviewToExportDoc } from '@/lib/export/features/board';
 
 export default function Board() {
   const navigate = useNavigate();
@@ -254,6 +256,9 @@ export default function Board() {
                   description: 'Pull the advisors’ insights into one narrative.',
                   path: '/career-story',
                 },
+                discussWithAdvisorStep('your board review', () =>
+                  boardReviewToExportDoc(boardReview)
+                ),
               ]}
             />
           </div>

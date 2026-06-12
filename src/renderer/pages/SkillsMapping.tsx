@@ -16,6 +16,8 @@ import { generateSkillsMapping } from '../services/skillsMapping';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { skillsMappingToExportDoc } from '@/lib/export/features/skills-mapping';
 
 export default function SkillsMapping() {
   const navigate = useNavigate();
@@ -191,6 +193,9 @@ export default function SkillsMapping() {
                   description: 'Your mapping feeds a sharper plan.',
                   path: '/learning-path',
                 },
+                discussWithAdvisorStep('your skills mapping', () =>
+                  skillsMappingToExportDoc(mapping)
+                ),
               ]}
             />
           </>

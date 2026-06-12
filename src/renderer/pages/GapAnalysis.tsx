@@ -16,6 +16,8 @@ import { generateGapAnalysis } from '../services/gapAnalysis';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { gapAnalysisToExportDoc } from '@/lib/export/features/gap-analysis';
 
 export default function GapAnalysis() {
   const navigate = useNavigate();
@@ -235,6 +237,9 @@ export default function GapAnalysis() {
                   description: 'Rehearse for the target role and get feedback.',
                   path: '/interview',
                 },
+                discussWithAdvisorStep('your gap analysis', () =>
+                  gapAnalysisToExportDoc(analysis, sources)
+                ),
               ]}
             />
           </>

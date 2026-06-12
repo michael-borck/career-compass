@@ -82,6 +82,13 @@ export type StudentProfile = {
 
 export type ChatMessageKind = 'message' | 'focus-marker' | 'attachment-summary' | 'notice';
 
+// A feature result the student explicitly attached to the chat so the
+// advisor can discuss it. Stored as markdown (from the ExportDoc builders).
+export type ChatAttachedResult = {
+  title: string;
+  markdown: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -261,6 +268,7 @@ export type SessionState = {
   // Chat
   chatMessages: ChatMessage[];
   currentFocus: string | null;
+  chatAttachedResults: ChatAttachedResult[];
 
   // Outputs
   distilledProfile: StudentProfile | null;
@@ -325,6 +333,9 @@ export type SessionState = {
       Partial<Pick<ChatMessage, 'id' | 'timestamp' | 'kind'>>
   ) => void;
   replaceChatMessages: (msgs: ChatMessage[]) => void;
+  // Attach (or refresh) a feature result for the advisor; replaces any
+  // earlier attachment with the same title.
+  attachChatResult: (result: ChatAttachedResult) => void;
   setFocus: (career: string | null) => void;
   setDistilledProfile: (profile: StudentProfile | null) => void;
   setCareers: (careers: finalCareerInfo[] | null) => void;
@@ -404,6 +415,7 @@ const initialState = {
   jobAdvert: '',
   chatMessages: [],
   currentFocus: null,
+  chatAttachedResults: [],
   distilledProfile: null,
   careers: null,
   selectedCareerId: null,
@@ -482,6 +494,14 @@ export const useSessionStore = create<SessionState>()(
         })),
 
       replaceChatMessages: (msgs) => set({ chatMessages: msgs }),
+
+      attachChatResult: (result) =>
+        set((s) => ({
+          chatAttachedResults: [
+            ...s.chatAttachedResults.filter((r) => r.title !== result.title),
+            result,
+          ],
+        })),
 
       setFocus: (career) => set({ currentFocus: career }),
       setDistilledProfile: (profile) => set({ distilledProfile: profile }),

@@ -45,6 +45,8 @@ import { downloadJsonFile } from '@/lib/download';
 import { runInterviewTurn, generateInterviewFeedback } from '../services/interview';
 import { isConfigured as isLLMConfigured } from '../services/llm';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { interviewFeedbackToExportDoc } from '@/lib/export/features/interview-feedback';
 
 const DIFFICULTY_OPTIONS: {
   value: InterviewDifficulty;
@@ -112,6 +114,9 @@ export default function Interview() {
                   description: 'Apply the feedback to your materials.',
                   path: '/resume-review',
                 },
+                discussWithAdvisorStep('your interview feedback', () =>
+                  interviewFeedbackToExportDoc(feedback, store.interviewSources)
+                ),
               ]}
             />
           </div>

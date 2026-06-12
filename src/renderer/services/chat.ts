@@ -23,7 +23,12 @@ import { buildContextBlock } from '@/lib/context-block';
 import { buildDistillationPrompt, parseDistilledProfile } from '@/lib/prompts/distill';
 import { trimHistory } from '@/lib/chat-history';
 import { formatSourcesForFootnote } from '@/lib/search-prompt';
-import type { ChatMessage, SourceRef, StudentProfile } from '@/lib/session-store';
+import type {
+  ChatAttachedResult,
+  ChatMessage,
+  SourceRef,
+  StudentProfile,
+} from '@/lib/session-store';
 
 const MESSAGE_TRIM_COUNT_TURN = 20;
 const MESSAGE_TRIM_COUNT_DISTILL = 30;
@@ -43,6 +48,7 @@ export type RunChatTurnInput = {
   jobTitle?: string;
   jobAdvert?: string;
   searchSources?: SourceRef[];
+  attachedResults?: ChatAttachedResult[];
 };
 
 export type RunChatTurnResult = {
@@ -97,7 +103,9 @@ export async function runChatTurn(input: RunChatTurnInput): Promise<RunChatTurnR
     input.resumeText,
     input.freeText,
     input.jobTitle,
-    input.jobAdvert
+    input.jobAdvert,
+    null,
+    input.attachedResults
   );
 
   const { result: reply, trimmed } = await generate(

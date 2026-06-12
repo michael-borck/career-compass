@@ -17,6 +17,8 @@ import { generateIndustryExploration } from '../services/industry';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { industryExplorationToExportDoc } from '@/lib/export/features/industry';
 
 export default function Industry() {
   const navigate = useNavigate();
@@ -182,6 +184,9 @@ export default function Industry() {
                   description: 'Generate personalised paths in this field.',
                   path: '/careers',
                 },
+                discussWithAdvisorStep('your industry exploration', () =>
+                  industryExplorationToExportDoc(exploration)
+                ),
               ]}
             />
           </>

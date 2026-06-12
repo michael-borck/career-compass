@@ -59,3 +59,17 @@ describe('buildContextBlock', () => {
     expect(out).toContain('the resume');
   });
 });
+
+describe('buildContextBlock — attached results', () => {
+  it('includes attached results so the advisor can discuss them', () => {
+    const block = buildContextBlock(null, '', '', '', null, [
+      { title: 'your gap analysis', markdown: '# Gap Analysis\n\nSQL is critical.' },
+    ]);
+    expect(block).toContain('ATTACHED RESULT — your gap analysis');
+    expect(block).toContain('SQL is critical.');
+  });
+
+  it('returns null when there is nothing at all', () => {
+    expect(buildContextBlock(null, '', '', '', null, [])).toBeNull();
+  });
+});

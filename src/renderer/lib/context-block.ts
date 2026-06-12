@@ -1,4 +1,4 @@
-import type { StudentProfile } from './session-store';
+import type { StudentProfile, ChatAttachedResult } from './session-store';
 
 function formatProfile(p: StudentProfile): string {
   const parts: string[] = [];
@@ -15,7 +15,8 @@ export function buildContextBlock(
   freeText?: string,
   jobTitle?: string,
   jobAdvert?: string,
-  distilledProfile?: StudentProfile | null
+  distilledProfile?: StudentProfile | null,
+  attachedResults?: ChatAttachedResult[]
 ): string | null {
   const parts: string[] = [];
   if (resumeText && resumeText.trim()) {
@@ -34,6 +35,13 @@ export function buildContextBlock(
     const profileText = formatProfile(distilledProfile);
     if (profileText) {
       parts.push(`STUDENT PROFILE (distilled from a previous chat):\n${profileText}`);
+    }
+  }
+  if (attachedResults) {
+    for (const r of attachedResults) {
+      parts.push(
+        `ATTACHED RESULT — ${r.title} (generated earlier in this app; the student wants to discuss it):\n${r.markdown}`
+      );
     }
   }
   if (parts.length === 0) return null;

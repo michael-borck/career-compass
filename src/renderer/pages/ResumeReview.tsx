@@ -16,6 +16,8 @@ import { generateResumeReview } from '../services/resumeReview';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { resumeReviewToExportDoc } from '@/lib/export/features/resume-review';
 
 export default function ResumeReview() {
   const navigate = useNavigate();
@@ -201,6 +203,7 @@ export default function ResumeReview() {
                   description: 'Cap off your materials with a personal site.',
                   path: '/portfolio',
                 },
+                discussWithAdvisorStep('your resume review', () => resumeReviewToExportDoc(review)),
               ]}
             />
           </>

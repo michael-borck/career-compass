@@ -16,6 +16,8 @@ import { generateCareerStory } from '../services/careerStory';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { careerStoryToExportDoc } from '@/lib/export/features/career-story';
 
 export default function CareerStory() {
   const navigate = useNavigate();
@@ -237,6 +239,9 @@ export default function CareerStory() {
                   description: 'Turn your story into a 30–60 second pitch.',
                   path: '/pitch',
                 },
+                discussWithAdvisorStep('your career story', () =>
+                  careerStoryToExportDoc(careerStory)
+                ),
               ]}
             />
           </>

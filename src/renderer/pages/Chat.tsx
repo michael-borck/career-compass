@@ -93,6 +93,7 @@ export default function Chat() {
         jobTitle: state.jobTitle,
         jobAdvert: state.jobAdvert,
         searchSources,
+        attachedResults: state.chatAttachedResults,
       });
       if (trimmed) {
         store.addChatMessage({

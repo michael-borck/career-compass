@@ -16,6 +16,8 @@ import { generatePitch } from '../services/pitch';
 import { extractTextFromFile } from '../services/file-upload';
 import { useGeneration } from '../hooks/useGeneration';
 import NextSteps from '../components/NextSteps';
+import { discussWithAdvisorStep } from '@/lib/chat-attach';
+import { pitchToExportDoc } from '@/lib/export/features/pitch';
 
 export default function Pitch() {
   const navigate = useNavigate();
@@ -223,6 +225,7 @@ export default function Pitch() {
                   description: 'Expand your pitch into an application letter.',
                   path: '/cover-letter',
                 },
+                discussWithAdvisorStep('your elevator pitch', () => pitchToExportDoc(pitch)),
               ]}
             />
           </>
