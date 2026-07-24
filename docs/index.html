@@ -1,160 +1,197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Career Compass — Your Career. Your Direction.</title>
-  <meta name="description" content="Career Compass is a privacy-first desktop app for exploring career paths with AI. Analyse your resume locally, generate personalised career suggestions, and build application materials. Your data stays on your device." />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Career Compass — Your Career. Your Direction.</title>
+    <meta
+      name="description"
+      content="Career Compass is a privacy-first desktop app for exploring career paths with AI. Analyse your resume locally, generate personalised career suggestions, and build application materials. Your data stays on your device."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <div class="container topnav-inner">
+        <span class="brand">Career <span class="brand-accent">Compass</span></span>
+        <div class="topnav-links">
+          <a href="https://github.com/michael-borck/career-compass">GitHub</a>
+          <a href="https://github.com/michael-borck/career-compass/releases">Releases</a>
+          <a href="#download" class="nav-cta">Download</a>
+        </div>
+      </div>
+    </nav>
 
-  <nav class="topnav">
-    <div class="container topnav-inner">
-      <span class="brand">Career <span class="brand-accent">Compass</span></span>
-      <div class="topnav-links">
+    <header class="hero" id="top">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Privacy-first career exploration</p>
+          <h1>Your Career. <em>Your Direction.</em></h1>
+          <p class="sub">
+            Explore what's possible. Understand what it takes. Reflect on what fits. Build what you
+            need. Career Compass reads your resume on your own machine and turns it into career
+            paths, gap analyses, and application materials — with the AI provider of your choice.
+          </p>
+
+          <div class="download-block" id="download">
+            <a
+              id="download-btn"
+              class="btn btn-primary"
+              href="https://github.com/michael-borck/career-compass/releases/latest"
+              >Download</a
+            >
+            <div class="platform-toggle" role="group" aria-label="Choose platform">
+              <button data-platform="mac" class="platform-btn">macOS</button>
+              <button data-platform="windows" class="platform-btn">Windows</button>
+              <button data-platform="linux" class="platform-btn">Linux</button>
+            </div>
+            <p class="version">
+              <span id="version">&nbsp;</span>
+              <a id="alt-arch" class="alt-arch" href="#" hidden></a>
+            </p>
+            <p class="all-releases">
+              <a href="https://github.com/michael-borck/career-compass/releases"
+                >All releases &amp; older versions →</a
+              >
+            </p>
+          </div>
+
+          <p class="privacy-tag">Local-first. Your resume and personal data stay on this device.</p>
+        </div>
+
+        <div class="hero-shots">
+          <!-- Screenshots auto-discovered from screenshots/career-compass-1.png, -2.png, -3.png…
+             Drop a new numbered PNG in docs/screenshots/ and it joins the rotation. -->
+          <div class="carousel" id="carousel" aria-label="App screenshots">
+            <noscript
+              ><img src="screenshots/career-compass-1.png" alt="Career Compass home screen"
+            /></noscript>
+          </div>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="container steps">
+      <h2>Four ways in</h2>
+      <div class="grid four">
+        <div class="card">
+          <div class="card-num">Discover</div>
+          <h3>Find your paths</h3>
+          <p>
+            Generate six personalised career suggestions from your resume, compare them side by side
+            across seven dimensions, and explore what it's really like to work in an industry.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-num">Assess</div>
+          <h3>Know the gap</h3>
+          <p>
+            See what you have versus what you need, get a step-by-step learning path to job-ready,
+            and map your skills into professional frameworks.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-num">Reflect</div>
+          <h3>Test the fit</h3>
+          <p>
+            Imagine three alternative five-year futures, hear four perspectives on your profile from
+            a board of advisors, and discover what matters most with the values compass.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-num">Materials</div>
+          <h3>Build what you need</h3>
+          <p>
+            Draft a cover letter, write a 30–60 second elevator pitch, get structured feedback on
+            your resume, and rehearse interview questions.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="providers-band">
+      <div class="container">
+        <h2>Bring your own AI</h2>
+        <div class="grid three">
+          <div class="card plain">
+            <h3>Fully local, by default</h3>
+            <p>
+              Point Career Compass at Ollama and everything — resume, analysis, conversation — stays
+              on your machine. The app even walks you through setting it up.
+            </p>
+          </div>
+          <div class="card plain">
+            <h3>Or any major provider</h3>
+            <p>
+              Anthropic Claude, OpenAI, Google Gemini, Groq, OpenRouter, or any OpenAI-compatible
+              endpoint. Your key, your choice, one settings tab each.
+            </p>
+          </div>
+          <div class="card plain">
+            <h3>Keys kept safe</h3>
+            <p>
+              API keys are encrypted with your operating system's native secure storage — Keychain
+              on macOS, Credential Manager on Windows, libsecret on Linux.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container privacy">
+      <div class="privacy-grid">
+        <div>
+          <h2>Privacy-first, by design</h2>
+          <p>
+            Career decisions are personal. Career Compass is built so your resume, your doubts, and
+            your five-year plans are <em>not</em> on someone else's server.
+          </p>
+        </div>
+        <ul class="privacy-list">
+          <li><strong>No account, no telemetry.</strong> Install it and start exploring.</li>
+          <li>
+            <strong>Files processed locally.</strong> PDF and Word resumes are parsed on your
+            device.
+          </li>
+          <li>
+            <strong>Sessions stay on disk.</strong> Your results and chats live in local storage,
+            exportable as a single Career Pack document.
+          </li>
+          <li><strong>Open source.</strong> MIT-licensed, auditable, yours.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="container audience">
+      <div class="grid two">
+        <div class="card">
+          <h3>For students &amp; graduates</h3>
+          <p>
+            Turn a thin resume and a lot of questions into concrete directions: which paths fit,
+            what the first job pays, how long the learning path takes, and what to say in the
+            interview.
+          </p>
+        </div>
+        <div class="card">
+          <h3>For career changers</h3>
+          <p>
+            Your experience counts for more than you think. Map your existing skills onto new
+            fields, see the genuine gaps, and rehearse the story that connects where you've been to
+            where you're going.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-inner">
         <a href="https://github.com/michael-borck/career-compass">GitHub</a>
         <a href="https://github.com/michael-borck/career-compass/releases">Releases</a>
-        <a href="#download" class="nav-cta">Download</a>
+        <span class="copyright">MIT © Michael Borck · part of the Buddy suite</span>
       </div>
-    </div>
-  </nav>
+    </footer>
 
-  <header class="hero" id="top">
-    <div class="container hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow">Privacy-first career exploration</p>
-        <h1>Your Career. <em>Your Direction.</em></h1>
-        <p class="sub">Explore what's possible. Understand what it takes. Reflect on what
-          fits. Build what you need. Career Compass reads your resume on your own
-          machine and turns it into career paths, gap analyses, and application
-          materials — with the AI provider of your choice.</p>
-
-        <div class="download-block" id="download">
-          <a id="download-btn" class="btn btn-primary" href="https://github.com/michael-borck/career-compass/releases/latest">Download</a>
-          <div class="platform-toggle" role="group" aria-label="Choose platform">
-            <button data-platform="mac" class="platform-btn">macOS</button>
-            <button data-platform="windows" class="platform-btn">Windows</button>
-            <button data-platform="linux" class="platform-btn">Linux</button>
-          </div>
-          <p class="version"><span id="version">&nbsp;</span> <a id="alt-arch" class="alt-arch" href="#" hidden></a></p>
-          <p class="all-releases"><a href="https://github.com/michael-borck/career-compass/releases">All releases &amp; older versions →</a></p>
-        </div>
-
-        <p class="privacy-tag">Local-first. Your resume and personal data stay on this device.</p>
-      </div>
-
-      <div class="hero-shots">
-        <!-- Screenshots auto-discovered from screenshots/career-compass-1.png, -2.png, -3.png…
-             Drop a new numbered PNG in docs/screenshots/ and it joins the rotation. -->
-        <div class="carousel" id="carousel" aria-label="App screenshots">
-          <noscript><img src="screenshots/career-compass-1.png" alt="Career Compass home screen" /></noscript>
-        </div>
-        <div class="carousel-dots" id="carousel-dots"></div>
-      </div>
-    </div>
-  </header>
-
-  <section class="container steps">
-    <h2>Four ways in</h2>
-    <div class="grid four">
-      <div class="card">
-        <div class="card-num">Discover</div>
-        <h3>Find your paths</h3>
-        <p>Generate six personalised career suggestions from your resume, compare
-          them side by side across seven dimensions, and explore what it's really
-          like to work in an industry.</p>
-      </div>
-      <div class="card">
-        <div class="card-num">Assess</div>
-        <h3>Know the gap</h3>
-        <p>See what you have versus what you need, get a step-by-step learning
-          path to job-ready, and map your skills into professional frameworks.</p>
-      </div>
-      <div class="card">
-        <div class="card-num">Reflect</div>
-        <h3>Test the fit</h3>
-        <p>Imagine three alternative five-year futures, hear four perspectives on
-          your profile from a board of advisors, and discover what matters most
-          with the values compass.</p>
-      </div>
-      <div class="card">
-        <div class="card-num">Materials</div>
-        <h3>Build what you need</h3>
-        <p>Draft a cover letter, write a 30–60 second elevator pitch, get
-          structured feedback on your resume, and rehearse interview questions.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="providers-band">
-    <div class="container">
-      <h2>Bring your own AI</h2>
-      <div class="grid three">
-        <div class="card plain">
-          <h3>Fully local, by default</h3>
-          <p>Point Career Compass at Ollama and everything — resume, analysis,
-            conversation — stays on your machine. The app even walks you through
-            setting it up.</p>
-        </div>
-        <div class="card plain">
-          <h3>Or any major provider</h3>
-          <p>Anthropic Claude, OpenAI, Google Gemini, Groq, OpenRouter, or any
-            OpenAI-compatible endpoint. Your key, your choice, one settings tab
-            each.</p>
-        </div>
-        <div class="card plain">
-          <h3>Keys kept safe</h3>
-          <p>API keys are encrypted with your operating system's native secure
-            storage — Keychain on macOS, Credential Manager on Windows,
-            libsecret on Linux.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="container privacy">
-    <div class="privacy-grid">
-      <div>
-        <h2>Privacy-first, by design</h2>
-        <p>Career decisions are personal. Career Compass is built so your resume,
-          your doubts, and your five-year plans are <em>not</em> on someone
-          else's server.</p>
-      </div>
-      <ul class="privacy-list">
-        <li><strong>No account, no telemetry.</strong> Install it and start exploring.</li>
-        <li><strong>Files processed locally.</strong> PDF and Word resumes are parsed on your device.</li>
-        <li><strong>Sessions stay on disk.</strong> Your results and chats live in local storage, exportable as a single Career Pack document.</li>
-        <li><strong>Open source.</strong> MIT-licensed, auditable, yours.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="container audience">
-    <div class="grid two">
-      <div class="card">
-        <h3>For students &amp; graduates</h3>
-        <p>Turn a thin resume and a lot of questions into concrete directions:
-          which paths fit, what the first job pays, how long the learning path
-          takes, and what to say in the interview.</p>
-      </div>
-      <div class="card">
-        <h3>For career changers</h3>
-        <p>Your experience counts for more than you think. Map your existing
-          skills onto new fields, see the genuine gaps, and rehearse the story
-          that connects where you've been to where you're going.</p>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <div class="container footer-inner">
-      <a href="https://github.com/michael-borck/career-compass">GitHub</a>
-      <a href="https://github.com/michael-borck/career-compass/releases">Releases</a>
-      <span class="copyright">MIT © Michael Borck · part of the Buddy suite</span>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>

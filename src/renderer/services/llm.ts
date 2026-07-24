@@ -522,9 +522,7 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
       // Ollama and custom servers only need a key when behind an auth proxy;
       // the other providers always require one.
       const key =
-        provider === 'ollama' || provider === 'custom'
-          ? apiKey
-          : requireApiKey(provider, apiKey);
+        provider === 'ollama' || provider === 'custom' ? apiKey : requireApiKey(provider, apiKey);
       const baseURL = resolveBaseURL(provider, settings.baseURL);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers.Authorization = `Bearer ${key}`;
