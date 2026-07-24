@@ -17,6 +17,8 @@ export default tseslint.config(
       'playwright-report/',
       'test-results/',
       '.superpowers/',
+      // AppleDouble metadata files macOS scatters on exFAT volumes.
+      '**/._*',
     ],
   },
   js.configs.recommended,
@@ -43,6 +45,11 @@ export default tseslint.config(
     // Vitest test files for the main process are ESM.
     files: ['src/main/**/*.test.js', 'src/shared/**/*.test.js'],
     languageOptions: { globals: globals.node, sourceType: 'module' },
+  },
+  {
+    // GitHub Pages landing site: plain browser scripts.
+    files: ['docs/**/*.js'],
+    languageOptions: { globals: globals.browser },
   },
   prettier
 );

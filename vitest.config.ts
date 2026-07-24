@@ -10,6 +10,9 @@ export default defineConfig({
     // registers itself via a global afterEach.
     globals: true,
     include: ['src/**/*.test.{js,ts,tsx}'],
+    // AppleDouble metadata files macOS scatters on exFAT volumes ("._foo.test.ts")
+    // match the include glob but aren't parseable source.
+    exclude: ['**/node_modules/**', '**/._*'],
   },
   resolve: {
     alias: {
