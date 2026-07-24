@@ -184,8 +184,8 @@ async function callOpenAICompatible(args: {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  // Ollama doesn't need a real key but the OpenAI client sends one; keep the
-  // header optional. Other providers must have a key (enforced upstream).
+  // Ollama/custom servers only get a key when one is configured (e.g. behind
+  // an auth proxy); other providers must have a key (enforced upstream).
   if (apiKey) {
     headers.Authorization = `Bearer ${apiKey}`;
   }
@@ -377,10 +377,12 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
 
   switch (provider) {
     case 'ollama': {
+      // Key is optional: local Ollama needs none, but a shared/remote server
+      // behind an auth proxy may require a bearer token.
       return callOpenAICompatible({
         provider,
         baseURL: resolveBaseURL(provider, settings.baseURL),
-        apiKey: null,
+        apiKey,
         model,
         options,
       });
@@ -517,12 +519,12 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
     case 'groq':
     case 'openrouter':
     case 'custom': {
+      // Ollama and custom servers only need a key when behind an auth proxy;
+      // the other providers always require one.
       const key =
-        provider === 'ollama'
-          ? null
-          : provider === 'custom'
-            ? apiKey
-            : requireApiKey(provider, apiKey);
+        provider === 'ollama' || provider === 'custom'
+          ? apiKey
+          : requireApiKey(provider, apiKey);
       const baseURL = resolveBaseURL(provider, settings.baseURL);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers.Authorization = `Bearer ${key}`;

@@ -22,7 +22,7 @@
 
 /** @type {Record<Provider, ProviderDescriptor>} */
 const PROVIDERS = {
-  ollama: { label: 'Ollama', envVar: null, defaultBaseURL: 'http://localhost:11434/v1' },
+  ollama: { label: 'Ollama', envVar: 'OLLAMA_API_KEY', defaultBaseURL: 'http://localhost:11434/v1' },
   openai: {
     label: 'OpenAI',
     envVar: 'OPENAI_API_KEY',

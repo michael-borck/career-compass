@@ -124,7 +124,7 @@ describe('chat — openai', () => {
 });
 
 describe('chat — ollama', () => {
-  it('uses the configured baseURL and sends no Authorization header', async () => {
+  it('uses the configured baseURL and sends no Authorization header without a key', async () => {
     const api = mockElectronAPI({
       settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
     });
@@ -141,6 +141,26 @@ describe('chat — ollama', () => {
       settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
     });
     await expect(chat({ messages: [{ role: 'user', content: 'hi' }] })).resolves.toBeDefined();
+  });
+
+  it('sends a Bearer token when a key is stored (shared server behind auth proxy)', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'ollama', baseURL: 'https://ollama.example.edu/v1', model: 'llama3' },
+      secureStorage: { 'career-compass-llm-ollama': 'class-token' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    const call = api.apiFetch.mock.calls[0][0];
+    expect(call.url).toBe('https://ollama.example.edu/v1/chat/completions');
+    expect(call.headers.Authorization).toBe('Bearer class-token');
+  });
+
+  it('falls back to OLLAMA_API_KEY env var when no stored key', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'ollama', baseURL: 'https://ollama.example.edu/v1', model: 'llama3' },
+      envVars: { OLLAMA_API_KEY: 'env-token' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(api.apiFetch.mock.calls[0][0].headers.Authorization).toBe('Bearer env-token');
   });
 });
 

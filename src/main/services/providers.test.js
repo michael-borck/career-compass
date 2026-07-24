@@ -18,6 +18,7 @@ beforeEach(() => {
     'GROQ_API_KEY',
     'GOOGLE_API_KEY',
     'OPENROUTER_API_KEY',
+    'OLLAMA_API_KEY',
   ]) {
     vi.stubEnv(k, '');
   }
@@ -65,7 +66,15 @@ describe('listModels', () => {
     const fetchImpl = fetchOk({ models: [{ name: 'llama3', size: 42 }] });
     const models = await listModels('ollama', { baseURL: 'http://host/v1' }, fetchImpl);
     expect(models).toEqual([{ id: 'llama3', name: 'llama3', size: 42 }]);
-    expect(fetchImpl).toHaveBeenCalledWith('http://host/api/tags');
+    expect(fetchImpl).toHaveBeenCalledWith('http://host/api/tags', { headers: {} });
+  });
+
+  it('ollama: sends a bearer header when a key is configured', async () => {
+    const fetchImpl = fetchOk({ models: [] });
+    await listModels('ollama', { baseURL: 'http://host/v1', apiKey: 'tok' }, fetchImpl);
+    expect(fetchImpl).toHaveBeenCalledWith('http://host/api/tags', {
+      headers: { Authorization: 'Bearer tok' },
+    });
   });
 
   it('openai: throws without an api key', async () => {
@@ -140,6 +149,15 @@ describe('testConnection', () => {
   it('ollama: reports success from the response ok flag', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp({ ok: true }));
     expect(await testConnection('ollama', {}, fetchImpl)).toEqual({ success: true, error: null });
+    expect(fetchImpl).toHaveBeenCalledWith('http://localhost:11434/api/tags', { headers: {} });
+  });
+
+  it('ollama: strips a trailing /v1 and sends a bearer header when a key is configured', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp({ ok: true }));
+    await testConnection('ollama', { baseURL: 'https://host/v1', apiKey: 'tok' }, fetchImpl);
+    expect(fetchImpl).toHaveBeenCalledWith('https://host/api/tags', {
+      headers: { Authorization: 'Bearer tok' },
+    });
   });
 
   it('openai: reports a clear error when the key is missing', async () => {
@@ -194,8 +212,12 @@ describe('resolveApiKey', () => {
     expect(resolveApiKey('openrouter', {})).toBe('or');
   });
 
+  it('falls back to OLLAMA_API_KEY for ollama (matches llm.ts)', () => {
+    vi.stubEnv('OLLAMA_API_KEY', 'ol');
+    expect(resolveApiKey('ollama', {})).toBe('ol');
+  });
+
   it('returns undefined for providers with no env mapping', () => {
-    expect(resolveApiKey('ollama', {})).toBeUndefined();
     expect(resolveApiKey('custom', {})).toBeUndefined();
   });
 });

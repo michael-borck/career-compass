@@ -19,7 +19,7 @@ const ENV_VAR_BY_PROVIDER: Record<LLMProvider, string> = {
   groq: 'GROQ_API_KEY',
   gemini: 'GOOGLE_API_KEY',
   openrouter: 'OPENROUTER_API_KEY',
-  ollama: '',
+  ollama: 'OLLAMA_API_KEY',
   custom: '',
 };
 
@@ -195,13 +195,16 @@ export default function Settings() {
   }, []);
 
   const getApiKeyPlaceholder = (provider: LLMProvider): string => {
-    if (provider === 'ollama') return 'Not needed for local use';
+    if (provider === 'ollama' || provider === 'custom')
+      return 'Optional — only for servers that require a key';
     return 'Paste your secret key here';
   };
 
   const getApiKeyHelpText = (provider: LLMProvider): string => {
     if (provider === 'ollama')
-      return 'Ollama runs on your computer and does not need a secret key.';
+      return 'Leave blank when Ollama runs on your computer. If you use a shared or remote Ollama server that requires a secret key (bearer token), paste it here.';
+    if (provider === 'custom')
+      return 'Leave blank unless your server requires a secret key (bearer token).';
     const envVar = getEnvVarName(provider);
     return `You can leave this blank if you have already set the ${envVar} environment variable on your computer. Otherwise, paste your secret key here.`;
   };
@@ -210,13 +213,21 @@ export default function Settings() {
     const providerInfo = ProviderInfo[provider];
     setAvailableModels([]);
     setConnectionStatus({});
+    // Clear the field, then load the key stored for the newly selected
+    // provider — carrying the previous provider's key across would save it
+    // under the wrong provider on the next Save.
     setSettings((prev) => ({
       ...prev,
       provider,
       baseURL: providerInfo.defaultURL,
       model: '',
-      apiKey: provider === 'ollama' ? '' : prev.apiKey,
+      apiKey: '',
     }));
+    void secureStorage.getApiKey(provider).then((key) => {
+      if (key) {
+        setSettings((prev) => (prev.provider === provider ? { ...prev, apiKey: key } : prev));
+      }
+    });
   };
 
   const loadModels = async () => {
@@ -443,42 +454,45 @@ export default function Settings() {
                 </p>
               </div>
 
-              {ProviderInfo[settings.provider].requiresApiKey && (
-                <div>
-                  <Label htmlFor='apiKey' className='text-base font-medium text-ink'>
-                    Secret key
-                  </Label>
-                  <Input
-                    id='apiKey'
-                    type='password'
-                    value={settings.apiKey}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        apiKey: e.target.value,
-                      }))
-                    }
-                    placeholder={getApiKeyPlaceholder(settings.provider)}
-                    className='mt-2'
-                  />
-                  <div className='mt-2 space-y-1'>
-                    <p className='text-[var(--text-sm)] text-ink-muted'>
-                      {getApiKeyHelpText(settings.provider)}
-                    </p>
-                    <p className='text-[var(--text-sm)] text-ink-muted'>
-                      Get your secret key from{' '}
-                      <a
-                        href={ProviderInfo[settings.provider].website}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='text-accent hover:underline'
-                      >
-                        {ProviderInfo[settings.provider].website}
-                      </a>
-                    </p>
-                  </div>
+              <div>
+                <Label htmlFor='apiKey' className='text-base font-medium text-ink'>
+                  {ProviderInfo[settings.provider].requiresApiKey
+                    ? 'Secret key'
+                    : 'Secret key (optional)'}
+                </Label>
+                <Input
+                  id='apiKey'
+                  type='password'
+                  value={settings.apiKey}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      apiKey: e.target.value,
+                    }))
+                  }
+                  placeholder={getApiKeyPlaceholder(settings.provider)}
+                  className='mt-2'
+                />
+                <div className='mt-2 space-y-1'>
+                  <p className='text-[var(--text-sm)] text-ink-muted'>
+                    {getApiKeyHelpText(settings.provider)}
+                  </p>
+                  {ProviderInfo[settings.provider].requiresApiKey &&
+                    ProviderInfo[settings.provider].website && (
+                      <p className='text-[var(--text-sm)] text-ink-muted'>
+                        Get your secret key from{' '}
+                        <a
+                          href={ProviderInfo[settings.provider].website}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-accent hover:underline'
+                        >
+                          {ProviderInfo[settings.provider].website}
+                        </a>
+                      </p>
+                    )}
                 </div>
-              )}
+              </div>
 
               <div>
                 <div className='flex items-center justify-between'>
@@ -573,7 +587,7 @@ export default function Settings() {
                   />
                   <p className='text-[var(--text-sm)] text-ink-muted mt-2'>
                     {settings.provider === 'ollama'
-                      ? 'Make sure Ollama is running on your computer at this address'
+                      ? 'For local use, keep the default. For a shared or remote Ollama server, enter its address (ending in /v1) and a secret key above if it needs one.'
                       : settings.provider === 'custom'
                         ? 'The full URL of an OpenAI-compatible server (e.g. http://localhost:8080/v1)'
                         : 'Leave empty to use the default address'}

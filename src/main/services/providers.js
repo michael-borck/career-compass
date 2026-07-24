@@ -70,7 +70,12 @@ async function listModels(provider, config, fetchImpl = fetch) {
     switch (provider) {
       case 'ollama': {
         const url = (config.baseURL || 'http://localhost:11434').replace(/\/v1\/?$/, '');
-        const response = await fetchImpl(`${url}/api/tags`);
+        // Key is optional: only shared/remote Ollama servers behind an auth
+        // proxy require one.
+        /** @type {Record<string, string>} */
+        const ollamaHeaders = {};
+        if (apiKey) ollamaHeaders['Authorization'] = `Bearer ${apiKey}`;
+        const response = await fetchImpl(`${url}/api/tags`, { headers: ollamaHeaders });
         if (!response.ok) throw new Error(`Ollama not reachable`);
         /** @type {{ models?: Array<{ name: string, size?: number }> }} */
         const data = await response.json();
@@ -181,8 +186,11 @@ async function testConnection(provider, config, fetchImpl = fetch) {
 
     switch (provider) {
       case 'ollama': {
-        const ollamaUrl = config.baseURL || 'http://localhost:11434';
-        const ollamaResponse = await fetchImpl(`${ollamaUrl}/api/tags`);
+        const ollamaUrl = (config.baseURL || 'http://localhost:11434').replace(/\/v1\/?$/, '');
+        /** @type {Record<string, string>} */
+        const ollamaHeaders = {};
+        if (apiKey) ollamaHeaders['Authorization'] = `Bearer ${apiKey}`;
+        const ollamaResponse = await fetchImpl(`${ollamaUrl}/api/tags`, { headers: ollamaHeaders });
         return {
           success: ollamaResponse.ok,
           error: ollamaResponse.ok ? null : `Ollama not reachable at ${ollamaUrl}`,

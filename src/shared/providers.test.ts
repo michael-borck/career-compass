@@ -18,10 +18,11 @@ describe('PROVIDERS registry', () => {
     expect(PROVIDERS.groq.envVar).toBe('GROQ_API_KEY');
     expect(PROVIDERS.gemini.envVar).toBe('GOOGLE_API_KEY');
     expect(PROVIDERS.openrouter.envVar).toBe('OPENROUTER_API_KEY');
+    // Optional for ollama — only used when a shared/remote server needs a key.
+    expect(PROVIDERS.ollama.envVar).toBe('OLLAMA_API_KEY');
   });
 
-  it('has no env var for the keyless providers', () => {
-    expect(PROVIDERS.ollama.envVar).toBeNull();
+  it('has no env var for the custom provider', () => {
     expect(PROVIDERS.custom.envVar).toBeNull();
   });
 
