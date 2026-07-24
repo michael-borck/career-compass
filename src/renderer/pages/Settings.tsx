@@ -43,8 +43,9 @@ const ProviderInfo: Record<
   }
 > = {
   ollama: {
-    name: 'Ollama (runs on your computer)',
-    description: 'Keep everything private. No data leaves your device',
+    name: 'Ollama (local or your own server)',
+    description:
+      'Most private option. Runs on your computer, or connect to a shared Ollama server (e.g. one your class or workplace provides)',
     requiresApiKey: false,
     requiresBaseURL: false,
     defaultURL: 'http://localhost:11434/v1',
