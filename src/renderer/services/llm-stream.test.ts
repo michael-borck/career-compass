@@ -59,6 +59,52 @@ describe('chatStream — openai-compatible', () => {
   });
 });
 
+describe('chatStream — ollama (native NDJSON)', () => {
+  it('streams from /api/chat with think:false and accumulates message deltas', async () => {
+    const apiFetchStream = mockStreamAPI(
+      { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
+      {
+        chunks: [
+          '{"message":{"role":"assistant","content":"Hel"},"done":false}\n',
+          '{"message":{"role":"assistant","content":"lo"},"done":fal',
+          'se}\n',
+          '{"message":{"role":"assistant","content":""},"done":true}\n',
+        ],
+      }
+    );
+    const seen: string[] = [];
+    const result = await chatStream({ messages: [{ role: 'user', content: 'hi' }] }, (t) =>
+      seen.push(t)
+    );
+    expect(result.content).toBe('Hello');
+    expect(seen).toEqual(['Hel', 'Hello']);
+    const call = apiFetchStream.mock.calls[0][0] as { url: string; body: string };
+    expect(call.url).toBe('http://localhost:11434/api/chat');
+    const body = JSON.parse(call.body);
+    expect(body.stream).toBe(true);
+    expect(body.think).toBe(false);
+  });
+
+  it('does not surface thinking deltas as content', async () => {
+    mockStreamAPI(
+      {
+        provider: 'ollama',
+        baseURL: 'http://localhost:11434/v1',
+        model: 'qwen3.5:4b',
+        ollamaThink: true,
+      },
+      {
+        chunks: [
+          '{"message":{"role":"assistant","content":"","thinking":"hmm"},"done":false}\n',
+          '{"message":{"role":"assistant","content":"Hi"},"done":true}\n',
+        ],
+      }
+    );
+    const result = await chatStream({ messages: [{ role: 'user', content: 'hi' }] }, () => {});
+    expect(result.content).toBe('Hi');
+  });
+});
+
 describe('chatStream — anthropic', () => {
   it('uses the messages endpoint with stream:true and parses content_block_delta', async () => {
     const apiFetchStream = mockStreamAPI(

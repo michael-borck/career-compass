@@ -123,22 +123,92 @@ describe('chat — openai', () => {
   });
 });
 
-describe('chat — ollama', () => {
-  it('uses the configured baseURL and sends no Authorization header without a key', async () => {
+describe('chat — ollama (native /api/chat)', () => {
+  const nativeResponse = {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    body: JSON.stringify({
+      message: { role: 'assistant', content: 'hello' },
+      prompt_eval_count: 10,
+      eval_count: 5,
+      done: true,
+    }),
+  };
+
+  it('strips /v1 from the baseURL, defaults think:false, parses message + usage', async () => {
     const api = mockElectronAPI({
       settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
+      apiFetchResponse: nativeResponse,
     });
     const result = await chat({ messages: [{ role: 'user', content: 'hi' }] });
     expect(result.content).toBe('hello');
+    expect(result.usage).toEqual({ promptTokens: 10, completionTokens: 5 });
 
     const call = api.apiFetch.mock.calls[0][0];
-    expect(call.url).toBe('http://localhost:11434/v1/chat/completions');
+    expect(call.url).toBe('http://localhost:11434/api/chat');
     expect(call.headers.Authorization).toBeUndefined();
+    const body = JSON.parse(call.body);
+    expect(body.think).toBe(false);
+    expect(body.stream).toBe(false);
+    expect(body.messages).toEqual([{ role: 'user', content: 'hi' }]);
+  });
+
+  it('sends think:true when the setting is enabled', async () => {
+    const api = mockElectronAPI({
+      settings: {
+        provider: 'ollama',
+        baseURL: 'http://localhost:11434/v1',
+        model: 'qwen3.5:4b',
+        ollamaThink: true,
+      },
+      apiFetchResponse: nativeResponse,
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).think).toBe(true);
+  });
+
+  it('maps maxTokens -> options.num_predict and json response_format -> format', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
+      apiFetchResponse: nativeResponse,
+    });
+    await chat({
+      messages: [{ role: 'user', content: 'hi' }],
+      temperature: 0.4,
+      maxTokens: 512,
+      response_format: { type: 'json_object' },
+    });
+    const body = JSON.parse(api.apiFetch.mock.calls[0][0].body);
+    expect(body.options).toEqual({ temperature: 0.4, num_predict: 512 });
+    expect(body.format).toBe('json');
+  });
+
+  it('retries without think when the server rejects the field', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'old-model' },
+    });
+    api.apiFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        body: JSON.stringify({ error: '"old-model" does not support thinking' }),
+      })
+      .mockResolvedValueOnce(nativeResponse);
+    const result = await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(result.content).toBe('hello');
+    expect(api.apiFetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).think).toBe(false);
+    expect(JSON.parse(api.apiFetch.mock.calls[1][0].body).think).toBeUndefined();
   });
 
   it('does not throw when no API key is set', async () => {
     mockElectronAPI({
       settings: { provider: 'ollama', baseURL: 'http://localhost:11434/v1', model: 'llama3' },
+      apiFetchResponse: nativeResponse,
     });
     await expect(chat({ messages: [{ role: 'user', content: 'hi' }] })).resolves.toBeDefined();
   });
@@ -147,10 +217,11 @@ describe('chat — ollama', () => {
     const api = mockElectronAPI({
       settings: { provider: 'ollama', baseURL: 'https://ollama.example.edu/v1', model: 'llama3' },
       secureStorage: { 'career-compass-llm-ollama': 'class-token' },
+      apiFetchResponse: nativeResponse,
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
     const call = api.apiFetch.mock.calls[0][0];
-    expect(call.url).toBe('https://ollama.example.edu/v1/chat/completions');
+    expect(call.url).toBe('https://ollama.example.edu/api/chat');
     expect(call.headers.Authorization).toBe('Bearer class-token');
   });
 
@@ -158,6 +229,7 @@ describe('chat — ollama', () => {
     const api = mockElectronAPI({
       settings: { provider: 'ollama', baseURL: 'https://ollama.example.edu/v1', model: 'llama3' },
       envVars: { OLLAMA_API_KEY: 'env-token' },
+      apiFetchResponse: nativeResponse,
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
     expect(api.apiFetch.mock.calls[0][0].headers.Authorization).toBe('Bearer env-token');
@@ -449,9 +521,16 @@ describe('chat — baseURL fallback', () => {
   it('empty baseURL for ollama falls back to localhost default', async () => {
     const api = mockElectronAPI({
       settings: { provider: 'ollama', baseURL: '', model: 'llama3' },
+      apiFetchResponse: {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: JSON.stringify({ message: { role: 'assistant', content: 'hello' }, done: true }),
+      },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
-    expect(api.apiFetch.mock.calls[0][0].url).toBe('http://localhost:11434/v1/chat/completions');
+    expect(api.apiFetch.mock.calls[0][0].url).toBe('http://localhost:11434/api/chat');
   });
 
   it('explicit baseURL wins over provider default', async () => {

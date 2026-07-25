@@ -171,4 +171,4 @@ the stored key.
 | "Request failed: 401" | Secret key missing or mistyped | Re-paste the key in Settings and Save |
 | Windows blocks the installer | Normal for unsigned free software | "More info" → "Run anyway" |
 | A student's laptop can't reach the server at all | Network restrictions | Fallback: free Groq account (Part 2) |
-| Everything is just very slow | A whole class on one server | Expected — use the reflection tasks; consider moving volunteers to Groq |
+| Everything is just very slow | A whole class on one server | Expected — the server answers a few requests at a time and **queues the rest**, so simultaneous generation multiplies waits. Stagger the class, use the reflection tasks, consider moving volunteers to Groq |

@@ -16,7 +16,14 @@
 // with the addition of native Gemini support per Phase 3 spec.
 
 import { PROVIDERS } from '../../shared/providers';
-import { createSSEParser, openAIDelta, anthropicDelta, geminiDelta } from './sse';
+import {
+  createSSEParser,
+  createNDJSONParser,
+  openAIDelta,
+  anthropicDelta,
+  geminiDelta,
+  ollamaNativeDelta,
+} from './sse';
 
 export type Provider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
 
@@ -67,12 +74,15 @@ type Settings = {
   provider: Provider;
   baseURL: string;
   model: string;
+  // Ollama only: allow thinking models to run their reasoning phase.
+  ollamaThink: boolean;
 };
 
 const DEFAULT_SETTINGS: Settings = {
   provider: 'ollama',
   baseURL: '',
   model: '',
+  ollamaThink: false,
 };
 
 // Default base URLs for the OpenAI-compatible dispatch live in the shared
@@ -215,6 +225,109 @@ async function callOpenAICompatible(args: {
     );
   }
   return parseOpenAIResponse(provider, resp);
+}
+
+// ---------------------------------------------------------------------------
+// Ollama native /api/chat
+//
+// Ollama chat goes through the native endpoint rather than the OpenAI-compat
+// /v1 shim because only the native API honors `think: false` — the switch
+// that stops "thinking" models (qwen3.5, gemma4, …) from burning minutes of
+// reasoning (and the token budget) before answering. Model listing and
+// connection tests already use native endpoints (/api/tags).
+
+// Settings store the baseURL in OpenAI form (…/v1); the native API lives at
+// the server root.
+function ollamaRootURL(baseURL: string): string {
+  return stripTrailingSlash(baseURL).replace(/\/v1$/, '');
+}
+
+function buildOllamaNativeBody(
+  model: string,
+  options: ChatOptions,
+  think: boolean,
+  stream: boolean
+): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    model,
+    messages: options.messages,
+    stream,
+    think,
+  };
+  const modelOptions: Record<string, unknown> = {};
+  if (options.temperature !== undefined) modelOptions.temperature = options.temperature;
+  if (options.maxTokens !== undefined) modelOptions.num_predict = options.maxTokens;
+  if (Object.keys(modelOptions).length > 0) body.options = modelOptions;
+  if (options.response_format?.type === 'json_object') body.format = 'json';
+  return body;
+}
+
+function ollamaHeaders(apiKey: string | null): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  // Optional: only shared/remote servers behind an auth proxy need a key.
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  return headers;
+}
+
+// Some Ollama versions reject the `think` field for models with no thinking
+// mode. The field is best-effort — on that specific rejection, retry without.
+function isThinkRejection(status: number, body: string): boolean {
+  return status >= 400 && status < 500 && /think/i.test(body);
+}
+
+async function callOllamaNative(args: {
+  baseURL: string;
+  apiKey: string | null;
+  model: string;
+  options: ChatOptions;
+  think: boolean;
+}): Promise<ChatResult> {
+  const { baseURL, apiKey, model, options, think } = args;
+  const url = `${ollamaRootURL(baseURL)}/api/chat`;
+
+  const attempt = async (body: Record<string, unknown>) => {
+    try {
+      return await window.electronAPI.apiFetch({
+        url,
+        method: 'POST',
+        headers: ollamaHeaders(apiKey),
+        body: JSON.stringify(body),
+        // LLM requests legitimately run 30-60s; this bounds the worst case.
+        timeoutMs: 60000,
+      });
+    } catch (err) {
+      throw new LLMError(
+        `Network error contacting ${PROVIDERS.ollama.label}: ${err instanceof Error ? err.message : String(err)}`,
+        0,
+        ''
+      );
+    }
+  };
+
+  let resp = await attempt(buildOllamaNativeBody(model, options, think, false));
+  if (!resp.ok && isThinkRejection(resp.status, resp.body)) {
+    const withoutThink = buildOllamaNativeBody(model, options, think, false);
+    delete withoutThink.think;
+    resp = await attempt(withoutThink);
+  }
+  if (!resp.ok) {
+    throw new LLMError(
+      `${PROVIDERS.ollama.label} request failed: ${resp.status} ${resp.statusText || ''}`.trim(),
+      resp.status,
+      resp.body
+    );
+  }
+
+  const data = parseJsonOrThrow('ollama', resp) as any;
+  const content: string = data?.message?.content ?? '';
+  const usage =
+    data?.prompt_eval_count !== undefined || data?.eval_count !== undefined
+      ? {
+          promptTokens: data?.prompt_eval_count ?? 0,
+          completionTokens: data?.eval_count ?? 0,
+        }
+      : undefined;
+  return { content, usage };
 }
 
 // Anthropic puts the system prompt in a separate top-level `system` field,
@@ -377,14 +490,12 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
 
   switch (provider) {
     case 'ollama': {
-      // Key is optional: local Ollama needs none, but a shared/remote server
-      // behind an auth proxy may require a bearer token.
-      return callOpenAICompatible({
-        provider,
+      return callOllamaNative({
         baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey,
         model,
         options,
+        think: settings.ollamaThink,
       });
     }
     case 'openai': {
@@ -458,9 +569,12 @@ async function streamRequest(args: {
   body: Record<string, unknown>;
   extract: (data: any) => string;
   onToken: TokenHandler;
+  // Ollama's native API streams newline-delimited JSON, not SSE.
+  wire?: 'sse' | 'ndjson';
 }): Promise<ChatResult> {
   let content = '';
-  const push = createSSEParser((payload) => {
+  const createParser = args.wire === 'ndjson' ? createNDJSONParser : createSSEParser;
+  const push = createParser((payload) => {
     let data: unknown;
     try {
       data = JSON.parse(payload);
@@ -514,15 +628,46 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
   const apiKey = await loadApiKey(provider);
 
   switch (provider) {
-    case 'ollama':
+    case 'ollama': {
+      // Native endpoint (see callOllamaNative) so `think: false` is honored.
+      const url = `${ollamaRootURL(resolveBaseURL(provider, settings.baseURL))}/api/chat`;
+      const headers = ollamaHeaders(apiKey);
+      const body = buildOllamaNativeBody(model, options, settings.ollamaThink, true);
+      try {
+        return await streamRequest({
+          provider,
+          url,
+          headers,
+          body,
+          extract: ollamaNativeDelta,
+          onToken,
+          wire: 'ndjson',
+        });
+      } catch (err) {
+        // Best-effort `think`: retry without it if this server rejects it.
+        if (err instanceof LLMError && isThinkRejection(err.status, err.body)) {
+          const withoutThink = { ...body };
+          delete withoutThink.think;
+          return streamRequest({
+            provider,
+            url,
+            headers,
+            body: withoutThink,
+            extract: ollamaNativeDelta,
+            onToken,
+            wire: 'ndjson',
+          });
+        }
+        throw err;
+      }
+    }
     case 'openai':
     case 'groq':
     case 'openrouter':
     case 'custom': {
-      // Ollama and custom servers only need a key when behind an auth proxy;
-      // the other providers always require one.
-      const key =
-        provider === 'ollama' || provider === 'custom' ? apiKey : requireApiKey(provider, apiKey);
+      // Custom servers only need a key when behind an auth proxy; the other
+      // providers always require one.
+      const key = provider === 'custom' ? apiKey : requireApiKey(provider, apiKey);
       const baseURL = resolveBaseURL(provider, settings.baseURL);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers.Authorization = `Bearer ${key}`;

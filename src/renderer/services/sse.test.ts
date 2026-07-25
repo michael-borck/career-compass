@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { createSSEParser, openAIDelta, anthropicDelta, geminiDelta } from './sse';
+import {
+  createSSEParser,
+  createNDJSONParser,
+  openAIDelta,
+  anthropicDelta,
+  geminiDelta,
+  ollamaNativeDelta,
+} from './sse';
 
 describe('createSSEParser', () => {
   it('emits each data payload from well-formed events', () => {
@@ -27,6 +34,23 @@ describe('createSSEParser', () => {
   });
 });
 
+describe('createNDJSONParser', () => {
+  it('emits each complete line, buffering across chunk boundaries', () => {
+    const out: string[] = [];
+    const push = createNDJSONParser((p) => out.push(p));
+    push('{"a":1}\n{"b"');
+    push(':2}\n');
+    expect(out).toEqual(['{"a":1}', '{"b":2}']);
+  });
+
+  it('skips blank lines and strips CR', () => {
+    const out: string[] = [];
+    const push = createNDJSONParser((p) => out.push(p));
+    push('\n{"x":1}\r\n\n');
+    expect(out).toEqual(['{"x":1}']);
+  });
+});
+
 describe('delta extractors', () => {
   it('openAIDelta reads choices[0].delta.content and tolerates bookkeeping', () => {
     expect(openAIDelta({ choices: [{ delta: { content: 'hi' } }] })).toBe('hi');
@@ -44,5 +68,11 @@ describe('delta extractors', () => {
       geminiDelta({ candidates: [{ content: { parts: [{ text: 'a' }, { text: 'b' }] } }] })
     ).toBe('ab');
     expect(geminiDelta({})).toBe('');
+  });
+
+  it('ollamaNativeDelta reads message.content and ignores thinking', () => {
+    expect(ollamaNativeDelta({ message: { content: 'hi', thinking: 'hmm' } })).toBe('hi');
+    expect(ollamaNativeDelta({ message: { thinking: 'hmm' } })).toBe('');
+    expect(ollamaNativeDelta({ done: true })).toBe('');
   });
 });

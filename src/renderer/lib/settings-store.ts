@@ -6,6 +6,10 @@ export interface SettingsConfig {
   apiKey: string;
   baseURL: string;
   model: string;
+  // Ollama only: allow "thinking" models to run their reasoning phase.
+  // Off by default — reasoning burns minutes and token budget before the
+  // answer. Models without a thinking mode are unaffected.
+  ollamaThink: boolean;
   searchEngine: SearchEngine;
   searchUrl: string;
 }
@@ -22,6 +26,7 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
   apiKey: '',
   baseURL: 'http://localhost:11434/v1',
   model: '',
+  ollamaThink: false,
   searchEngine: 'duckduckgo',
   searchUrl: '',
 };

@@ -125,6 +125,7 @@ export default function Settings() {
     apiKey: '',
     baseURL: 'http://localhost:11434/v1',
     model: '',
+    ollamaThink: false,
     searchEngine: 'duckduckgo',
     searchUrl: '',
   });
@@ -384,6 +385,7 @@ export default function Settings() {
         apiKey: '',
         baseURL: 'http://localhost:11434/v1',
         model: '',
+        ollamaThink: false,
         searchEngine: 'duckduckgo',
         searchUrl: '',
       };
@@ -594,6 +596,27 @@ export default function Settings() {
                         : 'Leave empty to use the default address'}
                   </p>
                 </div>
+              )}
+
+              {settings.provider === 'ollama' && (
+                <label className='flex items-start gap-3 cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    checked={settings.ollamaThink}
+                    onChange={(e) =>
+                      setSettings((prev) => ({ ...prev, ollamaThink: e.target.checked }))
+                    }
+                    className='mt-1'
+                  />
+                  <div>
+                    <div className='text-ink font-medium'>Allow model thinking</div>
+                    <div className='text-[var(--text-sm)] text-ink-muted'>
+                      Some models (qwen, gemma) can &ldquo;think&rdquo; step-by-step before
+                      answering. This is off by default because it makes answers much slower. Models
+                      without a thinking mode ignore this setting.
+                    </div>
+                  </div>
+                </label>
               )}
             </div>
           </div>
