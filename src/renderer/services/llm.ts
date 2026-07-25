@@ -188,8 +188,12 @@ async function callOpenAICompatible(args: {
   apiKey: string | null;
   model: string;
   options: ChatOptions;
+  // Send the OpenAI-standard reasoning_effort:"none" so thinking models
+  // answer directly (Ollama's /v1 shim maps it to think:false). Servers
+  // that reject the param get one retry without it.
+  suppressReasoning?: boolean;
 }): Promise<ChatResult> {
-  const { provider, baseURL, apiKey, model, options } = args;
+  const { provider, baseURL, apiKey, model, options, suppressReasoning } = args;
   const url = `${stripTrailingSlash(baseURL)}/chat/completions`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -199,23 +203,36 @@ async function callOpenAICompatible(args: {
   if (apiKey) {
     headers.Authorization = `Bearer ${apiKey}`;
   }
-  const body = JSON.stringify(buildOpenAIBody(model, options));
-  let resp;
-  try {
-    resp = await window.electronAPI.apiFetch({
-      url,
-      method: 'POST',
-      headers,
-      body,
-      // LLM requests legitimately run 30-60s; this bounds the worst case.
-      timeoutMs: 60000,
-    });
-  } catch (err) {
-    throw new LLMError(
-      `Network error contacting ${PROVIDERS[provider].label}: ${err instanceof Error ? err.message : String(err)}`,
-      0,
-      ''
-    );
+  const bodyObj = buildOpenAIBody(model, options);
+  if (suppressReasoning) bodyObj.reasoning_effort = 'none';
+
+  const attempt = async (payload: Record<string, unknown>) => {
+    try {
+      return await window.electronAPI.apiFetch({
+        url,
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        // LLM requests legitimately run 30-60s; this bounds the worst case.
+        timeoutMs: 60000,
+      });
+    } catch (err) {
+      throw new LLMError(
+        `Network error contacting ${PROVIDERS[provider].label}: ${err instanceof Error ? err.message : String(err)}`,
+        0,
+        ''
+      );
+    }
+  };
+
+  let resp = await attempt(bodyObj);
+  if (
+    !resp.ok &&
+    suppressReasoning &&
+    isParamRejection(resp.status, resp.body, /reasoning_effort/i)
+  ) {
+    delete bodyObj.reasoning_effort;
+    resp = await attempt(bodyObj);
   }
   if (!resp.ok) {
     throw new LLMError(
@@ -231,10 +248,13 @@ async function callOpenAICompatible(args: {
 // Ollama native /api/chat
 //
 // Ollama chat goes through the native endpoint rather than the OpenAI-compat
-// /v1 shim because only the native API honors `think: false` — the switch
-// that stops "thinking" models (qwen3.5, gemma4, …) from burning minutes of
-// reasoning (and the token budget) before answering. Model listing and
-// connection tests already use native endpoints (/api/tags).
+// /v1 shim. Both can stop "thinking" models (qwen3.5, gemma4, …) from
+// reasoning before answering — natively via `think: false`, on /v1 via the
+// OpenAI-standard `reasoning_effort: "none"` (which the shim maps to the
+// same switch; the custom provider path uses that form). Native is used here
+// for its extras: exact token counts, format:"json" enforcement, and
+// per-call keep_alive if we ever pin models. Model listing and connection
+// tests already use native endpoints (/api/tags).
 
 // Settings store the baseURL in OpenAI form (…/v1); the native API lives at
 // the server root.
@@ -269,10 +289,11 @@ function ollamaHeaders(apiKey: string | null): Record<string, string> {
   return headers;
 }
 
-// Some Ollama versions reject the `think` field for models with no thinking
-// mode. The field is best-effort — on that specific rejection, retry without.
-function isThinkRejection(status: number, body: string): boolean {
-  return status >= 400 && status < 500 && /think/i.test(body);
+// Thinking-suppression params (`think` on the native API, `reasoning_effort`
+// on OpenAI-compatible servers) are best-effort: some server versions or
+// models reject them. On that specific rejection, retry once without.
+function isParamRejection(status: number, body: string, param: RegExp): boolean {
+  return status >= 400 && status < 500 && param.test(body);
 }
 
 async function callOllamaNative(args: {
@@ -305,7 +326,7 @@ async function callOllamaNative(args: {
   };
 
   let resp = await attempt(buildOllamaNativeBody(model, options, think, false));
-  if (!resp.ok && isThinkRejection(resp.status, resp.body)) {
+  if (!resp.ok && isParamRejection(resp.status, resp.body, /think/i)) {
     const withoutThink = buildOllamaNativeBody(model, options, think, false);
     delete withoutThink.think;
     resp = await attempt(withoutThink);
@@ -537,12 +558,15 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       return callGemini({ apiKey: key, model, options });
     }
     case 'custom': {
+      // A custom server may front a thinking model (e.g. an Ollama /v1 shim
+      // or vLLM) — same thinking toggle as the Ollama provider.
       return callOpenAICompatible({
         provider,
         baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey,
         model,
         options,
+        suppressReasoning: !settings.ollamaThink,
       });
     }
     default: {
@@ -645,7 +669,7 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
         });
       } catch (err) {
         // Best-effort `think`: retry without it if this server rejects it.
-        if (err instanceof LLMError && isThinkRejection(err.status, err.body)) {
+        if (err instanceof LLMError && isParamRejection(err.status, err.body, /think/i)) {
           const withoutThink = { ...body };
           delete withoutThink.think;
           return streamRequest({
@@ -671,14 +695,33 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
       const baseURL = resolveBaseURL(provider, settings.baseURL);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers.Authorization = `Bearer ${key}`;
-      return streamRequest({
-        provider,
-        url: `${stripTrailingSlash(baseURL)}/chat/completions`,
-        headers,
-        body: { ...buildOpenAIBody(model, options), stream: true },
-        extract: openAIDelta,
-        onToken,
-      });
+      const body: Record<string, unknown> = { ...buildOpenAIBody(model, options), stream: true };
+      // A custom server may front a thinking model — same toggle as Ollama,
+      // expressed as the OpenAI-standard reasoning_effort param.
+      if (provider === 'custom' && !settings.ollamaThink) body.reasoning_effort = 'none';
+      const request = () =>
+        streamRequest({
+          provider,
+          url: `${stripTrailingSlash(baseURL)}/chat/completions`,
+          headers,
+          body,
+          extract: openAIDelta,
+          onToken,
+        });
+      try {
+        return await request();
+      } catch (err) {
+        // Best-effort param: retry without it if this server rejects it.
+        if (
+          err instanceof LLMError &&
+          body.reasoning_effort !== undefined &&
+          isParamRejection(err.status, err.body, /reasoning_effort/i)
+        ) {
+          delete body.reasoning_effort;
+          return request();
+        }
+        throw err;
+      }
     }
     case 'claude': {
       const key = requireApiKey(provider, apiKey);

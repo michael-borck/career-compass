@@ -59,6 +59,33 @@ describe('chatStream — openai-compatible', () => {
   });
 });
 
+describe('chatStream — custom provider', () => {
+  it('sends reasoning_effort:"none" by default, omits it when thinking is on', async () => {
+    const first = mockStreamAPI(
+      { provider: 'custom', baseURL: 'http://localhost:8080/v1', model: 'qwen3.5:4b' },
+      { chunks: ['data: {"choices":[{"delta":{"content":"Hi"}}]}\n'] }
+    );
+    await chatStream({ messages: [{ role: 'user', content: 'hi' }] }, () => {});
+    expect(JSON.parse((first.mock.calls[0][0] as { body: string }).body).reasoning_effort).toBe(
+      'none'
+    );
+
+    const second = mockStreamAPI(
+      {
+        provider: 'custom',
+        baseURL: 'http://localhost:8080/v1',
+        model: 'qwen3.5:4b',
+        ollamaThink: true,
+      },
+      { chunks: ['data: {"choices":[{"delta":{"content":"Hi"}}]}\n'] }
+    );
+    await chatStream({ messages: [{ role: 'user', content: 'hi' }] }, () => {});
+    expect(
+      JSON.parse((second.mock.calls[0][0] as { body: string }).body).reasoning_effort
+    ).toBeUndefined();
+  });
+});
+
 describe('chatStream — ollama (native NDJSON)', () => {
   it('streams from /api/chat with think:false and accumulates message deltas', async () => {
     const apiFetchStream = mockStreamAPI(

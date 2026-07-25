@@ -6,9 +6,10 @@ export interface SettingsConfig {
   apiKey: string;
   baseURL: string;
   model: string;
-  // Ollama only: allow "thinking" models to run their reasoning phase.
-  // Off by default — reasoning burns minutes and token budget before the
-  // answer. Models without a thinking mode are unaffected.
+  // Ollama + Custom providers: allow "thinking" models to run their
+  // reasoning phase. Off by default — reasoning burns minutes and token
+  // budget before the answer. Models without a thinking mode are unaffected.
+  // (Named for Ollama where it landed first; Custom reuses the same toggle.)
   ollamaThink: boolean;
   searchEngine: SearchEngine;
   searchUrl: string;

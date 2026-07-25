@@ -598,7 +598,7 @@ export default function Settings() {
                 </div>
               )}
 
-              {settings.provider === 'ollama' && (
+              {(settings.provider === 'ollama' || settings.provider === 'custom') && (
                 <label className='flex items-start gap-3 cursor-pointer'>
                   <input
                     type='checkbox'

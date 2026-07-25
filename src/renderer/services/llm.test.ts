@@ -563,4 +563,59 @@ describe('chat — custom provider', () => {
       /server address/i
     );
   });
+
+  it('sends reasoning_effort:"none" by default (thinking suppressed)', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'custom', baseURL: 'http://localhost:8080/v1', model: 'qwen3.5:4b' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning_effort).toBe('none');
+  });
+
+  it('omits reasoning_effort when the thinking toggle is on', async () => {
+    const api = mockElectronAPI({
+      settings: {
+        provider: 'custom',
+        baseURL: 'http://localhost:8080/v1',
+        model: 'qwen3.5:4b',
+        ollamaThink: true,
+      },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning_effort).toBeUndefined();
+  });
+
+  it('retries without reasoning_effort when the server rejects the param', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'custom', baseURL: 'http://localhost:8080/v1', model: 'strict-model' },
+    });
+    api.apiFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        headers: {},
+        body: JSON.stringify({ error: 'unknown parameter: reasoning_effort' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: JSON.stringify({ choices: [{ message: { content: 'hello' } }] }),
+      });
+    const result = await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(result.content).toBe('hello');
+    expect(api.apiFetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(api.apiFetch.mock.calls[1][0].body).reasoning_effort).toBeUndefined();
+  });
+
+  it('does not send reasoning_effort for providers with no thinking models routed here', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'openai', baseURL: 'https://api.openai.com/v1', model: 'gpt-4' },
+      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning_effort).toBeUndefined();
+  });
 });
