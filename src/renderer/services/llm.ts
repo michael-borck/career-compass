@@ -74,15 +74,15 @@ type Settings = {
   provider: Provider;
   baseURL: string;
   model: string;
-  // Ollama only: allow thinking models to run their reasoning phase.
-  ollamaThink: boolean;
+  // Allow thinking models to run their reasoning phase before answering.
+  allowThinking: boolean;
 };
 
 const DEFAULT_SETTINGS: Settings = {
   provider: 'ollama',
   baseURL: '',
   model: '',
-  ollamaThink: false,
+  allowThinking: false,
 };
 
 // Default base URLs for the OpenAI-compatible dispatch live in the shared
@@ -108,7 +108,15 @@ const DEFAULT_MAX_TOKENS = 4096;
 
 async function loadSettings(): Promise<Settings> {
   const raw = await window.electronAPI.store.get<Partial<Settings>>('settings', DEFAULT_SETTINGS);
-  return { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
+  const merged = { ...DEFAULT_SETTINGS, ...(raw ?? {}) };
+  // Carry forward the pre-0.6.3 name for this setting, as lib/settings-store
+  // does — otherwise a stored `ollamaThink: true` would be honoured by the
+  // Settings page but ignored here.
+  const legacyThink = (raw as { ollamaThink?: unknown } | null)?.ollamaThink;
+  if ((raw as { allowThinking?: unknown } | null)?.allowThinking === undefined) {
+    if (typeof legacyThink === 'boolean') merged.allowThinking = legacyThink;
+  }
+  return merged;
 }
 
 async function loadApiKey(provider: Provider): Promise<string | null> {
@@ -155,6 +163,87 @@ function buildOpenAIBody(model: string, options: ChatOptions): Record<string, un
   return body;
 }
 
+// ---------------------------------------------------------------------------
+// Thinking suppression
+//
+// Every provider that fronts a reasoning model spells "answer directly, don't
+// reason first" differently, so the "Allow model thinking" setting can't be one
+// parameter. Each entry pairs the body mutation with the pattern identifying a
+// server that rejects it — the call paths below apply it, and on a 4xx naming
+// the param, undo it and retry once. Suppression is always best-effort: some
+// models can't turn reasoning off at all, and some servers accept the param and
+// ignore it.
+//
+// Ollama is absent because its native /api/chat takes a plain `think` boolean
+// that buildOllamaNativeBody always sets (see callOllamaNative).
+type ThinkingSuppressor = {
+  apply: (body: Record<string, unknown>) => void;
+  undo: (body: Record<string, unknown>) => void;
+  // Matches the provider's error text when it won't accept the param.
+  rejection: RegExp;
+};
+
+// OpenAI-standard reasoning_effort. Ollama's /v1 shim maps "none" to
+// think:false; Groq accepts it only on models that can skip reasoning (the
+// gpt-oss family rejects it, which the retry handles).
+const REASONING_EFFORT_NONE: ThinkingSuppressor = {
+  apply: (body) => {
+    body.reasoning_effort = 'none';
+  },
+  undo: (body) => {
+    delete body.reasoning_effort;
+  },
+  rejection: /reasoning_effort/i,
+};
+
+const THINKING_SUPPRESSORS: Partial<Record<Provider, ThinkingSuppressor>> = {
+  openai: REASONING_EFFORT_NONE,
+  groq: REASONING_EFFORT_NONE,
+  custom: REASONING_EFFORT_NONE,
+  // OpenRouter wraps the same idea in its own object.
+  openrouter: {
+    apply: (body) => {
+      body.reasoning = { effort: 'none' };
+    },
+    undo: (body) => {
+      delete body.reasoning;
+    },
+    rejection: /reasoning/i,
+  },
+  // Anthropic: thinking is opt-in on Claude 4.x but ON BY DEFAULT on the
+  // Claude 5 family, so omitting the field is not the same as off. Rejected
+  // outright on models where thinking can't be disabled.
+  claude: {
+    apply: (body) => {
+      body.thinking = { type: 'disabled' };
+    },
+    undo: (body) => {
+      delete body.thinking;
+    },
+    rejection: /thinking/i,
+  },
+  // Gemini nests it, and "minimal" is the floor — there is no true off, and
+  // the Pro models won't go below "low" (they 4xx, and we retry without).
+  gemini: {
+    apply: (body) => {
+      const generationConfig = (body.generationConfig ?? {}) as Record<string, unknown>;
+      generationConfig.thinkingConfig = { thinkingLevel: 'minimal' };
+      body.generationConfig = generationConfig;
+    },
+    undo: (body) => {
+      const generationConfig = body.generationConfig as Record<string, unknown> | undefined;
+      if (generationConfig) delete generationConfig.thinkingConfig;
+    },
+    rejection: /thinking/i,
+  },
+};
+
+// The suppressor to apply for this request, or null when thinking is allowed
+// (or the provider has no way to express it).
+function thinkingSuppressor(provider: Provider, allowThinking: boolean): ThinkingSuppressor | null {
+  return allowThinking ? null : (THINKING_SUPPRESSORS[provider] ?? null);
+}
+
 function parseJsonOrThrow(provider: Provider, resp: { status: number; body: string }): unknown {
   try {
     return JSON.parse(resp.body);
@@ -188,12 +277,11 @@ async function callOpenAICompatible(args: {
   apiKey: string | null;
   model: string;
   options: ChatOptions;
-  // Send the OpenAI-standard reasoning_effort:"none" so thinking models
-  // answer directly (Ollama's /v1 shim maps it to think:false). Servers
-  // that reject the param get one retry without it.
-  suppressReasoning?: boolean;
+  // Applied when the "Allow model thinking" setting is off; see
+  // THINKING_SUPPRESSORS. Servers that reject it get one retry without.
+  suppress?: ThinkingSuppressor | null;
 }): Promise<ChatResult> {
-  const { provider, baseURL, apiKey, model, options, suppressReasoning } = args;
+  const { provider, baseURL, apiKey, model, options, suppress } = args;
   const url = `${stripTrailingSlash(baseURL)}/chat/completions`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -204,7 +292,7 @@ async function callOpenAICompatible(args: {
     headers.Authorization = `Bearer ${apiKey}`;
   }
   const bodyObj = buildOpenAIBody(model, options);
-  if (suppressReasoning) bodyObj.reasoning_effort = 'none';
+  suppress?.apply(bodyObj);
 
   const attempt = async (payload: Record<string, unknown>) => {
     try {
@@ -226,12 +314,8 @@ async function callOpenAICompatible(args: {
   };
 
   let resp = await attempt(bodyObj);
-  if (
-    !resp.ok &&
-    suppressReasoning &&
-    isParamRejection(resp.status, resp.body, /reasoning_effort/i)
-  ) {
-    delete bodyObj.reasoning_effort;
+  if (!resp.ok && suppress && isParamRejection(resp.status, resp.body, suppress.rejection)) {
+    suppress.undo(bodyObj);
     resp = await attempt(bodyObj);
   }
   if (!resp.ok) {
@@ -379,26 +463,35 @@ async function callAnthropic(args: {
   apiKey: string;
   model: string;
   options: ChatOptions;
+  suppress?: ThinkingSuppressor | null;
 }): Promise<ChatResult> {
-  const { apiKey, model, options } = args;
+  const { apiKey, model, options, suppress } = args;
   const body = buildAnthropicBody(model, options);
+  suppress?.apply(body);
 
-  let resp;
-  try {
-    resp = await window.electronAPI.apiFetch({
-      url: 'https://api.anthropic.com/v1/messages',
-      method: 'POST',
-      headers: ANTHROPIC_HEADERS(apiKey),
-      body: JSON.stringify(body),
-      // LLM requests legitimately run 30-60s; this bounds the worst case.
-      timeoutMs: 60000,
-    });
-  } catch (err) {
-    throw new LLMError(
-      `Network error contacting ${PROVIDERS.claude.label}: ${err instanceof Error ? err.message : String(err)}`,
-      0,
-      ''
-    );
+  const attempt = async (payload: Record<string, unknown>) => {
+    try {
+      return await window.electronAPI.apiFetch({
+        url: 'https://api.anthropic.com/v1/messages',
+        method: 'POST',
+        headers: ANTHROPIC_HEADERS(apiKey),
+        body: JSON.stringify(payload),
+        // LLM requests legitimately run 30-60s; this bounds the worst case.
+        timeoutMs: 60000,
+      });
+    } catch (err) {
+      throw new LLMError(
+        `Network error contacting ${PROVIDERS.claude.label}: ${err instanceof Error ? err.message : String(err)}`,
+        0,
+        ''
+      );
+    }
+  };
+
+  let resp = await attempt(body);
+  if (!resp.ok && suppress && isParamRejection(resp.status, resp.body, suppress.rejection)) {
+    suppress.undo(body);
+    resp = await attempt(body);
   }
   if (!resp.ok) {
     throw new LLMError(
@@ -462,26 +555,36 @@ async function callGemini(args: {
   apiKey: string;
   model: string;
   options: ChatOptions;
+  suppress?: ThinkingSuppressor | null;
 }): Promise<ChatResult> {
-  const { apiKey, model, options } = args;
+  const { apiKey, model, options, suppress } = args;
   const body = buildGeminiBody(options);
+  suppress?.apply(body);
   const url = geminiUrl(model, apiKey, false);
-  let resp;
-  try {
-    resp = await window.electronAPI.apiFetch({
-      url,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      // LLM requests legitimately run 30-60s; this bounds the worst case.
-      timeoutMs: 60000,
-    });
-  } catch (err) {
-    throw new LLMError(
-      `Network error contacting ${PROVIDERS.gemini.label}: ${err instanceof Error ? err.message : String(err)}`,
-      0,
-      ''
-    );
+
+  const attempt = async (payload: Record<string, unknown>) => {
+    try {
+      return await window.electronAPI.apiFetch({
+        url,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        // LLM requests legitimately run 30-60s; this bounds the worst case.
+        timeoutMs: 60000,
+      });
+    } catch (err) {
+      throw new LLMError(
+        `Network error contacting ${PROVIDERS.gemini.label}: ${err instanceof Error ? err.message : String(err)}`,
+        0,
+        ''
+      );
+    }
+  };
+
+  let resp = await attempt(body);
+  if (!resp.ok && suppress && isParamRejection(resp.status, resp.body, suppress.rejection)) {
+    suppress.undo(body);
+    resp = await attempt(body);
   }
   if (!resp.ok) {
     throw new LLMError(
@@ -508,6 +611,7 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
   const provider = settings.provider;
   const model = settings.model;
   const apiKey = await loadApiKey(provider);
+  const suppress = thinkingSuppressor(provider, settings.allowThinking);
 
   switch (provider) {
     case 'ollama': {
@@ -516,29 +620,11 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
         apiKey,
         model,
         options,
-        think: settings.ollamaThink,
+        think: settings.allowThinking,
       });
     }
-    case 'openai': {
-      const key = requireApiKey(provider, apiKey);
-      return callOpenAICompatible({
-        provider,
-        baseURL: resolveBaseURL(provider, settings.baseURL),
-        apiKey: key,
-        model,
-        options,
-      });
-    }
-    case 'groq': {
-      const key = requireApiKey(provider, apiKey);
-      return callOpenAICompatible({
-        provider,
-        baseURL: resolveBaseURL(provider, settings.baseURL),
-        apiKey: key,
-        model,
-        options,
-      });
-    }
+    case 'openai':
+    case 'groq':
     case 'openrouter': {
       const key = requireApiKey(provider, apiKey);
       return callOpenAICompatible({
@@ -547,26 +633,27 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
         apiKey: key,
         model,
         options,
+        suppress,
       });
     }
     case 'claude': {
       const key = requireApiKey(provider, apiKey);
-      return callAnthropic({ apiKey: key, model, options });
+      return callAnthropic({ apiKey: key, model, options, suppress });
     }
     case 'gemini': {
       const key = requireApiKey(provider, apiKey);
-      return callGemini({ apiKey: key, model, options });
+      return callGemini({ apiKey: key, model, options, suppress });
     }
     case 'custom': {
       // A custom server may front a thinking model (e.g. an Ollama /v1 shim
-      // or vLLM) — same thinking toggle as the Ollama provider.
+      // or vLLM); it only needs a key when behind an auth proxy.
       return callOpenAICompatible({
         provider,
         baseURL: resolveBaseURL(provider, settings.baseURL),
         apiKey,
         model,
         options,
-        suppressReasoning: !settings.ollamaThink,
+        suppress,
       });
     }
     default: {
@@ -641,6 +728,29 @@ async function streamRequest(args: {
   return { content };
 }
 
+// streamRequest plus the best-effort thinking-suppression retry: if the server
+// rejects the suppression param, undo it and stream again. The caller applies
+// the suppressor before calling (bodies differ per provider); this owns undo.
+async function streamWithSuppression(
+  args: Parameters<typeof streamRequest>[0] & { suppress?: ThinkingSuppressor | null }
+): Promise<ChatResult> {
+  const { suppress, ...rest } = args;
+  try {
+    return await streamRequest(rest);
+  } catch (err) {
+    if (
+      suppress &&
+      err instanceof LLMError &&
+      isParamRejection(err.status, err.body, suppress.rejection)
+    ) {
+      const body = { ...rest.body };
+      suppress.undo(body);
+      return streamRequest({ ...rest, body });
+    }
+    throw err;
+  }
+}
+
 // Streaming chat. Same provider dispatch and request shapes as chat(), with
 // the provider's stream flag set; onToken receives the cumulative content
 // after every delta. Resolves with the final ChatResult (no usage stats —
@@ -650,13 +760,14 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
   const provider = settings.provider;
   const model = settings.model;
   const apiKey = await loadApiKey(provider);
+  const suppress = thinkingSuppressor(provider, settings.allowThinking);
 
   switch (provider) {
     case 'ollama': {
       // Native endpoint (see callOllamaNative) so `think: false` is honored.
       const url = `${ollamaRootURL(resolveBaseURL(provider, settings.baseURL))}/api/chat`;
       const headers = ollamaHeaders(apiKey);
-      const body = buildOllamaNativeBody(model, options, settings.ollamaThink, true);
+      const body = buildOllamaNativeBody(model, options, settings.allowThinking, true);
       try {
         return await streamRequest({
           provider,
@@ -696,53 +807,43 @@ export async function chatStream(options: ChatOptions, onToken: TokenHandler): P
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (key) headers.Authorization = `Bearer ${key}`;
       const body: Record<string, unknown> = { ...buildOpenAIBody(model, options), stream: true };
-      // A custom server may front a thinking model — same toggle as Ollama,
-      // expressed as the OpenAI-standard reasoning_effort param.
-      if (provider === 'custom' && !settings.ollamaThink) body.reasoning_effort = 'none';
-      const request = () =>
-        streamRequest({
-          provider,
-          url: `${stripTrailingSlash(baseURL)}/chat/completions`,
-          headers,
-          body,
-          extract: openAIDelta,
-          onToken,
-        });
-      try {
-        return await request();
-      } catch (err) {
-        // Best-effort param: retry without it if this server rejects it.
-        if (
-          err instanceof LLMError &&
-          body.reasoning_effort !== undefined &&
-          isParamRejection(err.status, err.body, /reasoning_effort/i)
-        ) {
-          delete body.reasoning_effort;
-          return request();
-        }
-        throw err;
-      }
+      suppress?.apply(body);
+      return streamWithSuppression({
+        provider,
+        url: `${stripTrailingSlash(baseURL)}/chat/completions`,
+        headers,
+        body,
+        extract: openAIDelta,
+        onToken,
+        suppress,
+      });
     }
     case 'claude': {
       const key = requireApiKey(provider, apiKey);
-      return streamRequest({
+      const body: Record<string, unknown> = { ...buildAnthropicBody(model, options), stream: true };
+      suppress?.apply(body);
+      return streamWithSuppression({
         provider,
         url: 'https://api.anthropic.com/v1/messages',
         headers: ANTHROPIC_HEADERS(key),
-        body: { ...buildAnthropicBody(model, options), stream: true },
+        body,
         extract: anthropicDelta,
         onToken,
+        suppress,
       });
     }
     case 'gemini': {
       const key = requireApiKey(provider, apiKey);
-      return streamRequest({
+      const body = buildGeminiBody(options);
+      suppress?.apply(body);
+      return streamWithSuppression({
         provider,
         url: geminiUrl(model, key, true),
         headers: { 'Content-Type': 'application/json' },
-        body: buildGeminiBody(options),
+        body,
         extract: geminiDelta,
         onToken,
+        suppress,
       });
     }
     default: {

@@ -6,11 +6,12 @@ export interface SettingsConfig {
   apiKey: string;
   baseURL: string;
   model: string;
-  // Ollama + Custom providers: allow "thinking" models to run their
-  // reasoning phase. Off by default — reasoning burns minutes and token
-  // budget before the answer. Models without a thinking mode are unaffected.
-  // (Named for Ollama where it landed first; Custom reuses the same toggle.)
-  ollamaThink: boolean;
+  // Allow "thinking" models to run their reasoning phase before answering.
+  // Off by default — reasoning burns minutes and token budget before the
+  // answer, and on this app's prompts costs little quality. Applies to every
+  // provider that has a way to say "answer directly" (see THINKING_SUPPRESSORS
+  // in services/llm.ts); models without a thinking mode are unaffected.
+  allowThinking: boolean;
   searchEngine: SearchEngine;
   searchUrl: string;
 }
@@ -27,10 +28,23 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
   apiKey: '',
   baseURL: 'http://localhost:11434/v1',
   model: '',
-  ollamaThink: false,
+  allowThinking: false,
   searchEngine: 'duckduckgo',
   searchUrl: '',
 };
+
+// Merge stored settings over the defaults, carrying forward the pre-0.6.3
+// `ollamaThink` key. Without this, someone who had deliberately turned
+// thinking *on* would silently lose it when the key was renamed.
+export function normaliseSettings(stored: unknown): SettingsConfig {
+  const raw = (stored ?? {}) as Record<string, unknown>;
+  const merged = { ...DEFAULT_SETTINGS, ...raw } as SettingsConfig & { ollamaThink?: unknown };
+  if (raw.allowThinking === undefined && typeof raw.ollamaThink === 'boolean') {
+    merged.allowThinking = raw.ollamaThink;
+  }
+  delete merged.ollamaThink;
+  return merged;
+}
 
 // Settings store interface for both web and desktop
 export interface SettingsStore {
@@ -47,7 +61,7 @@ class WebSettingsStore implements SettingsStore {
     try {
       const saved = localStorage.getItem(this.key);
       if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        return normaliseSettings(JSON.parse(saved));
       }
     } catch (error) {
       console.warn('Failed to load settings from localStorage:', error);
@@ -85,7 +99,7 @@ class ElectronSettingsStore implements SettingsStore {
     try {
       const settings = await this.store.get('settings', DEFAULT_SETTINGS);
       console.log('ElectronSettingsStore loaded:', settings);
-      return { ...DEFAULT_SETTINGS, ...settings };
+      return normaliseSettings(settings);
     } catch (error) {
       console.warn('Failed to load settings from electron-store:', error);
       return DEFAULT_SETTINGS;

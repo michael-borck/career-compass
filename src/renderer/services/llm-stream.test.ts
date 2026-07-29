@@ -75,7 +75,7 @@ describe('chatStream — custom provider', () => {
         provider: 'custom',
         baseURL: 'http://localhost:8080/v1',
         model: 'qwen3.5:4b',
-        ollamaThink: true,
+        allowThinking: true,
       },
       { chunks: ['data: {"choices":[{"delta":{"content":"Hi"}}]}\n'] }
     );
@@ -118,7 +118,7 @@ describe('chatStream — ollama (native NDJSON)', () => {
         provider: 'ollama',
         baseURL: 'http://localhost:11434/v1',
         model: 'qwen3.5:4b',
-        ollamaThink: true,
+        allowThinking: true,
       },
       {
         chunks: [

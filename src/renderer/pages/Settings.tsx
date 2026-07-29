@@ -125,7 +125,7 @@ export default function Settings() {
     apiKey: '',
     baseURL: 'http://localhost:11434/v1',
     model: '',
-    ollamaThink: false,
+    allowThinking: false,
     searchEngine: 'duckduckgo',
     searchUrl: '',
   });
@@ -385,7 +385,7 @@ export default function Settings() {
         apiKey: '',
         baseURL: 'http://localhost:11434/v1',
         model: '',
-        ollamaThink: false,
+        allowThinking: false,
         searchEngine: 'duckduckgo',
         searchUrl: '',
       };
@@ -598,26 +598,25 @@ export default function Settings() {
                 </div>
               )}
 
-              {(settings.provider === 'ollama' || settings.provider === 'custom') && (
-                <label className='flex items-start gap-3 cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    checked={settings.ollamaThink}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, ollamaThink: e.target.checked }))
-                    }
-                    className='mt-1'
-                  />
-                  <div>
-                    <div className='text-ink font-medium'>Allow model thinking</div>
-                    <div className='text-[var(--text-sm)] text-ink-muted'>
-                      Some models (qwen, gemma) can &ldquo;think&rdquo; step-by-step before
-                      answering. This is off by default because it makes answers much slower. Models
-                      without a thinking mode ignore this setting.
-                    </div>
+              <label className='flex items-start gap-3 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={settings.allowThinking}
+                  onChange={(e) =>
+                    setSettings((prev) => ({ ...prev, allowThinking: e.target.checked }))
+                  }
+                  className='mt-1'
+                />
+                <div>
+                  <div className='text-ink font-medium'>Allow model thinking</div>
+                  <div className='text-[var(--text-sm)] text-ink-muted'>
+                    Many models (gemma, qwen, Claude, Gemini, GPT) can &ldquo;think&rdquo;
+                    step-by-step before answering. This is off by default because it makes answers
+                    much slower — often 5-10x — for little gain on these tasks. Models that always
+                    think, or that have no thinking mode, ignore this setting.
                   </div>
-                </label>
-              )}
+                </div>
+              </label>
             </div>
           </div>
 

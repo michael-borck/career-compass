@@ -161,7 +161,7 @@ describe('chat — ollama (native /api/chat)', () => {
         provider: 'ollama',
         baseURL: 'http://localhost:11434/v1',
         model: 'qwen3.5:4b',
-        ollamaThink: true,
+        allowThinking: true,
       },
       apiFetchResponse: nativeResponse,
     });
@@ -578,7 +578,7 @@ describe('chat — custom provider', () => {
         provider: 'custom',
         baseURL: 'http://localhost:8080/v1',
         model: 'qwen3.5:4b',
-        ollamaThink: true,
+        allowThinking: true,
       },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
@@ -610,12 +610,167 @@ describe('chat — custom provider', () => {
     expect(JSON.parse(api.apiFetch.mock.calls[1][0].body).reasoning_effort).toBeUndefined();
   });
 
-  it('does not send reasoning_effort for providers with no thinking models routed here', async () => {
+  it('sends reasoning_effort:"none" for openai and groq too', async () => {
+    for (const [provider, baseURL] of [
+      ['openai', 'https://api.openai.com/v1'],
+      ['groq', 'https://api.groq.com/openai/v1'],
+    ] as const) {
+      const api = mockElectronAPI({
+        settings: { provider, baseURL, model: 'some-model' },
+        secureStorage: { [`career-compass-llm-${provider}`]: 'sk-test' },
+      });
+      await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning_effort).toBe('none');
+    }
+  });
+});
+
+describe('chat — thinking suppression across providers', () => {
+  it('honours the pre-0.6.3 ollamaThink key when allowThinking is absent', async () => {
     const api = mockElectronAPI({
-      settings: { provider: 'openai', baseURL: 'https://api.openai.com/v1', model: 'gpt-4' },
-      secureStorage: { 'career-compass-llm-openai': 'sk-test' },
+      settings: {
+        provider: 'custom',
+        baseURL: 'http://localhost:8080/v1',
+        model: 'qwen3.5:4b',
+        ollamaThink: true,
+      },
     });
     await chat({ messages: [{ role: 'user', content: 'hi' }] });
     expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning_effort).toBeUndefined();
+  });
+
+  it('sends reasoning:{effort:"none"} for openrouter', async () => {
+    const api = mockElectronAPI({
+      settings: { provider: 'openrouter', baseURL: '', model: 'qwen/qwen3.5-9b' },
+      secureStorage: { 'career-compass-llm-openrouter': 'sk-or' },
+    });
+    await chat({ messages: [{ role: 'user', content: 'hi' }] });
+    expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).reasoning).toEqual({ effort: 'none' });
+  });
+
+  describe('claude', () => {
+    const anthropicResponse = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      body: JSON.stringify({
+        content: [{ type: 'text', text: 'hello' }],
+        usage: { input_tokens: 3, output_tokens: 4 },
+      }),
+    };
+
+    it('sends thinking:{type:"disabled"} by default', async () => {
+      const api = mockElectronAPI({
+        settings: { provider: 'claude', baseURL: '', model: 'claude-sonnet-5' },
+        secureStorage: { 'career-compass-llm-claude': 'sk-ant' },
+        apiFetchResponse: anthropicResponse,
+      });
+      await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).thinking).toEqual({
+        type: 'disabled',
+      });
+    });
+
+    it('omits thinking when the toggle is on', async () => {
+      const api = mockElectronAPI({
+        settings: {
+          provider: 'claude',
+          baseURL: '',
+          model: 'claude-sonnet-5',
+          allowThinking: true,
+        },
+        secureStorage: { 'career-compass-llm-claude': 'sk-ant' },
+        apiFetchResponse: anthropicResponse,
+      });
+      await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      expect(JSON.parse(api.apiFetch.mock.calls[0][0].body).thinking).toBeUndefined();
+    });
+
+    it('retries without thinking on models that cannot disable it', async () => {
+      const api = mockElectronAPI({
+        settings: { provider: 'claude', baseURL: '', model: 'claude-fable-5' },
+        secureStorage: { 'career-compass-llm-claude': 'sk-ant' },
+      });
+      api.apiFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          headers: {},
+          body: JSON.stringify({
+            error: { message: '`thinking.type: disabled` is not supported by this model' },
+          }),
+        })
+        .mockResolvedValueOnce(anthropicResponse);
+      const result = await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      expect(result.content).toBe('hello');
+      expect(api.apiFetch).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(api.apiFetch.mock.calls[1][0].body).thinking).toBeUndefined();
+    });
+  });
+
+  describe('gemini', () => {
+    const geminiResponse = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      body: JSON.stringify({
+        candidates: [{ content: { parts: [{ text: 'hello' }] } }],
+      }),
+    };
+
+    it('sends thinkingConfig.thinkingLevel:"minimal" inside generationConfig', async () => {
+      const api = mockElectronAPI({
+        settings: { provider: 'gemini', baseURL: '', model: 'gemini-3.6-flash' },
+        secureStorage: { 'career-compass-llm-gemini': 'goog-key' },
+        apiFetchResponse: geminiResponse,
+      });
+      await chat({ messages: [{ role: 'user', content: 'hi' }], temperature: 0.4 });
+      const body = JSON.parse(api.apiFetch.mock.calls[0][0].body);
+      expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'minimal' });
+      // Suppression must not clobber the rest of generationConfig.
+      expect(body.generationConfig.temperature).toBe(0.4);
+    });
+
+    it('omits thinkingConfig when the toggle is on', async () => {
+      const api = mockElectronAPI({
+        settings: {
+          provider: 'gemini',
+          baseURL: '',
+          model: 'gemini-3.6-flash',
+          allowThinking: true,
+        },
+        secureStorage: { 'career-compass-llm-gemini': 'goog-key' },
+        apiFetchResponse: geminiResponse,
+      });
+      await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      const body = JSON.parse(api.apiFetch.mock.calls[0][0].body);
+      expect(body.generationConfig?.thinkingConfig).toBeUndefined();
+    });
+
+    it('retries without thinkingConfig when the model will not go that low', async () => {
+      const api = mockElectronAPI({
+        settings: { provider: 'gemini', baseURL: '', model: 'gemini-3-pro-preview' },
+        secureStorage: { 'career-compass-llm-gemini': 'goog-key' },
+      });
+      api.apiFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          headers: {},
+          body: JSON.stringify({
+            error: { message: 'thinkingLevel "minimal" is not supported for this model' },
+          }),
+        })
+        .mockResolvedValueOnce(geminiResponse);
+      const result = await chat({ messages: [{ role: 'user', content: 'hi' }] });
+      expect(result.content).toBe('hello');
+      expect(api.apiFetch).toHaveBeenCalledTimes(2);
+      const retry = JSON.parse(api.apiFetch.mock.calls[1][0].body);
+      expect(retry.generationConfig?.thinkingConfig).toBeUndefined();
+    });
   });
 });
