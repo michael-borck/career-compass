@@ -70,6 +70,9 @@ export type SourceRef = {
   title: string;
   url: string;
   domain: string;
+  snippet?: string;
+  provider?: string;
+  position?: number;
 };
 
 export type StudentProfile = {

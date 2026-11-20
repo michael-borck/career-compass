@@ -131,7 +131,7 @@ Multi-perspective feedback on a career goal. The AI simulates a "personal board 
 ### F13: Web Search Grounding
 Integrate web search (DuckDuckGo free scraping, with optional Serper/SearXNG/Brave) to ground career advice in current data. When the advisor discusses salary ranges, job demand, required certifications, or industry trends, it can search for current information rather than relying on training data alone.
 
-Port the multi-engine search system from Study Buddy (`app/api/getSources/route.ts`).
+Provider-specific keys, automatic fallback (Brave, Serper, SearXNG, DuckDuckGo by default), over-fetch and deduplication, a short cache, rate-limit cooldown, and usage/cost disclosure in Settings. Ported from the Study Buddy search chain.
 
 **Why:** LLM training data goes stale. "Average salary for a Data Analyst in Perth" should reflect current job listings, not 2024 data. Also enables the "compare me to the market" workflow from the workshop (Activity 2).
 

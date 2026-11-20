@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { search, runEngineSearch, SearchError } from './service';
 import { __resetCacheForTests } from './cache';
+import { __resetSearchChainForTests } from './chain';
 import type { SearchSettings } from './settings';
 
 type MockOverrides = {
@@ -60,6 +61,7 @@ function mockElectronAPI(overrides: MockOverrides = {}): MockElectronAPI {
 beforeEach(() => {
   vi.restoreAllMocks();
   __resetCacheForTests();
+  __resetSearchChainForTests();
 });
 
 describe('search — disabled engine', () => {
@@ -196,7 +198,7 @@ describe('search — Serper engine', () => {
     expect(call.method).toBe('POST');
     expect(call.headers['X-API-KEY']).toBe('serper-key');
     const body = JSON.parse(call.body);
-    expect(body).toEqual({ q: 'data analyst', num: 9 });
+    expect(body).toEqual({ q: 'data analyst', num: 18 });
     expect(results).toEqual([{ title: 'A', url: 'https://example.com/a', domain: 'example.com' }]);
   });
 });

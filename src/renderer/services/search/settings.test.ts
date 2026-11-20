@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { isSearchConfigured, normaliseEngine, type SearchSettings } from './settings';
+import {
+  DEFAULT_SEARCH_FALLBACK_ORDER,
+  isSearchConfigured,
+  normaliseEngine,
+  normaliseSearchFallbackOrder,
+  type SearchSettings,
+} from './settings';
 
 function makeSettings(partial: Partial<SearchSettings>): SearchSettings {
   return { engine: 'duckduckgo', apiKey: '', url: '', ...partial };
@@ -22,6 +28,11 @@ describe('isSearchConfigured', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'brave', apiKey: 'k' }))).toBe(true);
   });
 
+  it('accepts provider-specific keys', () => {
+    expect(isSearchConfigured(makeSettings({ engine: 'brave', braveApiKey: 'k' }))).toBe(true);
+    expect(isSearchConfigured(makeSettings({ engine: 'serper', serperApiKey: 'k' }))).toBe(true);
+  });
+
   it('returns false for serper without an API key', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'serper' }))).toBe(false);
   });
@@ -36,6 +47,16 @@ describe('isSearchConfigured', () => {
 
   it('returns true for searxng with a URL', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'searxng', url: 'http://x' }))).toBe(true);
+  });
+});
+
+describe('normaliseSearchFallbackOrder', () => {
+  it('keeps known providers in order and removes duplicates', () => {
+    expect(normaliseSearchFallbackOrder(' Braver, brave, searxng, nope ')).toBe('brave,searxng');
+  });
+
+  it('defaults to the Brave-first order', () => {
+    expect(normaliseSearchFallbackOrder(undefined)).toBe(DEFAULT_SEARCH_FALLBACK_ORDER);
   });
 });
 

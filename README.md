@@ -65,6 +65,17 @@ Upload your resume in multiple formats:
 - Connection testing for all providers
 - Model management (especially for Ollama)
 
+### 🔎 Web Search Grounding
+- **DuckDuckGo** free by default, no key needed
+- **Brave** and **Serper** keys for reliable, fresher results
+- **SearXNG** for a self-hosted instance
+- **Automatic fallback** when a provider fails or returns nothing
+- Configurable fallback order, or turn it off
+- Usage, rate-limit and cost links in Settings
+
+Search queries leave the device, but your resume and chat content do not. Only
+the derived query (for example, "Data Analyst Perth salary") is sent.
+
 ### 🎯 Career Exploration
 - Personalized career recommendations
 - Skills analysis and mapping

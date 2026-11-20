@@ -14,6 +14,8 @@ export interface SettingsConfig {
   allowThinking: boolean;
   searchEngine: SearchEngine;
   searchUrl: string;
+  searchFallbackEnabled: boolean;
+  searchFallbackOrder: string;
 }
 
 export interface ModelInfo {
@@ -31,6 +33,8 @@ export const DEFAULT_SETTINGS: SettingsConfig = {
   allowThinking: false,
   searchEngine: 'duckduckgo',
   searchUrl: '',
+  searchFallbackEnabled: true,
+  searchFallbackOrder: 'brave,serper,searxng,duckduckgo',
 };
 
 // Merge stored settings over the defaults, carrying forward the pre-0.6.3
@@ -46,6 +50,12 @@ export function normaliseSettings(stored: unknown): SettingsConfig {
   // setting to the free default rather than leaving an unusable engine.
   if ((raw.searchEngine as string | undefined) === 'bing') {
     merged.searchEngine = 'duckduckgo';
+  }
+  if (typeof merged.searchFallbackEnabled !== 'boolean') {
+    merged.searchFallbackEnabled = true;
+  }
+  if (typeof merged.searchFallbackOrder !== 'string' || !merged.searchFallbackOrder.trim()) {
+    merged.searchFallbackOrder = 'brave,serper,searxng,duckduckgo';
   }
   delete merged.ollamaThink;
   return merged;

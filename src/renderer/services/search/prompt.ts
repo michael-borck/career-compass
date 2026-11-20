@@ -4,6 +4,12 @@ export type SourceRef = {
   title: string;
   url: string;
   domain: string;
+  /** Snippet supplied by the search engine, when it has one. */
+  snippet?: string;
+  /** Provider that produced this result. */
+  provider?: string;
+  /** Rank within that provider. */
+  position?: number;
 };
 
 // The citation formatters live once in lib/search-prompt.ts (also imported by

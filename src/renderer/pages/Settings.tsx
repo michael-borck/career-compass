@@ -8,7 +8,12 @@ import {
   type SettingsConfig,
   type SearchEngine,
 } from '@/lib/settings-store';
-import { search, type SearchSettings } from '../services/search';
+import {
+  applyIntent,
+  searchWithFallback,
+  type SearchAttempt,
+  type SearchSettings,
+} from '../services/search';
 import toast, { Toaster } from 'react-hot-toast';
 
 type LLMProvider = 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
@@ -24,6 +29,22 @@ const ENV_VAR_BY_PROVIDER: Record<LLMProvider, string> = {
 };
 
 const getEnvVarName = (provider: LLMProvider): string => ENV_VAR_BY_PROVIDER[provider];
+
+function formatSearchAttempts(attempts: SearchAttempt[]): string {
+  return attempts
+    .map((attempt) => {
+      const detail =
+        attempt.status === 'ok'
+          ? ` (${attempt.count})`
+          : attempt.error
+            ? ` (${attempt.error.slice(0, 80)})`
+            : attempt.reason
+              ? ` (${attempt.reason})`
+              : '';
+      return `${attempt.provider}: ${attempt.status}${detail}`;
+    })
+    .join('; ');
+}
 
 interface AvailableModel {
   id: string;
@@ -104,16 +125,16 @@ const ProviderInfo: Record<
 const SEARCH_ENGINE_LABEL: Record<SearchEngine, string> = {
   disabled: 'Disabled — no web search',
   duckduckgo: 'DuckDuckGo — free, no setup',
-  brave: 'Brave Search — free tier 2000/month',
-  serper: 'Serper (Google) — paid',
+  brave: 'Brave Search — monthly free credit',
+  serper: 'Serper (Google) — free trial, then paid',
   searxng: 'SearXNG — self-hosted',
 };
 
 const SEARCH_ENGINE_DESCRIPTION: Record<SearchEngine, string> = {
   disabled: 'All grounding is off. Career Compass runs offline for AI calls.',
   duckduckgo: 'Default. HTML scraping of the DuckDuckGo lite page.',
-  brave: 'Needs an API key. Reliable and reasonably generous free tier.',
-  serper: 'Google results via Serper. Needs an API key.',
+  brave: 'Needs an API key. About 1,000 free queries per month, then paid.',
+  serper: 'Google results via Serper. 2,500 free queries, then prepaid credits.',
   searxng: 'Point to your own SearXNG instance URL.',
 };
 
@@ -126,6 +147,8 @@ export default function Settings() {
     allowThinking: false,
     searchEngine: 'duckduckgo',
     searchUrl: '',
+    searchFallbackEnabled: true,
+    searchFallbackOrder: 'brave,serper,searxng,duckduckgo',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -136,8 +159,12 @@ export default function Settings() {
   }>({});
 
   const [searchEngine, setSearchEngine] = useState<SearchEngine>('duckduckgo');
-  const [searchApiKey, setSearchApiKey] = useState('');
+  const [braveApiKey, setBraveApiKey] = useState('');
+  const [serperApiKey, setSerperApiKey] = useState('');
   const [searchUrl, setSearchUrl] = useState('');
+  const [searchFallbackEnabled, setSearchFallbackEnabled] = useState(true);
+  const [searchFallbackOrder, setSearchFallbackOrder] = useState('brave,serper,searxng,duckduckgo');
+  const [searchTestResult, setSearchTestResult] = useState<string | null>(null);
   const [testingSearch, setTestingSearch] = useState(false);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
 
@@ -182,10 +209,16 @@ export default function Settings() {
         const eng = savedSettings.searchEngine ?? 'duckduckgo';
         setSearchEngine(eng);
         setSearchUrl(savedSettings.searchUrl ?? '');
-        if (eng === 'brave' || eng === 'serper') {
-          const key = await secureStorage.getSearchApiKey(eng);
-          setSearchApiKey(key ?? '');
-        }
+        setSearchFallbackEnabled(savedSettings.searchFallbackEnabled ?? true);
+        setSearchFallbackOrder(
+          savedSettings.searchFallbackOrder ?? 'brave,serper,searxng,duckduckgo'
+        );
+        const [braveKey, serperKey] = await Promise.all([
+          secureStorage.getSearchApiKey('brave'),
+          secureStorage.getSearchApiKey('serper'),
+        ]);
+        setBraveApiKey(braveKey ?? '');
+        setSerperApiKey(serperKey ?? '');
       } catch (error) {
         console.error('Failed to load settings:', error);
         toast.error('Failed to load settings');
@@ -291,6 +324,7 @@ export default function Settings() {
 
   const handleTestSearch = async () => {
     setTestingSearch(true);
+    setSearchTestResult(null);
     try {
       if (searchEngine === 'disabled') {
         toast('Search is disabled. Pick an engine to test it.', { icon: 'ℹ️' });
@@ -301,27 +335,38 @@ export default function Settings() {
       // without having to press Save first.
       const overrideSettings: SearchSettings = {
         engine: searchEngine,
-        apiKey: searchApiKey,
+        apiKey:
+          searchEngine === 'brave' ? braveApiKey : searchEngine === 'serper' ? serperApiKey : '',
+        braveApiKey,
+        serperApiKey,
         url: searchUrl,
+        fallbackEnabled: searchFallbackEnabled,
+        fallbackOrder: searchFallbackOrder,
       };
 
-      const results = await search(
-        { query: 'data analyst Perth salary', intent: 'salary' },
-        { settings: overrideSettings }
-      );
+      const query = applyIntent('data analyst Perth salary', 'salary');
+      const outcome = await searchWithFallback(overrideSettings, query);
+      const summary = formatSearchAttempts(outcome.attempts);
+      const used = outcome.results[0]?.provider;
 
-      if (results.length === 0) {
-        toast('Search ran but returned no results. Try a different engine or check your API key.', {
+      if (outcome.results.length === 0) {
+        setSearchTestResult(`No results. ${summary}`);
+        toast('Search ran but returned no results. Try a different provider or check your key.', {
           icon: '⚠️',
         });
       } else {
+        setSearchTestResult(
+          `Found ${outcome.results.length} result${outcome.results.length === 1 ? '' : 's'}${used ? ` via ${used}` : ''}. ${summary}`
+        );
         toast.success(
-          `Search OK — got ${results.length} result${results.length === 1 ? '' : 's'} (e.g., ${results[0].domain})`
+          `Search OK — ${outcome.results.length} result${outcome.results.length === 1 ? '' : 's'}${used ? ` via ${used}` : ''}`
         );
       }
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Search test failed');
+      const message = err instanceof Error ? err.message : 'Search test failed';
+      setSearchTestResult(message);
+      toast.error(message);
     } finally {
       setTestingSearch(false);
     }
@@ -351,7 +396,13 @@ export default function Settings() {
         }
       }
 
-      const settingsToSave = { ...settings, searchEngine, searchUrl };
+      const settingsToSave = {
+        ...settings,
+        searchEngine,
+        searchUrl,
+        searchFallbackEnabled,
+        searchFallbackOrder,
+      };
       // apiKey lives in secureStorage, not the settings blob.
       delete (settingsToSave as Partial<SettingsConfig>).apiKey;
       await settingsStore.set(settingsToSave);
@@ -363,9 +414,10 @@ export default function Settings() {
         await secureStorage.deleteApiKey(settings.provider);
       }
 
-      if (searchEngine === 'brave' || searchEngine === 'serper') {
-        await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
-      }
+      await Promise.all([
+        secureStorage.setSearchApiKey('brave', braveApiKey),
+        secureStorage.setSearchApiKey('serper', serperApiKey),
+      ]);
 
       toast.success('Settings saved');
     } catch (error) {
@@ -386,8 +438,17 @@ export default function Settings() {
         allowThinking: false,
         searchEngine: 'duckduckgo',
         searchUrl: '',
+        searchFallbackEnabled: true,
+        searchFallbackOrder: 'brave,serper,searxng,duckduckgo',
       };
       setSettings(defaultSettings);
+      setSearchEngine('duckduckgo');
+      setSearchUrl('');
+      setBraveApiKey('');
+      setSerperApiKey('');
+      setSearchFallbackEnabled(true);
+      setSearchFallbackOrder('brave,serper,searxng,duckduckgo');
+      setSearchTestResult(null);
       await settingsStore.clear();
 
       const providers: LLMProvider[] = [
@@ -399,7 +460,11 @@ export default function Settings() {
         'openrouter',
         'custom',
       ];
-      await Promise.all(providers.map((provider) => secureStorage.deleteApiKey(provider)));
+      await Promise.all([
+        ...providers.map((provider) => secureStorage.deleteApiKey(provider)),
+        secureStorage.setSearchApiKey('brave', ''),
+        secureStorage.setSearchApiKey('serper', ''),
+      ]);
 
       toast.success('Settings reset to defaults');
     } catch (error) {
@@ -657,40 +722,121 @@ export default function Settings() {
               ))}
             </div>
 
-            {(searchEngine === 'brave' || searchEngine === 'serper') && (
-              <div className='mt-4'>
-                <Label>API key</Label>
+            <div className='mt-4 grid gap-4 sm:grid-cols-2'>
+              <div>
+                <Label>Brave API key</Label>
                 <Input
                   type='password'
-                  value={searchApiKey}
-                  onChange={(e) => setSearchApiKey(e.target.value)}
-                  placeholder={`Your ${searchEngine} API key`}
+                  value={braveApiKey}
+                  onChange={(e) => setBraveApiKey(e.target.value)}
+                  placeholder='Brave Search API key'
                 />
               </div>
-            )}
-
-            {searchEngine === 'searxng' && (
-              <div className='mt-4'>
-                <Label>SearXNG URL</Label>
+              <div>
+                <Label>Serper API key</Label>
                 <Input
-                  value={searchUrl}
-                  onChange={(e) => setSearchUrl(e.target.value)}
-                  placeholder='https://your-searxng-instance.example.com'
+                  type='password'
+                  value={serperApiKey}
+                  onChange={(e) => setSerperApiKey(e.target.value)}
+                  placeholder='Serper API key'
                 />
               </div>
-            )}
+            </div>
+
+            <div className='mt-4'>
+              <Label>SearXNG URL (optional)</Label>
+              <Input
+                value={searchUrl}
+                onChange={(e) => setSearchUrl(e.target.value)}
+                placeholder='https://your-searxng-instance.example.com'
+              />
+            </div>
+
+            <label className='mt-4 flex items-start gap-3 cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={searchFallbackEnabled}
+                onChange={(e) => setSearchFallbackEnabled(e.target.checked)}
+                className='mt-1'
+              />
+              <span>
+                <span className='block text-ink font-medium'>Automatic fallback</span>
+                <span className='block text-[var(--text-sm)] text-ink-muted'>
+                  Try the next configured provider when one fails or returns no results.
+                </span>
+              </span>
+            </label>
+
+            <div className='mt-4'>
+              <Label>Fallback order</Label>
+              <Input
+                value={searchFallbackOrder}
+                onChange={(e) => setSearchFallbackOrder(e.target.value)}
+                disabled={!searchFallbackEnabled}
+                placeholder='brave,serper,searxng,duckduckgo'
+              />
+              <p className='mt-1 text-[var(--text-sm)] text-ink-muted'>
+                Comma-separated. Brave and Serper need keys; SearXNG needs a URL; DuckDuckGo is
+                free. Remove a provider to disable it.
+              </p>
+            </div>
 
             <div className='mt-4'>
               <Button variant='outline' onClick={handleTestSearch} disabled={testingSearch}>
                 {testingSearch ? 'Testing…' : 'Test search'}
               </Button>
+              {searchTestResult && (
+                <p className='mt-2 text-[var(--text-sm)] text-ink-muted'>{searchTestResult}</p>
+              )}
             </div>
 
             <div className='mt-6 p-4 border border-border rounded-lg bg-paper-warm'>
-              <p className='text-[var(--text-sm)] text-ink-muted'>
-                <strong className='text-ink'>Privacy note.</strong> Search queries leave your
-                device. Career Compass never sends your resume or chat content to the search engine
-                — only the derived query (e.g., &ldquo;Data Analyst Perth salary&rdquo;).
+              <p className='mb-2 text-[var(--text-sm)] text-ink'>
+                <strong>Usage, rate limits and cost.</strong>
+              </p>
+              <ul className='list-disc pl-5 space-y-1 text-[var(--text-sm)] text-ink-muted'>
+                <li>
+                  Brave: $5 free credit each month, then $5 per 1,000 requests.{' '}
+                  <a
+                    className='underline decoration-dotted hover:text-accent'
+                    href='https://api-dashboard.search.brave.com/app/keys'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    Brave dashboard
+                  </a>
+                </li>
+                <li>
+                  Serper: 2,500 free queries, then prepaid credits.{' '}
+                  <a
+                    className='underline decoration-dotted hover:text-accent'
+                    href='https://serper.dev/dashboard'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    Serper dashboard
+                  </a>
+                </li>
+                <li>
+                  SearXNG: free to self-host, but upstream engines can rate-limit.{' '}
+                  <a
+                    className='underline decoration-dotted hover:text-accent'
+                    href='https://docs.searxng.org/'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    SearXNG docs
+                  </a>
+                </li>
+                <li>
+                  Queries leave this device and go to the selected provider. Check the provider
+                  dashboard for current usage and billing.
+                </li>
+              </ul>
+              <p className='mt-3 text-[var(--text-sm)] text-ink-muted'>
+                <strong className='text-ink'>Privacy note.</strong> Career Compass never sends your
+                resume or chat content to the search engine — only the derived query (e.g.,
+                &ldquo;Data Analyst Perth salary&rdquo;).
               </p>
             </div>
           </div>
