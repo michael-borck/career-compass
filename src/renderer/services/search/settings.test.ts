@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isSearchConfigured,
-  normaliseEngine,
-  type SearchSettings,
-} from './settings';
+import { isSearchConfigured, normaliseEngine, type SearchSettings } from './settings';
 
 function makeSettings(partial: Partial<SearchSettings>): SearchSettings {
   return { engine: 'duckduckgo', apiKey: '', url: '', ...partial };

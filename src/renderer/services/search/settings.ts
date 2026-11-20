@@ -8,13 +8,7 @@
 
 export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'serper' | 'searxng';
 
-const VALID_ENGINES: SearchEngine[] = [
-  'disabled',
-  'duckduckgo',
-  'brave',
-  'serper',
-  'searxng',
-];
+const VALID_ENGINES: SearchEngine[] = ['disabled', 'duckduckgo', 'brave', 'serper', 'searxng'];
 
 // Bing's Search API was retired on 11 August 2025. A stored "bing" setting
 // falls back to the free default instead of silently disabling search.
@@ -25,9 +19,7 @@ const LEGACY_SEARCH_ENGINES: Record<string, SearchEngine> = {
 export function normaliseEngine(value: string | undefined): SearchEngine {
   const raw = (value ?? 'duckduckgo').toLowerCase();
   const mapped = LEGACY_SEARCH_ENGINES[raw] ?? raw;
-  return VALID_ENGINES.includes(mapped as SearchEngine)
-    ? (mapped as SearchEngine)
-    : 'duckduckgo';
+  return VALID_ENGINES.includes(mapped as SearchEngine) ? (mapped as SearchEngine) : 'duckduckgo';
 }
 
 export type SearchSettings = {

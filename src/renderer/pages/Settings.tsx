@@ -637,26 +637,24 @@ export default function Settings() {
             </p>
 
             <div className='space-y-2'>
-              {(['disabled', 'duckduckgo', 'brave', 'serper', 'searxng'] as const).map(
-                (eng) => (
-                  <label key={eng} className='flex items-start gap-3 cursor-pointer'>
-                    <input
-                      type='radio'
-                      name='searchEngine'
-                      value={eng}
-                      checked={searchEngine === eng}
-                      onChange={() => setSearchEngine(eng)}
-                      className='mt-1'
-                    />
-                    <div>
-                      <div className='text-ink font-medium'>{SEARCH_ENGINE_LABEL[eng]}</div>
-                      <div className='text-[var(--text-sm)] text-ink-muted'>
-                        {SEARCH_ENGINE_DESCRIPTION[eng]}
-                      </div>
+              {(['disabled', 'duckduckgo', 'brave', 'serper', 'searxng'] as const).map((eng) => (
+                <label key={eng} className='flex items-start gap-3 cursor-pointer'>
+                  <input
+                    type='radio'
+                    name='searchEngine'
+                    value={eng}
+                    checked={searchEngine === eng}
+                    onChange={() => setSearchEngine(eng)}
+                    className='mt-1'
+                  />
+                  <div>
+                    <div className='text-ink font-medium'>{SEARCH_ENGINE_LABEL[eng]}</div>
+                    <div className='text-[var(--text-sm)] text-ink-muted'>
+                      {SEARCH_ENGINE_DESCRIPTION[eng]}
                     </div>
-                  </label>
-                )
-              )}
+                  </div>
+                </label>
+              ))}
             </div>
 
             {(searchEngine === 'brave' || searchEngine === 'serper') && (
