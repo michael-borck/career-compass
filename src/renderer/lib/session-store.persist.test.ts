@@ -7,14 +7,17 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSessionStore, SESSION_STORAGE_KEY } from './session-store';
 
+// Node 26 exposes a global `localStorage` that is undefined unless the
+// process is started with --localstorage-file. Under the jsdom environment
+// the real Storage lives on `window`, so use that explicitly.
 function persisted() {
-  const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+  const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
   return raw ? JSON.parse(raw) : null;
 }
 
 beforeEach(() => {
   useSessionStore.getState().reset();
-  localStorage.clear();
+  window.localStorage.clear();
 });
 
 describe('session persistence', () => {
@@ -46,7 +49,7 @@ describe('session persistence', () => {
   });
 
   it('rehydrates a stored session and keeps actions working', async () => {
-    localStorage.setItem(
+    window.localStorage.setItem(
       SESSION_STORAGE_KEY,
       JSON.stringify({
         state: { jobTitle: 'Restored role', freeText: 'about me' },

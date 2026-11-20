@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
+    // A non-opaque origin is required for jsdom to expose localStorage.
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
+    setupFiles: ['./src/test/setup.ts'],
     // Required for @testing-library/react's automatic DOM cleanup, which
     // registers itself via a global afterEach.
     globals: true,
