@@ -175,33 +175,6 @@ describe('search — Brave engine', () => {
   });
 });
 
-describe('search — Bing engine', () => {
-  it('uses Ocp-Apim-Subscription-Key header and Bing endpoint', async () => {
-    const api = mockElectronAPI({
-      apiFetchResponse: {
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        body: JSON.stringify({
-          webPages: {
-            value: [{ name: 'Bing Hit', url: 'https://example.com/bing' }],
-          },
-        }),
-      },
-    });
-    const settings: SearchSettings = { engine: 'bing', apiKey: 'bing-key', url: '' };
-    const results = await search({ query: 'data analyst' }, { settings });
-    expect(api.apiFetch).toHaveBeenCalledTimes(1);
-    const call = api.apiFetch.mock.calls[0][0];
-    expect(call.url).toContain('api.bing.microsoft.com/v7.0/search');
-    expect(call.headers['Ocp-Apim-Subscription-Key']).toBe('bing-key');
-    expect(results).toEqual([
-      { title: 'Bing Hit', url: 'https://example.com/bing', domain: 'example.com' },
-    ]);
-  });
-});
-
 describe('search — Serper engine', () => {
   it('POSTs JSON body with the query', async () => {
     const api = mockElectronAPI({
@@ -543,20 +516,6 @@ describe('search — timeout plumbing', () => {
       },
     });
     const settings: SearchSettings = { engine: 'brave', apiKey: 'k', url: '' };
-    await search({ query: 'x' }, { settings });
-    expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
-  });
-
-  it('Bing passes timeoutMs=10000 to apiFetch', async () => {
-    const api = mockElectronAPI({
-      apiFetchResponse: {
-        ok: true,
-        status: 200,
-        headers: {},
-        body: JSON.stringify({ webPages: { value: [] } }),
-      },
-    });
-    const settings: SearchSettings = { engine: 'bing', apiKey: 'k', url: '' };
     await search({ query: 'x' }, { settings });
     expect(api.apiFetch.mock.calls[0][0].timeoutMs).toBe(10000);
   });

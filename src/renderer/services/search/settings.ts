@@ -4,9 +4,31 @@
 // Storage shape matches what lib/settings-store.ts writes:
 //   - 'settings' key holds { searchEngine, searchUrl, ... }
 //   - secureStorage key 'career-compass-search-<engine>' holds the API key
-//     for paid engines (brave, bing, serper).
+//     for paid engines (brave, serper).
 
-export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'bing' | 'serper' | 'searxng';
+export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'serper' | 'searxng';
+
+const VALID_ENGINES: SearchEngine[] = [
+  'disabled',
+  'duckduckgo',
+  'brave',
+  'serper',
+  'searxng',
+];
+
+// Bing's Search API was retired on 11 August 2025. A stored "bing" setting
+// falls back to the free default instead of silently disabling search.
+const LEGACY_SEARCH_ENGINES: Record<string, SearchEngine> = {
+  bing: 'duckduckgo',
+};
+
+export function normaliseEngine(value: string | undefined): SearchEngine {
+  const raw = (value ?? 'duckduckgo').toLowerCase();
+  const mapped = LEGACY_SEARCH_ENGINES[raw] ?? raw;
+  return VALID_ENGINES.includes(mapped as SearchEngine)
+    ? (mapped as SearchEngine)
+    : 'duckduckgo';
+}
 
 export type SearchSettings = {
   engine: SearchEngine;
@@ -15,7 +37,7 @@ export type SearchSettings = {
 };
 
 type StoredSettings = {
-  searchEngine?: SearchEngine;
+  searchEngine?: string;
   searchUrl?: string;
 };
 
@@ -25,10 +47,10 @@ type StoredSettings = {
  */
 export async function loadSearchSettings(): Promise<SearchSettings> {
   const saved = await window.electronAPI.store.get<StoredSettings>('settings', {});
-  const engine = (saved?.searchEngine ?? 'duckduckgo') as SearchEngine;
+  const engine = normaliseEngine(saved?.searchEngine);
 
   let apiKey = '';
-  if (engine === 'brave' || engine === 'bing' || engine === 'serper') {
+  if (engine === 'brave' || engine === 'serper') {
     const stored = await window.electronAPI.secureStorage.getPassword(
       `career-compass-search-${engine}`
     );

@@ -1,7 +1,7 @@
 // Search dispatcher for the renderer. All network IO goes through
 // window.electronAPI.apiFetch (Electron's net module in main), which
 // sidesteps the browser's CORS preflight machinery and lets us call
-// DuckDuckGo HTML, Brave, Bing, Serper, and SearXNG endpoints from the
+// DuckDuckGo HTML, Brave, Serper, and SearXNG endpoints from the
 // renderer process.
 //
 // Faithful port of lib/search-service.ts — engine dispatch logic and
@@ -101,8 +101,6 @@ export async function runEngineSearch(
       return runDuckDuckGo(query);
     case 'brave':
       return runBrave(query, settings.apiKey);
-    case 'bing':
-      return runBing(query, settings.apiKey);
     case 'serper':
       return runSerper(query, settings.apiKey);
     case 'searxng':
@@ -237,47 +235,6 @@ async function runBrave(query: string, apiKey: string): Promise<SourceRef[]> {
       url: r.url,
       domain: extractDomain(r.url),
     }));
-}
-
-// ---------- Bing ----------
-
-type BingResult = { name: string; url: string };
-type BingResponse = { webPages: { value: BingResult[] } };
-
-async function runBing(query: string, apiKey: string): Promise<SourceRef[]> {
-  if (!apiKey) throw new SearchError('Bing API key is required');
-  const params = new URLSearchParams({
-    q: `${query} ${EXCLUDED_SITES.map((site) => `-site:${site}`).join(' ')}`,
-    mkt: 'en-US',
-    count: '9',
-    safeSearch: 'Strict',
-  });
-  let response;
-  try {
-    response = await window.electronAPI.apiFetch({
-      url: `https://api.bing.microsoft.com/v7.0/search?${params}`,
-      method: 'GET',
-      headers: { 'Ocp-Apim-Subscription-Key': apiKey },
-      timeoutMs: 10000,
-    });
-  } catch (err) {
-    throw new SearchError(
-      `Network error contacting Bing: ${err instanceof Error ? err.message : String(err)}`
-    );
-  }
-  if (!response.ok) {
-    throw new SearchError(
-      `Bing: ${response.status} ${response.statusText}`,
-      response.status,
-      response.body
-    );
-  }
-  const data = parseJsonOrThrow('Bing', response) as BingResponse;
-  return data.webPages.value.map((r) => ({
-    title: r.name,
-    url: r.url,
-    domain: extractDomain(r.url),
-  }));
 }
 
 // ---------- Serper ----------

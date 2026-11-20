@@ -1,5 +1,5 @@
 // Settings store for desktop persistence using electron-store
-export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'bing' | 'serper' | 'searxng';
+export type SearchEngine = 'disabled' | 'duckduckgo' | 'brave' | 'serper' | 'searxng';
 
 export interface SettingsConfig {
   provider: 'ollama' | 'openai' | 'claude' | 'groq' | 'gemini' | 'openrouter' | 'custom';
@@ -41,6 +41,11 @@ export function normaliseSettings(stored: unknown): SettingsConfig {
   const merged = { ...DEFAULT_SETTINGS, ...raw } as SettingsConfig & { ollamaThink?: unknown };
   if (raw.allowThinking === undefined && typeof raw.ollamaThink === 'boolean') {
     merged.allowThinking = raw.ollamaThink;
+  }
+  // Bing's Search API was retired on 11 August 2025. Carry a stored "bing"
+  // setting to the free default rather than leaving an unusable engine.
+  if ((raw.searchEngine as string | undefined) === 'bing') {
+    merged.searchEngine = 'duckduckgo';
   }
   delete merged.ollamaThink;
   return merged;

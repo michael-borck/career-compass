@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { isSearchConfigured, type SearchSettings } from './settings';
+import {
+  isSearchConfigured,
+  normaliseEngine,
+  type SearchSettings,
+} from './settings';
 
 function makeSettings(partial: Partial<SearchSettings>): SearchSettings {
   return { engine: 'duckduckgo', apiKey: '', url: '', ...partial };
@@ -22,14 +26,6 @@ describe('isSearchConfigured', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'brave', apiKey: 'k' }))).toBe(true);
   });
 
-  it('returns false for bing without an API key', () => {
-    expect(isSearchConfigured(makeSettings({ engine: 'bing' }))).toBe(false);
-  });
-
-  it('returns true for bing with an API key', () => {
-    expect(isSearchConfigured(makeSettings({ engine: 'bing', apiKey: 'k' }))).toBe(true);
-  });
-
   it('returns false for serper without an API key', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'serper' }))).toBe(false);
   });
@@ -44,5 +40,20 @@ describe('isSearchConfigured', () => {
 
   it('returns true for searxng with a URL', () => {
     expect(isSearchConfigured(makeSettings({ engine: 'searxng', url: 'http://x' }))).toBe(true);
+  });
+});
+
+describe('normaliseEngine', () => {
+  it('migrates the retired bing engine to duckduckgo', () => {
+    expect(normaliseEngine('bing')).toBe('duckduckgo');
+  });
+
+  it('keeps a valid engine', () => {
+    expect(normaliseEngine('brave')).toBe('brave');
+  });
+
+  it('falls back to duckduckgo for an unknown engine', () => {
+    expect(normaliseEngine('altavista')).toBe('duckduckgo');
+    expect(normaliseEngine(undefined)).toBe('duckduckgo');
   });
 });

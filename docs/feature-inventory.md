@@ -129,7 +129,7 @@ Multi-perspective feedback on a career goal. The AI simulates a "personal board 
 **Why:** Students get stuck in one frame of reference. Multiple simulated viewpoints break tunnel vision. The advisor personas could be configurable.
 
 ### F13: Web Search Grounding
-Integrate web search (DuckDuckGo free scraping, with optional Bing/Serper/SearXNG/Brave) to ground career advice in current data. When the advisor discusses salary ranges, job demand, required certifications, or industry trends, it can search for current information rather than relying on training data alone.
+Integrate web search (DuckDuckGo free scraping, with optional Serper/SearXNG/Brave) to ground career advice in current data. When the advisor discusses salary ranges, job demand, required certifications, or industry trends, it can search for current information rather than relying on training data alone.
 
 Port the multi-engine search system from Study Buddy (`app/api/getSources/route.ts`).
 

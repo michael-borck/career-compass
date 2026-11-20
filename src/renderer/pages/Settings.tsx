@@ -105,7 +105,6 @@ const SEARCH_ENGINE_LABEL: Record<SearchEngine, string> = {
   disabled: 'Disabled — no web search',
   duckduckgo: 'DuckDuckGo — free, no setup',
   brave: 'Brave Search — free tier 2000/month',
-  bing: 'Bing — paid',
   serper: 'Serper (Google) — paid',
   searxng: 'SearXNG — self-hosted',
 };
@@ -114,7 +113,6 @@ const SEARCH_ENGINE_DESCRIPTION: Record<SearchEngine, string> = {
   disabled: 'All grounding is off. Career Compass runs offline for AI calls.',
   duckduckgo: 'Default. HTML scraping of the DuckDuckGo lite page.',
   brave: 'Needs an API key. Reliable and reasonably generous free tier.',
-  bing: 'Needs an API key. Pay per query.',
   serper: 'Google results via Serper. Needs an API key.',
   searxng: 'Point to your own SearXNG instance URL.',
 };
@@ -184,7 +182,7 @@ export default function Settings() {
         const eng = savedSettings.searchEngine ?? 'duckduckgo';
         setSearchEngine(eng);
         setSearchUrl(savedSettings.searchUrl ?? '');
-        if (eng === 'brave' || eng === 'bing' || eng === 'serper') {
+        if (eng === 'brave' || eng === 'serper') {
           const key = await secureStorage.getSearchApiKey(eng);
           setSearchApiKey(key ?? '');
         }
@@ -365,7 +363,7 @@ export default function Settings() {
         await secureStorage.deleteApiKey(settings.provider);
       }
 
-      if (searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') {
+      if (searchEngine === 'brave' || searchEngine === 'serper') {
         await secureStorage.setSearchApiKey(searchEngine, searchApiKey);
       }
 
@@ -639,7 +637,7 @@ export default function Settings() {
             </p>
 
             <div className='space-y-2'>
-              {(['disabled', 'duckduckgo', 'brave', 'bing', 'serper', 'searxng'] as const).map(
+              {(['disabled', 'duckduckgo', 'brave', 'serper', 'searxng'] as const).map(
                 (eng) => (
                   <label key={eng} className='flex items-start gap-3 cursor-pointer'>
                     <input
@@ -661,7 +659,7 @@ export default function Settings() {
               )}
             </div>
 
-            {(searchEngine === 'brave' || searchEngine === 'bing' || searchEngine === 'serper') && (
+            {(searchEngine === 'brave' || searchEngine === 'serper') && (
               <div className='mt-4'>
                 <Label>API key</Label>
                 <Input
