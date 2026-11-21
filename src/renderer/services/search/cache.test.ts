@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { getCached, setCached, makeKey, __resetCacheForTests } from './cache';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { getCached, setCached, makeKey, __resetCacheForTests, SEARCH_CACHE_TTL_MS } from './cache';
 import type { SourceRef } from './prompt';
 
 const sampleResults: SourceRef[] = [
@@ -23,6 +23,20 @@ describe('makeKey', () => {
 describe('getCached / setCached', () => {
   beforeEach(() => {
     __resetCacheForTests();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('expires entries after the TTL', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    setCached('ttl', sampleResults);
+    vi.advanceTimersByTime(SEARCH_CACHE_TTL_MS - 1);
+    expect(getCached('ttl')).toEqual(sampleResults);
+    vi.advanceTimersByTime(2);
+    expect(getCached('ttl')).toBeNull();
   });
 
   it('returns null for a cache miss', () => {

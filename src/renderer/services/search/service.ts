@@ -80,7 +80,7 @@ export async function search(
     url,
     domain,
   }));
-  setCached(key, results);
+  if (results.length > 0) setCached(key, results);
   return results;
 }
 

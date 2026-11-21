@@ -6,6 +6,8 @@ type CacheEntry = {
 };
 
 const MAX_ENTRIES = 50;
+/** Search results go stale quickly (salaries, courses, hiring pages). */
+export const SEARCH_CACHE_TTL_MS = 10 * 60 * 1000;
 const cache = new Map<string, CacheEntry>();
 
 export function makeKey(engine: string, query: string): string {
@@ -16,6 +18,10 @@ export function makeKey(engine: string, query: string): string {
 export function getCached(key: string): SourceRef[] | null {
   const entry = cache.get(key);
   if (!entry) return null;
+  if (Date.now() - entry.timestamp >= SEARCH_CACHE_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
   cache.delete(key);
   cache.set(key, entry);
   return entry.results;
